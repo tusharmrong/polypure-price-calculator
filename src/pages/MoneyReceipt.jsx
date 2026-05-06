@@ -211,14 +211,8 @@ export default function MoneyReceipt() {
                   </div>
                 ) : null}
 
-                <div className="grid gap-3 lg:grid-cols-[1fr_260px]">
-                  <div className="rounded-lg border border-brand-100 bg-brand-50 p-3 text-xs">
-                    <p className="font-bold text-slate-950">Company Payment Details</p>
-                    <p className="mt-1 whitespace-pre-line text-[10px] leading-4 text-slate-700">
-                      {defaultSettings.paymentMethod}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 p-3">
+                <div className="grid gap-3">
+                  <div className="rounded-lg border border-slate-200 p-3 lg:ml-auto lg:w-[260px]">
                     <div className="grid gap-2 text-xs">
                       <div className="flex justify-between gap-4">
                         <span className="text-slate-500">Receipt Number</span>
