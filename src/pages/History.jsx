@@ -1,13 +1,45 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Button from '../components/Button.jsx'
+import Input from '../components/Input.jsx'
+import Select from '../components/Select.jsx'
 import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
 import { loadDocuments } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 
 export default function History() {
+  const navigate = useNavigate()
   const savedDocuments = useMemo(() => loadDocuments(), [])
+  const [typeFilter, setTypeFilter] = useState('All')
+  const [search, setSearch] = useState('')
   const documents = savedDocuments.length > 0 ? savedDocuments : sampleDocuments
   const isShowingSamples = savedDocuments.length === 0
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((document) => {
+      const typeMatch = typeFilter === 'All' || document.type === typeFilter
+      const searchText = `${document.number} ${document.clientName}`.toLowerCase()
+      const searchMatch = search.trim() === '' || searchText.includes(search.trim().toLowerCase())
+      return typeMatch && searchMatch
+    })
+  }, [documents, search, typeFilter])
+
+  const openDocument = (document, duplicate = false) => {
+    if (isShowingSamples) {
+      return
+    }
+    const targetByType = {
+      Quotation: '/quotation',
+      Invoice: '/invoice',
+      'Money Receipt': '/money-receipt'
+    }
+    const targetPath = targetByType[document.type]
+    if (!targetPath) {
+      return
+    }
+    const prefillDocument = duplicate ? { ...document, number: '' } : document
+    navigate(targetPath, { state: { prefillDocument } })
+  }
 
   return (
     <Card>
@@ -21,18 +53,35 @@ export default function History() {
         <p className="text-sm font-semibold text-brand-700">{documents.length} document{documents.length === 1 ? '' : 's'}</p>
       </div>
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <Select id="history-type-filter" label="Filter by type" onChange={(event) => setTypeFilter(event.target.value)} value={typeFilter}>
+          <option>All</option>
+          <option>Quotation</option>
+          <option>Invoice</option>
+          <option>Money Receipt</option>
+        </Select>
+        <Input
+          id="history-search"
+          label="Search by document number or client"
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="e.g. PP-Q or Client Name"
+          value={search}
+        />
+      </div>
+
       <div className="overflow-hidden rounded-lg border border-slate-200">
-        <div className="hidden grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 md:grid">
+        <div className="hidden grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_170px] bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 md:grid">
           <span>Document Type</span>
           <span>Document Number</span>
           <span>Client Name</span>
           <span>Date</span>
           <span className="text-right">Amount</span>
+          <span className="text-right">Actions</span>
         </div>
         <div className="divide-y divide-slate-200">
-          {documents.map((document) => (
+          {filteredDocuments.map((document) => (
             <div
-              className="grid gap-2 px-4 py-4 text-sm md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] md:items-center"
+              className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_170px] md:items-center"
               key={document.id || document.number}
             >
               <p className="font-semibold text-slate-950">{document.type}</p>
@@ -40,8 +89,19 @@ export default function History() {
               <p className="text-slate-600">{document.clientName}</p>
               <p className="text-slate-600">{document.displayDate || document.date}</p>
               <p className="font-bold text-brand-700 md:text-right">{formatCurrency(document.totalAmount || document.amount)}</p>
+              <div className="flex gap-2 md:justify-end">
+                <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document)} type="button" variant="secondary">
+                  Open
+                </Button>
+                <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document, true)} type="button" variant="secondary">
+                  Duplicate
+                </Button>
+              </div>
             </div>
           ))}
+          {filteredDocuments.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-slate-500">No document found for this filter.</div>
+          ) : null}
         </div>
       </div>
     </Card>

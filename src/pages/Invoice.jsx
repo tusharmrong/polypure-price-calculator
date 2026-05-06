@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Plus, Printer, Trash2 } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
@@ -28,17 +28,29 @@ function itemAmount(item) {
 }
 
 export default function Invoice() {
+  const navigate = useNavigate()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
-  const [documentDate, setDocumentDate] = useState(getTodayInputDate())
-  const [clientName, setClientName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
-  const [items, setItems] = useState(() => [createItem(draft)])
-  const [discount, setDiscount] = useState('0.00')
-  const [paidAmount, setPaidAmount] = useState('0.00')
-  const [notes, setNotes] = useState('')
-  const [terms, setTerms] = useState(defaultSettings.terms)
+  const prefill = location.state?.prefillDocument
+  const [documentDate, setDocumentDate] = useState(prefill?.date || getTodayInputDate())
+  const [clientName, setClientName] = useState(prefill?.clientName || '')
+  const [phone, setPhone] = useState(prefill?.phone || '')
+  const [address, setAddress] = useState(prefill?.address || '')
+  const [items, setItems] = useState(() => {
+    if (prefill?.items?.length) {
+      return prefill.items.map((item) => ({
+        id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+        description: normalizeThicknessText(item.description || ''),
+        quantity: String(item.quantity ?? '2000'),
+        rate: formatDecimal(item.rate || 0)
+      }))
+    }
+    return [createItem(draft)]
+  })
+  const [discount, setDiscount] = useState(formatDecimal(prefill?.discount || 0))
+  const [paidAmount, setPaidAmount] = useState(formatDecimal(prefill?.paidAmount || 0))
+  const [notes, setNotes] = useState(prefill?.notes || '')
+  const [terms, setTerms] = useState(prefill?.terms || defaultSettings.terms)
   const [saveStatus, setSaveStatus] = useState('')
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-I', documentDate), [documentDate])
@@ -99,6 +111,27 @@ export default function Invoice() {
       terms
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+  }
+
+  const createReceiptFromInvoice = () => {
+    navigate('/money-receipt', {
+      state: {
+        prefillDocument: {
+          type: 'Invoice',
+          date: documentDate,
+          clientName,
+          phone,
+          address,
+          paymentMethod: 'Cash',
+          workDetails: items
+            .map((item) => normalizeThicknessText(item.description || ''))
+            .filter(Boolean)
+            .join(' | '),
+          receivedAmount: paidAmount,
+          notes
+        }
+      }
+    })
   }
 
   return (
@@ -259,6 +292,9 @@ export default function Invoice() {
             </Button>
             <Button onClick={saveInvoice} type="button" variant="secondary">
               Save Invoice
+            </Button>
+            <Button onClick={createReceiptFromInvoice} type="button" variant="secondary">
+              Create Money Receipt
             </Button>
             <Button disabled variant="secondary">
               PDF Later

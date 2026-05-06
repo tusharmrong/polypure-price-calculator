@@ -17,14 +17,19 @@ import { loadValue } from '../utils/storage.js'
 export default function MoneyReceipt() {
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
-  const [documentDate, setDocumentDate] = useState(getTodayInputDate())
-  const [clientName, setClientName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
-  const [receivedAmount, setReceivedAmount] = useState(draft?.totalAmount ? formatDecimal(draft.totalAmount) : '')
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
-  const [workDetails, setWorkDetails] = useState(draft?.description ? normalizeThicknessText(draft.description) : '')
-  const [notes, setNotes] = useState('')
+  const prefill = location.state?.prefillDocument
+  const [documentDate, setDocumentDate] = useState(prefill?.date || getTodayInputDate())
+  const [clientName, setClientName] = useState(prefill?.clientName || '')
+  const [phone, setPhone] = useState(prefill?.phone || '')
+  const [address, setAddress] = useState(prefill?.address || '')
+  const [receivedAmount, setReceivedAmount] = useState(
+    prefill?.receivedAmount || (draft?.totalAmount ? formatDecimal(draft.totalAmount) : '')
+  )
+  const [paymentMethod, setPaymentMethod] = useState(prefill?.paymentMethod || 'Cash')
+  const [workDetails, setWorkDetails] = useState(
+    prefill?.workDetails || (draft?.description ? normalizeThicknessText(draft.description) : '')
+  )
+  const [notes, setNotes] = useState(prefill?.notes || '')
   const [saveStatus, setSaveStatus] = useState('')
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
