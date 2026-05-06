@@ -11,6 +11,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
+import { loadValue } from '../utils/storage.js'
 
 function createItem(draft) {
   return {
@@ -51,6 +52,7 @@ export default function Invoice() {
     return Number.isFinite(nextDue) ? Math.max(nextDue, 0) : 0
   }, [paidAmount, totalAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
+  const signatureImage = useMemo(() => loadValue('signaturePngDataUrl', ''), [])
 
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
@@ -384,9 +386,18 @@ export default function Invoice() {
                   <p className="mt-1">This invoice records payment and due status for this order.</p>
                 </div>
                 <div className="flex justify-end">
-                  <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
-                    Authorized Signature
-                  </div>
+                  {signatureImage ? (
+                    <div className="w-44 text-center">
+                      <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
+                        <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
+                      </div>
+                      <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
+                    </div>
+                  ) : (
+                    <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
+                      Authorized Signature
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

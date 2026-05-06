@@ -12,6 +12,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
+import { loadValue } from '../utils/storage.js'
 
 export default function MoneyReceipt() {
   const location = useLocation()
@@ -28,6 +29,7 @@ export default function MoneyReceipt() {
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
+  const signatureImage = useMemo(() => loadValue('signaturePngDataUrl', ''), [])
 
   const printReceipt = () => {
     window.print()
@@ -245,9 +247,18 @@ export default function MoneyReceipt() {
                   <p className="mt-1">Please keep this receipt for your records.</p>
                 </div>
                 <div className="flex justify-end">
-                  <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
-                    Authorized Signature
-                  </div>
+                  {signatureImage ? (
+                    <div className="w-44 text-center">
+                      <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
+                        <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
+                      </div>
+                      <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
+                    </div>
+                  ) : (
+                    <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
+                      Authorized Signature
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

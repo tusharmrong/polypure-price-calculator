@@ -1,4 +1,3 @@
-import { Menu } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 
 const titles = {
@@ -28,9 +27,6 @@ export default function Header() {
             className="hidden h-10 w-10 rounded-full border border-brand-100 bg-white object-contain sm:block md:hidden"
             src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
           />
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-700 md:hidden">
-            <Menu size={20} aria-hidden="true" />
-          </div>
         </div>
       </div>
     </header>

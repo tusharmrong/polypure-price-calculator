@@ -5,11 +5,14 @@ import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { defaultSettings } from '../data/defaultSettings.js'
+import { loadValue, saveValue } from '../utils/storage.js'
 
 export default function Settings() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [installStatus, setInstallStatus] = useState('')
+  const [signatureImage, setSignatureImage] = useState(() => loadValue('signaturePngDataUrl', ''))
+  const [signatureStatus, setSignatureStatus] = useState('')
 
   useEffect(() => {
     const installed =
@@ -55,6 +58,43 @@ export default function Settings() {
     }
 
     setDeferredPrompt(null)
+  }
+
+  const handleSignatureUpload = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    if (file.type !== 'image/png') {
+      setSignatureStatus('Please upload only PNG signature file.')
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const pngDataUrl = typeof reader.result === 'string' ? reader.result : ''
+      if (!pngDataUrl) {
+        setSignatureStatus('Could not read the file. Please try again.')
+        return
+      }
+      saveValue('signaturePngDataUrl', pngDataUrl)
+      setSignatureImage(pngDataUrl)
+      setSignatureStatus('Signature saved for this device.')
+      event.target.value = ''
+    }
+    reader.onerror = () => {
+      setSignatureStatus('Upload failed. Please try another PNG file.')
+      event.target.value = ''
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeSignature = () => {
+    saveValue('signaturePngDataUrl', '')
+    setSignatureImage('')
+    setSignatureStatus('Saved signature removed from this device.')
   }
 
   return (
@@ -121,8 +161,31 @@ export default function Settings() {
           />
           <div className="grid gap-2 text-sm font-medium text-slate-700 sm:col-span-2">
             Signature / Stamp
-            <div className="flex min-h-28 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm text-slate-500">
-              Signature or stamp placeholder
+            <div className="grid gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+              <input
+                accept="image/png"
+                className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
+                onChange={handleSignatureUpload}
+                type="file"
+              />
+              <div className="flex min-h-24 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-center text-sm text-slate-500">
+                {signatureImage ? (
+                  <img alt="Saved signature" className="max-h-20 w-auto object-contain" src={signatureImage} />
+                ) : (
+                  'No signature uploaded yet.'
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={!signatureImage}
+                  onClick={removeSignature}
+                  type="button"
+                  variant="secondary"
+                >
+                  Remove Signature
+                </Button>
+              </div>
+              {signatureStatus ? <p className="text-xs font-semibold text-brand-700">{signatureStatus}</p> : null}
             </div>
           </div>
         </div>
