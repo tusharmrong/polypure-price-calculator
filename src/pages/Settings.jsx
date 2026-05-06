@@ -131,7 +131,7 @@ export default function Settings() {
             Save Settings Later
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }
