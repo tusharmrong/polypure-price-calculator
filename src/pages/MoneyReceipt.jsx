@@ -6,8 +6,8 @@ import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import Select from '../components/Select.jsx'
 import TextArea from '../components/TextArea.jsx'
-import { defaultSettings } from '../data/defaultSettings.js'
 import { loadCalculatorDraft, normalizeThicknessText } from '../utils/calculatorDraft.js'
+import { loadCompanySettings } from '../utils/companySettings.js'
 import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../utils/documentNumber.js'
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
@@ -17,6 +17,7 @@ import { loadValue } from '../utils/storage.js'
 export default function MoneyReceipt() {
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
+  const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
   const [documentDate, setDocumentDate] = useState(prefill?.date || getTodayInputDate())
   const [clientName, setClientName] = useState(prefill?.clientName || '')
@@ -170,12 +171,12 @@ export default function MoneyReceipt() {
                     src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
                   />
                   <div>
-                    <p className="text-xl font-bold text-slate-950">{defaultSettings.companyName}</p>
+                    <p className="text-xl font-bold text-slate-950">{companySettings.companyName}</p>
                     <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Printing and Packaging</p>
                     <div className="mt-1 grid gap-0.5 text-[10px] leading-4 text-slate-500">
-                      <span>Phone: {defaultSettings.phone}</span>
-                      <span>Email: {defaultSettings.email} | Website: {defaultSettings.website}</span>
-                      <span>{defaultSettings.address}</span>
+                      <span>Phone: {companySettings.phone}</span>
+                      <span>Email: {companySettings.email} | Website: {companySettings.website}</span>
+                      <span>{companySettings.address}</span>
                     </div>
                   </div>
                 </div>
