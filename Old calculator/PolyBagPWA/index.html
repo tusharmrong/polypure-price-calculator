@@ -1,0 +1,1482 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Poly Bag Price Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#132238">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Poly Bag Calc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<style>
+  :root {
+    --bg-start: #132238;
+    --bg-end: #27476e;
+    --panel: rgba(255, 255, 255, 0.94);
+    --panel-soft: #f4f0e8;
+    --panel-muted: #f8fafc;
+    --panel-strong: #fffaf2;
+    --text: #14253d;
+    --muted: #68768d;
+    --line: #d7dfeb;
+    --accent: #d97706;
+    --accent-deep: #b45309;
+    --accent-soft: #fff3e3;
+    --accent-strong: #8a3b12;
+    --success-bg: #eefbf2;
+    --success-text: #166534;
+    --shadow: 0 28px 70px rgba(8, 24, 48, 0.28);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(245, 158, 11, 0.16), transparent 28%),
+      radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.12), transparent 25%),
+      linear-gradient(145deg, var(--bg-start), var(--bg-end));
+    color: var(--text);
+  }
+
+  body.sidebar-active {
+    overflow: hidden;
+  }
+
+  .calculator {
+    width: min(100%, 520px);
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .calculator::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(217, 119, 6, 0.14), transparent 70%);
+    pointer-events: none;
+  }
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 32px;
+    letter-spacing: -0.03em;
+    text-align: center;
+  }
+
+  .subtitle {
+    margin: 0 0 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(217, 119, 6, 0.12);
+    color: var(--accent-strong);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hero-strip {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(20, 37, 61, 0.06));
+    border: 1px solid rgba(217, 119, 6, 0.14);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--accent-strong);
+    font-weight: 700;
+  }
+
+  .hero-strip span:last-child {
+    text-align: right;
+  }
+
+  .app-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    width: min(320px, calc(100vw - 36px));
+    max-height: calc(100vh - 36px);
+    padding: 16px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow:
+      0 24px 50px rgba(8, 24, 48, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 45;
+    overflow-y: auto;
+    transform: translateX(calc(-100% - 24px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.28s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+
+  .sidebar-text {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .main-panel {
+    min-width: 0;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 35;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+
+  .sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .system-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .workflow-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .workflow-btn {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(20, 37, 61, 0.08);
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .workflow-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(20, 37, 61, 0.08);
+  }
+
+  .status-chip {
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(20, 37, 61, 0.08);
+    display: grid;
+    gap: 4px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .status-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .status-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .status-value.online {
+    color: #166534;
+  }
+
+  .status-value.offline {
+    color: #b45309;
+  }
+
+  .mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: rgba(20, 37, 61, 0.06);
+    padding: 7px;
+    border-radius: 18px;
+  }
+
+  .mode-btn,
+  .ghost-btn,
+  .submit-btn {
+    border: none;
+    border-radius: 14px;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mode-btn {
+    padding: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .mode-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(180, 83, 9, 0.28);
+  }
+
+  .mode-btn:hover,
+  .ghost-btn:hover,
+  .submit-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  form {
+    display: grid;
+    gap: 14px;
+  }
+
+  .panel-block {
+    padding: 18px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, var(--panel-muted), #ffffff);
+    border: 1px solid #e6ebf3;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .section-title {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .field-note {
+    font-size: 11px;
+    color: #90a0b8;
+    margin-top: -2px;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 15px;
+    color: var(--text);
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  input[type="number"]::placeholder {
+    color: #9aa8bc;
+  }
+
+  input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .option-bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ghost-btn {
+    padding: 10px 14px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 700;
+  }
+
+  .ghost-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #ffffff;
+  }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .sidebar-toggle {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(20, 37, 61, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.84);
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(20, 37, 61, 0.08);
+  }
+
+  .sidebar-toggle-lines {
+    display: grid;
+    gap: 4px;
+  }
+
+  .sidebar-toggle-lines span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--text);
+    display: block;
+  }
+
+  .install-btn {
+    display: none;
+    padding: 10px 14px;
+    background: rgba(20, 37, 61, 0.08);
+    color: var(--text);
+    border: 1px solid rgba(20, 37, 61, 0.08);
+    border-radius: 14px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .install-btn.visible {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .submit-btn {
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 14px 28px rgba(180, 83, 9, 0.24);
+  }
+
+  .reset-btn {
+    padding: 14px 16px;
+    background: #ffffff;
+    color: var(--text);
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+
+  .result {
+    margin-top: 18px;
+    background: linear-gradient(180deg, var(--panel-strong), #ffffff);
+    border: 1px solid #eee2d1;
+    border-radius: 24px;
+    padding: 22px;
+    min-height: 120px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    position: relative;
+  }
+
+  .result p {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #334155;
+  }
+
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(217, 119, 6, 0.1);
+    color: var(--accent-strong);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .result-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+
+  .copy-btn {
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(20, 37, 61, 0.08);
+    background: rgba(20, 37, 61, 0.06);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .result-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #334155;
+  }
+
+  .result-line span:last-child {
+    font-weight: 700;
+  }
+
+  .result hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 14px 0;
+  }
+
+  .final {
+    padding: 14px;
+    text-align: center;
+    border-radius: 18px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+
+  .hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .meta-bar {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .credit-line {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--accent-strong);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .update-toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    z-index: 40;
+    width: min(320px, calc(100vw - 36px));
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(20, 37, 61, 0.94);
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 18px 40px rgba(10, 24, 48, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    text-align: center;
+  }
+
+  .result-empty {
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .update-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  @media (max-width: 560px) {
+    body {
+      padding: 16px;
+    }
+
+    .calculator {
+      padding: 20px;
+      border-radius: 20px;
+    }
+
+    .hero-strip,
+    .row {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-strip,
+    .system-strip,
+    .workflow-strip,
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      left: 16px;
+      top: 16px;
+      width: min(320px, calc(100vw - 32px));
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="brand-mark">Poly Bag Pricing Suite</div>
+    <h1>Poly Bag Calculator</h1>
+    <p class="subtitle">Switch between Shopping and Courier bag pricing in one calculator.</p>
+    <div class="top-actions">
+      <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle quick tools" aria-expanded="false">
+        <span class="sidebar-toggle-lines">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <button type="button" class="install-btn" id="installBtn">Install App</button>
+    </div>
+    <div class="hero-strip">
+      <span>Fast pricing for daily orders</span>
+      <span>Editable defaults</span>
+    </div>
+
+    <div class="app-layout">
+      <aside class="sidebar">
+        <p class="sidebar-title">Quick Tools</p>
+        <p class="sidebar-text">Presets, saved defaults, and live system status stay here so the calculator area stays focused.</p>
+
+        <div class="system-strip">
+          <div class="status-chip">
+            <span class="status-label">Connection</span>
+            <span class="status-value" id="connectionStatus">Checking...</span>
+          </div>
+          <div class="status-chip">
+            <span class="status-label">App Version</span>
+            <span class="status-value" id="systemVersion">2.2.0</span>
+          </div>
+          <div class="status-chip">
+            <span class="status-label">System Sync</span>
+            <span class="status-value" id="systemSyncStatus">Preparing...</span>
+          </div>
+        </div>
+
+        <div class="workflow-strip">
+          <button type="button" class="workflow-btn" id="shoppingPresetBtn">Use Shopping Preset</button>
+          <button type="button" class="workflow-btn" id="courierPresetBtn">Use Courier Preset</button>
+          <button type="button" class="workflow-btn" id="saveDefaultsBtn">Save Current Defaults</button>
+          <button type="button" class="workflow-btn" id="loadDefaultsBtn">Load Saved Defaults</button>
+        </div>
+      </aside>
+
+      <div class="main-panel">
+        <div class="mode-switch" role="tablist" aria-label="Bag type">
+          <button type="button" class="mode-btn active" data-mode-btn="shopping" aria-pressed="true">Shopping Bag</button>
+          <button type="button" class="mode-btn" data-mode-btn="courier" aria-pressed="false">Courier Bag</button>
+        </div>
+
+        <form id="calculatorForm">
+          <div class="panel-block">
+            <p class="section-title" id="sectionTitle">Shopping Bag Details</p>
+            <div class="row">
+              <div class="field">
+                <label for="width">Width</label>
+                <input type="number" id="width" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true" required>
+                <span class="field-note">Enter your bag width</span>
+              </div>
+              <div class="field">
+                <label for="length">Length</label>
+                <input type="number" id="length" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true" required>
+                <span class="field-note">Enter your bag length</span>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="extraMeasure" id="extraMeasureLabel">Folding</label>
+                <input type="number" id="extraMeasure" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true" required>
+                <span class="field-note" id="extraMeasureNote">Extra fold size</span>
+              </div>
+              <div class="field">
+                <label for="thickness">Thickness</label>
+                <input type="number" id="thickness" min="0" step="0.01" value="17" required>
+                <span class="field-note">Changeable default thickness</span>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="baseQty">Base Quantity</label>
+                <input type="number" id="baseQty" min="0" step="0.01" value="100" required>
+                <span class="field-note">Used in base price calculation</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-block">
+            <p class="section-title">Costing</p>
+            <div class="option-bar" id="handleToggleWrap">
+              <button type="button" class="ghost-btn" id="handleToggle">Add Handle Cost</button>
+            </div>
+
+            <div class="row hidden" id="handleRow">
+              <div class="field">
+                <label for="handleCost">Handle Cost</label>
+                <input type="number" id="handleCost" min="0" step="0.01" value="2">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="blockCharge">Block Charge</label>
+                <input type="number" id="blockCharge" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true">
+              </div>
+              <div class="field">
+                <label for="printCost">Print Cost</label>
+                <input type="number" id="printCost" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field" id="adhesiveField">
+                <label for="adhesiveCost">Adhesive Cost</label>
+                <input type="number" id="adhesiveCost" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true">
+              </div>
+              <div class="field">
+                <label for="profit">Profit</label>
+                <input type="number" id="profit" min="0" step="0.01" value="0" placeholder="none" data-zero-clear="true">
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button type="submit" class="submit-btn">Calculate Price</button>
+            <button type="button" class="mode-btn reset-btn" id="resetBtn">Reset</button>
+          </div>
+        </form>
+
+        <div class="result" id="output" aria-live="polite">
+          <div class="result-badge">Calculation Preview</div>
+          <p class="result-empty">Enter the bag details, choose the type, and calculate the final price.</p>
+          <div class="result-actions">
+            <button type="button" class="copy-btn" id="copyResultBtn">Copy Result</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">Zero-value fields show as none while typing and return to 0 if left empty.</p>
+    <div class="meta-bar">
+      <span id="appVersion">Version 2.4.4</span>
+      <span id="updateStatus">stable release</span>
+    </div>
+    <p class="credit-line">Developed by Tushar Mrong</p>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="update-toast" id="updateToast" aria-live="polite"></div>
+
+  <script>
+    const APP_VERSION = "2.4.4";
+    const config = {
+      shopping: {
+        title: "Shopping Bag Details",
+        extraLabel: "Folding",
+        thickness: 17,
+        showAdhesive: false,
+        showHandle: true
+      },
+      courier: {
+        title: "Courier Bag Details",
+        extraLabel: "Flap",
+        thickness: 13,
+        showAdhesive: true,
+        showHandle: false
+      }
+    };
+
+    const form = document.getElementById("calculatorForm");
+    const output = document.getElementById("output");
+    const sectionTitle = document.getElementById("sectionTitle");
+    const extraMeasureLabel = document.getElementById("extraMeasureLabel");
+    const extraMeasureNote = document.getElementById("extraMeasureNote");
+    const thicknessInput = document.getElementById("thickness");
+    const adhesiveField = document.getElementById("adhesiveField");
+    const adhesiveInput = document.getElementById("adhesiveCost");
+    const handleToggleWrap = document.getElementById("handleToggleWrap");
+    const handleToggle = document.getElementById("handleToggle");
+    const handleRow = document.getElementById("handleRow");
+    const resetBtn = document.getElementById("resetBtn");
+    const installBtn = document.getElementById("installBtn");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+    const appVersionLabel = document.getElementById("appVersion");
+    const updateStatusLabel = document.getElementById("updateStatus");
+    const updateToast = document.getElementById("updateToast");
+    const shoppingPresetBtn = document.getElementById("shoppingPresetBtn");
+    const courierPresetBtn = document.getElementById("courierPresetBtn");
+    const saveDefaultsBtn = document.getElementById("saveDefaultsBtn");
+    const loadDefaultsBtn = document.getElementById("loadDefaultsBtn");
+    const copyResultBtn = document.getElementById("copyResultBtn");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const systemVersion = document.getElementById("systemVersion");
+    const systemSyncStatus = document.getElementById("systemSyncStatus");
+    const modeButtons = document.querySelectorAll("[data-mode-btn]");
+    const zeroClearInputs = document.querySelectorAll("[data-zero-clear='true']");
+
+    let currentMode = "shopping";
+    let handleEnabled = false;
+    let deferredInstallPrompt = null;
+    let adhesiveEditedManually = false;
+    let updateToastTimer = null;
+    let isReloadingForUpdate = false;
+    let currentResultText = "";
+    let sidebarOpen = false;
+
+    appVersionLabel.textContent = "Version " + APP_VERSION;
+    systemVersion.textContent = APP_VERSION;
+
+    function getFieldIds() {
+      return [
+        "width",
+        "length",
+        "extraMeasure",
+        "thickness",
+        "baseQty",
+        "blockCharge",
+        "printCost",
+        "adhesiveCost",
+        "profit",
+        "handleCost"
+      ];
+    }
+
+    function formatMoney(value) {
+      return "Tk " + value.toFixed(2);
+    }
+
+    function showError(message) {
+      output.innerHTML = '<div class="error">' + message + "</div>";
+    }
+
+    function readNumber(id) {
+      return parseFloat(document.getElementById(id).value);
+    }
+
+    function compareVersions(left, right) {
+      const leftParts = String(left || "0.0.0").split(".").map((part) => parseInt(part, 10) || 0);
+      const rightParts = String(right || "0.0.0").split(".").map((part) => parseInt(part, 10) || 0);
+      const maxLength = Math.max(leftParts.length, rightParts.length);
+
+      for (let index = 0; index < maxLength; index += 1) {
+        const leftValue = leftParts[index] || 0;
+        const rightValue = rightParts[index] || 0;
+
+        if (leftValue > rightValue) {
+          return 1;
+        }
+
+        if (leftValue < rightValue) {
+          return -1;
+        }
+      }
+
+      return 0;
+    }
+
+    function showUpdateToast(message, sticky = false) {
+      updateToast.textContent = message;
+      updateToast.classList.add("visible");
+
+      if (updateToastTimer) {
+        clearTimeout(updateToastTimer);
+      }
+
+      if (!sticky) {
+        updateToastTimer = setTimeout(() => {
+          updateToast.classList.remove("visible");
+        }, 3200);
+      }
+    }
+
+    function setSidebarOpen(open) {
+      sidebarOpen = open;
+      sidebar.classList.toggle("open", open);
+      sidebarOverlay.classList.toggle("visible", open);
+      document.body.classList.toggle("sidebar-active", open);
+      sidebarToggle.setAttribute("aria-expanded", String(open));
+    }
+
+    function getStorageKey(name, mode = currentMode) {
+      if (name === "last-used") {
+        return "polybag-last-used";
+      }
+
+      return `polybag-${name}-${mode}`;
+    }
+
+    function getCurrentFormSnapshot() {
+      return {
+        mode: currentMode,
+        width: document.getElementById("width").value,
+        length: document.getElementById("length").value,
+        extraMeasure: document.getElementById("extraMeasure").value,
+        thickness: document.getElementById("thickness").value,
+        baseQty: document.getElementById("baseQty").value,
+        blockCharge: document.getElementById("blockCharge").value,
+        printCost: document.getElementById("printCost").value,
+        adhesiveCost: document.getElementById("adhesiveCost").value,
+        profit: document.getElementById("profit").value,
+        handleCost: document.getElementById("handleCost").value,
+        handleEnabled
+      };
+    }
+
+    function applySnapshot(snapshot, mode = currentMode) {
+      if (!snapshot) {
+        return;
+      }
+
+      if (mode !== currentMode) {
+        setMode(mode);
+      }
+
+      getFieldIds().forEach((fieldId) => {
+        if (snapshot[fieldId] !== undefined && snapshot[fieldId] !== null) {
+          document.getElementById(fieldId).value = snapshot[fieldId];
+        }
+      });
+
+      handleEnabled = Boolean(snapshot.handleEnabled) && currentMode === "shopping";
+      handleToggle.classList.toggle("active", handleEnabled);
+      handleToggle.textContent = handleEnabled ? "Handle Cost Added" : "Add Handle Cost";
+      handleRow.classList.toggle("hidden", !handleEnabled);
+
+      if (currentMode === "courier") {
+        updateAdhesiveFromWidth(true);
+      }
+    }
+
+    function saveLastUsedState() {
+      localStorage.setItem(getStorageKey("last-used"), JSON.stringify(getCurrentFormSnapshot()));
+    }
+
+    function restoreLastUsedState() {
+      const stored = localStorage.getItem(getStorageKey("last-used"));
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const snapshot = JSON.parse(stored);
+        if (snapshot && snapshot.mode) {
+          applySnapshot(snapshot, snapshot.mode);
+          showUpdateToast("Restored your last-used values.");
+        }
+      } catch (error) {
+        localStorage.removeItem(getStorageKey("last-used", "shopping"));
+      }
+    }
+
+    function saveDefaults() {
+      localStorage.setItem(getStorageKey("saved-defaults"), JSON.stringify(getCurrentFormSnapshot()));
+      showUpdateToast(`Saved ${currentMode} defaults.`);
+    }
+
+    function loadDefaults(mode = currentMode) {
+      const stored = localStorage.getItem(getStorageKey("saved-defaults", mode));
+      if (!stored) {
+        showUpdateToast(`No saved ${mode} defaults found.`);
+        return;
+      }
+
+      try {
+        const snapshot = JSON.parse(stored);
+        applySnapshot(snapshot, mode);
+        showUpdateToast(`Loaded ${mode} defaults.`);
+      } catch (error) {
+        showUpdateToast("Saved defaults could not be loaded.");
+      }
+    }
+
+    function applyPreset(mode) {
+      const preset = {
+        width: "0",
+        length: "0",
+        extraMeasure: "0",
+        thickness: mode === "shopping" ? "17" : "13",
+        baseQty: "100",
+        blockCharge: "0",
+        printCost: "0",
+        adhesiveCost: "0",
+        profit: "0",
+        handleCost: "2",
+        handleEnabled: false
+      };
+
+      applySnapshot(preset, mode);
+      showUpdateToast(`${mode === "shopping" ? "Shopping" : "Courier"} preset applied.`);
+      saveLastUsedState();
+    }
+
+    async function copyResultSummary() {
+      if (!currentResultText) {
+        showUpdateToast("No result available to copy.");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(currentResultText);
+        showUpdateToast("Result copied to clipboard.");
+      } catch (error) {
+        showUpdateToast("Copy failed. Please try again.");
+      }
+    }
+
+    function updateConnectionState() {
+      const online = navigator.onLine;
+      connectionStatus.textContent = online ? "Online" : "Offline";
+      connectionStatus.classList.toggle("online", online);
+      connectionStatus.classList.toggle("offline", !online);
+    }
+
+    function setSystemSyncStatus(message) {
+      systemSyncStatus.textContent = message;
+    }
+
+    async function checkForAppUpdate(registration, silent = false) {
+      if (!navigator.onLine) {
+        if (!silent) {
+          showUpdateToast("You are offline. Update check will run again when you reconnect.");
+        }
+        setSystemSyncStatus("Offline");
+        return;
+      }
+
+      try {
+        if (!silent) {
+          updateStatusLabel.textContent = "Checking for updates...";
+          showUpdateToast("Checking for updates...", true);
+        }
+        setSystemSyncStatus("Checking...");
+
+        const releaseResponse = await fetch("./release.json?ts=" + Date.now(), {
+          cache: "no-store"
+        });
+        const releaseData = releaseResponse.ok ? await releaseResponse.json() : null;
+
+        await registration.update();
+
+        if (releaseData && compareVersions(releaseData.version, APP_VERSION) > 0) {
+          updateStatusLabel.textContent = "New version found";
+          setSystemSyncStatus("Update found");
+          showUpdateToast(`New version ${releaseData.version} found. Applying update...`, true);
+
+          const registrationCheck = await navigator.serviceWorker.getRegistration();
+          if (registrationCheck) {
+            await registrationCheck.update();
+
+            if (registrationCheck.waiting) {
+              registrationCheck.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+          }
+
+          setTimeout(() => {
+            if (!isReloadingForUpdate) {
+              isReloadingForUpdate = true;
+              window.location.reload();
+            }
+          }, 1200);
+
+          return;
+        }
+
+        updateStatusLabel.textContent = "System is up to date";
+        setSystemSyncStatus("Up to date");
+        showUpdateToast("System is up to date");
+      } catch (error) {
+        setSystemSyncStatus("Check failed");
+        if (!silent) {
+          showUpdateToast("Update check failed. Please try again while online.");
+        }
+      }
+    }
+
+    function wireServiceWorkerLifecycle(registration) {
+      const promptWorkerActivation = (worker) => {
+        if (!worker) {
+          return;
+        }
+
+        worker.postMessage({ type: "SKIP_WAITING" });
+      };
+
+      if (registration.waiting) {
+        updateStatusLabel.textContent = "Applying latest version...";
+        setSystemSyncStatus("Applying...");
+        showUpdateToast("New version found. Applying update...", true);
+        promptWorkerActivation(registration.waiting);
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+        if (!newWorker) {
+          return;
+        }
+
+        updateStatusLabel.textContent = "Checking for updates...";
+        setSystemSyncStatus("Checking...");
+
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed") {
+            if (navigator.serviceWorker.controller) {
+              updateStatusLabel.textContent = "Applying latest version...";
+              setSystemSyncStatus("Applying...");
+              showUpdateToast("New version found. Applying update...", true);
+              promptWorkerActivation(newWorker);
+            } else {
+              updateStatusLabel.textContent = "System is up to date";
+              setSystemSyncStatus("Up to date");
+              showUpdateToast("System is up to date");
+            }
+          }
+        });
+      });
+    }
+
+    function updateAdhesiveFromWidth(forceUpdate = false) {
+      if (currentMode !== "courier") {
+        return;
+      }
+
+      const width = readNumber("width");
+      if (Number.isNaN(width) || width < 0) {
+        return;
+      }
+
+      if (!adhesiveEditedManually || forceUpdate) {
+        adhesiveInput.value = (width * 0.06).toFixed(2);
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const modeConfig = config[mode];
+
+      sectionTitle.textContent = modeConfig.title;
+      extraMeasureLabel.textContent = modeConfig.extraLabel;
+      extraMeasureNote.textContent = mode === "shopping" ? "Extra fold size" : "Courier flap size";
+      thicknessInput.value = modeConfig.thickness;
+      adhesiveField.classList.toggle("hidden", !modeConfig.showAdhesive);
+      handleToggleWrap.classList.toggle("hidden", !modeConfig.showHandle);
+      handleRow.classList.toggle("hidden", !modeConfig.showHandle || !handleEnabled);
+
+      if (!modeConfig.showAdhesive) {
+        adhesiveInput.value = 0;
+        adhesiveEditedManually = false;
+      } else {
+        adhesiveEditedManually = false;
+        updateAdhesiveFromWidth(true);
+      }
+
+      if (!modeConfig.showHandle) {
+        handleEnabled = false;
+        handleToggle.classList.remove("active");
+        handleToggle.textContent = "Add Handle Cost";
+      }
+
+      modeButtons.forEach((button) => {
+        const active = button.dataset.modeBtn === mode;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+
+      output.innerHTML = `
+        <div class="result-badge">Calculation Preview</div>
+        <p class="result-empty">Enter the bag details, choose the type, and calculate the final price.</p>
+        <div class="result-actions">
+          <button type="button" class="copy-btn" id="copyResultBtn">Copy Result</button>
+        </div>
+      `;
+      currentResultText = "";
+      bindDynamicButtons();
+    }
+
+    function resetFormValues() {
+      form.reset();
+      document.getElementById("width").value = 0;
+      document.getElementById("length").value = 0;
+      document.getElementById("extraMeasure").value = 0;
+      document.getElementById("thickness").value = config[currentMode].thickness;
+      document.getElementById("baseQty").value = 100;
+      document.getElementById("blockCharge").value = 0;
+      document.getElementById("printCost").value = 0;
+      document.getElementById("adhesiveCost").value = 0;
+      document.getElementById("profit").value = 0;
+      document.getElementById("handleCost").value = 2;
+      handleEnabled = false;
+      adhesiveEditedManually = false;
+      handleToggle.classList.remove("active");
+      handleToggle.textContent = "Add Handle Cost";
+      handleRow.classList.add("hidden");
+      output.innerHTML = `
+        <div class="result-badge">Calculation Preview</div>
+        <p class="result-empty">Enter the bag details, choose the type, and calculate the final price.</p>
+        <div class="result-actions">
+          <button type="button" class="copy-btn" id="copyResultBtn">Copy Result</button>
+        </div>
+      `;
+      currentResultText = "";
+      bindDynamicButtons();
+
+      if (currentMode === "courier") {
+        updateAdhesiveFromWidth(true);
+      }
+    }
+
+    zeroClearInputs.forEach((input) => {
+      input.addEventListener("focus", () => {
+        if (input.value === "0") {
+          input.value = "";
+        }
+      });
+
+      input.addEventListener("blur", () => {
+        if (input.value.trim() === "") {
+          input.value = "0";
+        }
+      });
+    });
+
+    document.getElementById("width").addEventListener("input", () => {
+      updateAdhesiveFromWidth();
+    });
+
+    adhesiveInput.addEventListener("input", () => {
+      if (currentMode === "courier") {
+        adhesiveEditedManually = true;
+      }
+    });
+
+    handleToggle.addEventListener("click", () => {
+      handleEnabled = !handleEnabled;
+      handleToggle.classList.toggle("active", handleEnabled);
+      handleToggle.textContent = handleEnabled ? "Handle Cost Added" : "Add Handle Cost";
+      handleRow.classList.toggle("hidden", !handleEnabled);
+    });
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.modeBtn));
+    });
+
+    resetBtn.addEventListener("click", resetFormValues);
+    sidebarToggle.addEventListener("click", () => {
+      setSidebarOpen(!sidebarOpen);
+    });
+    sidebarOverlay.addEventListener("click", () => {
+      setSidebarOpen(false);
+    });
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      installBtn.classList.add("visible");
+      updateStatusLabel.textContent = "Install available";
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        return;
+      }
+
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installBtn.classList.remove("visible");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      installBtn.classList.remove("visible");
+      updateStatusLabel.textContent = "Installed app ready";
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const width = readNumber("width");
+      const length = readNumber("length");
+      const extraMeasure = readNumber("extraMeasure");
+      const thickness = readNumber("thickness");
+      const baseQty = readNumber("baseQty");
+      const blockCharge = readNumber("blockCharge") || 0;
+      const printCost = readNumber("printCost") || 0;
+      const adhesiveCost = currentMode === "courier" ? (readNumber("adhesiveCost") || 0) : 0;
+      const profit = readNumber("profit") || 0;
+      const handleCost = currentMode === "shopping" && handleEnabled ? (readNumber("handleCost") || 0) : 0;
+
+      if ([width, length, extraMeasure, thickness, baseQty].some((value) => Number.isNaN(value))) {
+        showError("Please enter valid numbers for width, length, folding or flap, thickness, and base quantity.");
+        return;
+      }
+
+      if (width <= 0 || length <= 0 || extraMeasure < 0 || thickness <= 0 || baseQty <= 0) {
+        showError("Width, length, thickness, and base quantity must be more than 0. Folding or flap cannot be negative.");
+        return;
+      }
+
+      const pieces = currentMode === "shopping"
+        ? 75000 / (width + extraMeasure) / length / thickness
+        : 75000 / width / (length + extraMeasure) / thickness;
+
+      if (!Number.isFinite(pieces) || pieces <= 0) {
+        showError("The entered dimensions produced an invalid result. Please check the values and try again.");
+        return;
+      }
+
+      const basePrice = baseQty / pieces;
+      const finalPrice = basePrice + blockCharge + printCost + adhesiveCost + profit + handleCost;
+      const extraLabel = config[currentMode].extraLabel;
+
+      output.innerHTML = `
+        <div class="result-badge">${currentMode === "shopping" ? "Shopping Bag Result" : "Courier Bag Result"}</div>
+        <p><strong>${currentMode === "shopping" ? "Shopping Poly Bag" : "Courier Poly Bag"}</strong></p>
+        <div class="result-line"><span>Pieces Result</span><span>${pieces.toFixed(2)}</span></div>
+        <div class="result-line"><span>Base Price (${baseQty} pcs)</span><span>${formatMoney(basePrice)}</span></div>
+        <div class="result-line"><span>Block Charge</span><span>${formatMoney(blockCharge)}</span></div>
+        <div class="result-line"><span>Print Cost</span><span>${formatMoney(printCost)}</span></div>
+        ${currentMode === "courier" ? `<div class="result-line"><span>Adhesive Cost</span><span>${formatMoney(adhesiveCost)}</span></div>` : ""}
+        ${currentMode === "shopping" && handleEnabled ? `<div class="result-line"><span>Handle Cost</span><span>${formatMoney(handleCost)}</span></div>` : ""}
+        <div class="result-line"><span>Profit</span><span>${formatMoney(profit)}</span></div>
+        <hr>
+        <div class="final">${formatMoney(finalPrice)}</div>
+        <p class="hint">${currentMode === "shopping"
+          ? `Formula used: 75000 / (width + ${extraLabel.toLowerCase()}) / length / thickness`
+          : `Formula used: 75000 / width / (length + ${extraLabel.toLowerCase()}) / thickness`}</p>
+        <div class="result-actions">
+          <button type="button" class="copy-btn" id="copyResultBtn">Copy Result</button>
+        </div>
+      `;
+
+      currentResultText = [
+        currentMode === "shopping" ? "Shopping Poly Bag" : "Courier Poly Bag",
+        `Pieces Result: ${pieces.toFixed(2)}`,
+        `Base Price (${baseQty} pcs): ${formatMoney(basePrice)}`,
+        `Block Charge: ${formatMoney(blockCharge)}`,
+        `Print Cost: ${formatMoney(printCost)}`,
+        currentMode === "courier" ? `Adhesive Cost: ${formatMoney(adhesiveCost)}` : null,
+        currentMode === "shopping" && handleEnabled ? `Handle Cost: ${formatMoney(handleCost)}` : null,
+        `Profit: ${formatMoney(profit)}`,
+        `Final Price: ${formatMoney(finalPrice)}`
+      ].filter(Boolean).join("\n");
+
+      saveLastUsedState();
+      bindDynamicButtons();
+    });
+
+    function bindDynamicButtons() {
+      const copyButton = document.getElementById("copyResultBtn");
+      if (copyButton) {
+        copyButton.onclick = copyResultSummary;
+      }
+    }
+
+    getFieldIds().forEach((fieldId) => {
+      document.getElementById(fieldId).addEventListener("input", () => {
+        saveLastUsedState();
+      });
+    });
+
+    shoppingPresetBtn.addEventListener("click", () => applyPreset("shopping"));
+    courierPresetBtn.addEventListener("click", () => applyPreset("courier"));
+    saveDefaultsBtn.addEventListener("click", saveDefaults);
+    loadDefaultsBtn.addEventListener("click", () => loadDefaults(currentMode));
+    copyResultBtn.addEventListener("click", copyResultSummary);
+
+    setMode(currentMode);
+    updateConnectionState();
+    setSystemSyncStatus("Ready");
+    restoreLastUsedState();
+    bindDynamicButtons();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").then((registration) => {
+          wireServiceWorkerLifecycle(registration);
+          checkForAppUpdate(registration);
+
+          window.addEventListener("online", () => {
+            updateConnectionState();
+            checkForAppUpdate(registration);
+          });
+
+          window.addEventListener("offline", () => {
+            updateConnectionState();
+            updateStatusLabel.textContent = "Offline mode";
+            setSystemSyncStatus("Offline");
+            showUpdateToast("You are offline. Calculator is still available.");
+          });
+
+          document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+              updateConnectionState();
+              checkForAppUpdate(registration);
+            }
+          });
+        });
+
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (isReloadingForUpdate) {
+            return;
+          }
+
+          isReloadingForUpdate = true;
+          updateStatusLabel.textContent = "Latest version loaded";
+          setSystemSyncStatus("Reloading...");
+          window.location.reload();
+        });
+      });
+    } else {
+      setSystemSyncStatus("Browser only");
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0f172a;
+  background: #f8fafc;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.bg-brand-50 {
+  background-color: #fff1f2;
+}
+
+.bg-brand-100 {
+  background-color: #ffe4e6;
+}
+
+.bg-brand-500 {
+  background-color: #dc2638;
+}
+
+.bg-brand-600 {
+  background-color: #c91f32;
+}
+
+.bg-brand-700,
+.hover\:bg-brand-700:hover {
+  background-color: #a91528;
+}
+
+.text-brand-600 {
+  color: #c91f32;
+}
+
+.text-brand-700 {
+  color: #a91528;
+}
+
+.border-brand-100 {
+  border-color: #ffe4e6;
+}
+
+.border-brand-200,
+.hover\:border-brand-200:hover {
+  border-color: #fecdd3;
+}
+
+.focus\:border-brand-600:focus {
+  border-color: #c91f32;
+}
+
+.focus\:ring-brand-100:focus {
+  --tw-ring-color: #ffe4e6;
+}
+
+input[type='checkbox'] {
+  accent-color: #c91f32;
+}
+
+.quotation-sheet {
+  max-width: 820px;
+}
+
+.quotation-terms {
+  column-gap: 18px;
+}
+
+.quotation-payment-total-grid {
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+
+@media (max-width: 720px) {
+  .quotation-payment-total-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .quotation-terms {
+    columns: 2;
+  }
+}
+
+@media print {
+  @page {
+    margin: 8mm;
+    size: A4;
+  }
+
+  body {
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-area > div,
+  .quotation-sheet {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    max-width: none !important;
+  }
+
+  .quotation-sheet {
+    font-size: 11px;
+  }
+
+  .quotation-terms {
+    columns: 2;
+    column-gap: 16px;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+
+  .quotation-payment-total-grid {
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

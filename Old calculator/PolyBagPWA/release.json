@@ -1,0 +1,46 @@
+﻿{
+    "appName":  "Poly Bag Price Calculator",
+    "version":  "2.4.4",
+    "releaseDate":  "2026-04-28",
+    "status":  "stable",
+    "deployTarget":  "GitHub Pages",
+    "backupFolder":  "backups/v2.4.4",
+    "filesToUpdate":  [
+                          "release.json",
+                          "sync-release.ps1",
+                          "new-release.ps1",
+                          "release-patch.bat",
+                          "release-minor.bat",
+                          "release-major.bat"
+                      ],
+    "releaseNotes":  [
+                         "Auto-created patch release v2.4.4 on 2026-04-28",
+                         "Auto-created patch release v2.4.3 on 2026-04-20",
+                         "Auto-created patch release v2.4.2 on 2026-04-20",
+                         "Auto-created patch release v2.4.1 on 2026-04-19",
+                         "Auto-created minor release v2.4.0 on 2026-04-19",
+                         "Auto-created minor release v2.3.0 on 2026-04-19",
+                         "Auto-created minor release v2.2.0 on 2026-04-19",
+                         "Started Phase 3 workflow tools with presets, saved defaults, and copy result",
+                         "Auto-created minor release v2.1.0 on 2026-04-19",
+                         "Auto-created major release v2.0.0 on 2026-04-19",
+                         "Auto-created minor release v1.3.0 on 2026-04-19",
+                         "Started Phase 1 roadmap work with system status and update visibility",
+                         "Auto-created patch release v1.2.3 on 2026-04-19",
+                         "Auto-created patch release v1.2.2 on 2026-04-19",
+                         "Auto-created patch release v1.2.1 on 2026-04-19",
+                         "Auto-created minor release v1.2.0 on 2026-04-19",
+                         "Auto-created minor release v1.1.0 on 2026-04-11",
+                         "Auto-created patch release v1.0.1 on 2026-04-10",
+                         "Added installable PWA support",
+                         "Added Netlify-ready hosting config",
+                         "Added versioned cache refresh flow",
+                         "Created backup snapshot for v1.0.0",
+                         "Added automatic release sync script"
+                     ],
+    "nextReleaseChecklist":  [
+                                 "Run new-release.ps1 -Bump patch|minor|major",
+                                 "Review release notes in release.json",
+                                 "Upload updated folder to Netlify"
+                             ]
+}

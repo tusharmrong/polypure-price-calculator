@@ -1,0 +1,24 @@
+{
+  "name": "Poly Bag Price Calculator",
+  "short_name": "Poly Bag Calc",
+  "description": "Installable shopping and courier poly bag price calculator.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#132238",
+  "theme_color": "#132238",
+  "icons": [
+    {
+      "src": "./icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
