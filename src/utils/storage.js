@@ -10,5 +10,10 @@ export function loadValue(key, fallback) {
 }
 
 export function saveValue(key, value) {
-  window.localStorage.setItem(`${storagePrefix}${key}`, JSON.stringify(value))
+  try {
+    window.localStorage.setItem(`${storagePrefix}${key}`, JSON.stringify(value))
+    return true
+  } catch {
+    return false
+  }
 }

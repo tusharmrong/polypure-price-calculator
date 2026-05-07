@@ -12,7 +12,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
-import { loadValue } from '../utils/storage.js'
+import { loadSignatureImage } from '../utils/signature.js'
 
 function createItem(draft) {
   return {
@@ -66,7 +66,7 @@ export default function Invoice() {
     return Number.isFinite(nextDue) ? Math.max(nextDue, 0) : 0
   }, [paidAmount, totalAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
-  const signatureImage = useMemo(() => loadValue('signaturePngDataUrl', ''), [])
+  const signatureImage = useMemo(() => loadSignatureImage(), [])
 
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))

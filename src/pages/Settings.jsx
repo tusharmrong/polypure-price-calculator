@@ -6,12 +6,13 @@ import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
+import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
 
 export default function Settings() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [installStatus, setInstallStatus] = useState('')
-  const [signatureImage, setSignatureImage] = useState(() => loadValue('signaturePngDataUrl', ''))
+  const [signatureImage, setSignatureImage] = useState(() => loadSignatureImage())
   const [signatureStatus, setSignatureStatus] = useState('')
   const [backupStatus, setBackupStatus] = useState('')
   const [companySettings, setCompanySettings] = useState(() => loadCompanySettings())
@@ -74,18 +75,37 @@ export default function Settings() {
       event.target.value = ''
       return
     }
+    if (file.size > 900 * 1024) {
+      setSignatureStatus('PNG is too large. Please use a smaller signature image (under 900KB).')
+      event.target.value = ''
+      return
+    }
 
     const reader = new FileReader()
     reader.onload = () => {
       const pngDataUrl = typeof reader.result === 'string' ? reader.result : ''
-      if (!pngDataUrl) {
+      if (!isValidSignatureDataUrl(pngDataUrl)) {
         setSignatureStatus('Could not read the file. Please try again.')
+        event.target.value = ''
         return
       }
-      saveValue('signaturePngDataUrl', pngDataUrl)
-      setSignatureImage(pngDataUrl)
-      setSignatureStatus('Signature saved for this device.')
-      event.target.value = ''
+      const image = new Image()
+      image.onload = () => {
+        const didSave = saveValue('signaturePngDataUrl', pngDataUrl)
+        if (!didSave) {
+          setSignatureStatus('Could not save signature. Please use a smaller PNG file.')
+          event.target.value = ''
+          return
+        }
+        setSignatureImage(pngDataUrl)
+        setSignatureStatus('Signature saved for this device.')
+        event.target.value = ''
+      }
+      image.onerror = () => {
+        setSignatureStatus('PNG appears invalid. Please upload another file.')
+        event.target.value = ''
+      }
+      image.src = pngDataUrl
     }
     reader.onerror = () => {
       setSignatureStatus('Upload failed. Please try another PNG file.')
@@ -95,7 +115,11 @@ export default function Settings() {
   }
 
   const removeSignature = () => {
-    saveValue('signaturePngDataUrl', '')
+    const didSave = saveValue('signaturePngDataUrl', '')
+    if (!didSave) {
+      setSignatureStatus('Could not remove signature right now. Please try again.')
+      return
+    }
     setSignatureImage('')
     setSignatureStatus('Saved signature removed from this device.')
   }
@@ -148,10 +172,16 @@ export default function Settings() {
           ...(data.companySettings || {})
         }
         saveCompanySettings(nextCompanySettings)
-        saveValue('documents', Array.isArray(data.documents) ? data.documents : [])
-        saveValue('signaturePngDataUrl', data.signaturePngDataUrl || '')
+        const didSaveDocuments = saveValue('documents', Array.isArray(data.documents) ? data.documents : [])
+        const importedSignature = isValidSignatureDataUrl(data.signaturePngDataUrl) ? data.signaturePngDataUrl : ''
+        const didSaveSignature = saveValue('signaturePngDataUrl', importedSignature)
+        if (!didSaveDocuments || !didSaveSignature) {
+          setBackupStatus('Import failed due to storage limit. Clear some old data and try again.')
+          event.target.value = ''
+          return
+        }
         setCompanySettings(nextCompanySettings)
-        setSignatureImage(data.signaturePngDataUrl || '')
+        setSignatureImage(importedSignature)
         setBackupStatus('Backup imported successfully.')
       } catch {
         setBackupStatus('Invalid backup file. Please select a valid Polypure backup JSON.')
@@ -249,7 +279,7 @@ export default function Settings() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
-                  disabled={!signatureImage}
+                  disabled={!isValidSignatureDataUrl(signatureImage)}
                   onClick={removeSignature}
                   type="button"
                   variant="secondary"

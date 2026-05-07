@@ -12,7 +12,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
-import { loadValue } from '../utils/storage.js'
+import { loadSignatureImage } from '../utils/signature.js'
 
 export default function MoneyReceipt() {
   const location = useLocation()
@@ -35,7 +35,7 @@ export default function MoneyReceipt() {
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
-  const signatureImage = useMemo(() => loadValue('signaturePngDataUrl', ''), [])
+  const signatureImage = useMemo(() => loadSignatureImage(), [])
 
   const printReceipt = () => {
     window.print()
