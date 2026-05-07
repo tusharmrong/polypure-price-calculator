@@ -34,7 +34,7 @@ export default function Sidebar() {
             />
             <div>
               <p className="text-sm font-semibold opacity-90">Poly Pure</p>
-              <p className="mt-1 text-xl font-bold">{t('app_title')}</p>
+              <p className="mt-1 text-xl font-bold">Price Calculator</p>
             </div>
           </div>
         </div>

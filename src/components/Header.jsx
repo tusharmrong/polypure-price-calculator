@@ -5,13 +5,13 @@ export default function Header() {
   const { language, setLanguage, t } = useUiLanguage()
   const location = useLocation()
   const titles = {
-    '/': t('nav_dashboard'),
-    '/calculator': t('nav_calculator'),
+    '/': 'Dashboard',
+    '/calculator': 'Calculator',
     '/quotation': 'Quotation',
     '/invoice': 'Invoice',
     '/money-receipt': 'Money Receipt',
-    '/history': t('nav_history'),
-    '/settings': t('settings_title')
+    '/history': 'History',
+    '/settings': 'Settings'
   }
   const title = titles[location.pathname] || 'Poly Pure'
 
