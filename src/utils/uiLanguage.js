@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, createElement, useContext, useMemo, useState } from 'react'
 import { loadValue, saveValue } from './storage.js'
 
 const UiLanguageContext = createContext(null)
@@ -37,36 +37,36 @@ const translations = {
     import_backup: 'Import Backup JSON'
   },
   bn: {
-    nav_dashboard: 'ড্যাশবোর্ড',
-    nav_calculator: 'ক্যালকুলেটর',
-    nav_quotation: 'কোটেশন',
-    nav_invoice: 'ইনভয়েস',
-    nav_money_receipt: 'মানি রিসিপ্ট',
-    nav_history: 'হিস্ট্রি',
-    nav_settings: 'সেটিংস',
-    app_title: 'প্রাইস ক্যালকুলেটর',
-    dashboard_tagline: 'ব্যাগের দাম ও ব্যবসার ডকুমেন্ট এক জায়গায়।',
-    dashboard_recent_documents: 'সাম্প্রতিক ডকুমেন্ট',
-    view_all: 'সব দেখুন',
-    history_title: 'হিস্ট্রি',
-    history_sample_note: 'আপনি প্রথম কোটেশন সেভ না করা পর্যন্ত নমুনা ডকুমেন্ট দেখানো হচ্ছে।',
-    history_saved_note: 'এই ডিভাইসে সেভ করা ডকুমেন্ট।',
-    history_filter_type: 'টাইপ দিয়ে ফিল্টার',
-    history_search: 'ডকুমেন্ট নম্বর বা ক্লায়েন্ট দিয়ে খুঁজুন',
-    history_no_data: 'এই ফিল্টারে কোনো ডকুমেন্ট পাওয়া যায়নি।',
-    actions: 'অ্যাকশন',
-    open: 'ওপেন',
-    duplicate: 'ডুপ্লিকেট',
-    settings_title: 'সেটিংস',
-    install_app: 'অ্যাপ ইনস্টল',
-    install_app_text: 'দ্রুত ব্যবহার ও ফুল-স্ক্রিন অভিজ্ঞতার জন্য ফোন বা পিসিতে অ্যাপ ইনস্টল করুন।',
-    install_now: 'পলিপিউর অ্যাপ ইনস্টল করুন',
-    installed: 'ইনস্টল করা আছে',
-    company_settings: 'কোম্পানি সেটিংস',
-    save_company_settings: 'কোম্পানি সেটিংস সেভ করুন',
-    backup_restore: 'ব্যাকআপ ও রিস্টোর',
-    export_backup: 'ব্যাকআপ JSON ডাউনলোড',
-    import_backup: 'ব্যাকআপ JSON ইম্পোর্ট'
+    nav_dashboard: '\u09A1\u09CD\u09AF\u09BE\u09B6\u09AC\u09CB\u09B0\u09CD\u09A1',
+    nav_calculator: '\u0995\u09CD\u09AF\u09BE\u09B2\u0995\u09C1\u09B2\u09C7\u099F\u09B0',
+    nav_quotation: '\u0995\u09CB\u099F\u09C7\u09B6\u09A8',
+    nav_invoice: '\u0987\u09A8\u09AD\u09DF\u09C7\u09B8',
+    nav_money_receipt: '\u09AE\u09BE\u09A8\u09BF \u09B0\u09BF\u09B8\u09BF\u09AA\u09CD\u099F',
+    nav_history: '\u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF',
+    nav_settings: '\u09B8\u09C7\u099F\u09BF\u0982\u09B8',
+    app_title: '\u09AA\u09CD\u09B0\u09BE\u0987\u09B8 \u0995\u09CD\u09AF\u09BE\u09B2\u0995\u09C1\u09B2\u09C7\u099F\u09B0',
+    dashboard_tagline: '\u09AC\u09CD\u09AF\u09BE\u0997\u09C7\u09B0 \u09A6\u09BE\u09AE \u0993 \u09AC\u09CD\u09AF\u09AC\u09B8\u09BE\u09B0 \u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F \u098F\u0995 \u099C\u09BE\u09DF\u0997\u09BE\u09DF\u0964',
+    dashboard_recent_documents: '\u09B8\u09BE\u09AE\u09CD\u09AA\u09CD\u09B0\u09A4\u09BF\u0995 \u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F',
+    view_all: '\u09B8\u09AC \u09A6\u09C7\u0996\u09C1\u09A8',
+    history_title: '\u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF',
+    history_sample_note: '\u0986\u09AA\u09A8\u09BF \u09AA\u09CD\u09B0\u09A5\u09AE \u0995\u09CB\u099F\u09C7\u09B6\u09A8 \u09B8\u09C7\u09AD \u09A8\u09BE \u0995\u09B0\u09BE \u09AA\u09B0\u09CD\u09AF\u09A8\u09CD\u09A4 \u09A8\u09AE\u09C1\u09A8\u09BE \u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F \u09A6\u09C7\u0996\u09BE\u09A8\u09CB \u09B9\u099A\u09CD\u099B\u09C7\u0964',
+    history_saved_note: '\u098F\u0987 \u09A1\u09BF\u09AD\u09BE\u0987\u09B8\u09C7 \u09B8\u09C7\u09AD \u0995\u09B0\u09BE \u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F\u0964',
+    history_filter_type: '\u099F\u09BE\u0987\u09AA \u09A6\u09BF\u09DF\u09C7 \u09AB\u09BF\u09B2\u09CD\u099F\u09BE\u09B0',
+    history_search: '\u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F \u09A8\u09AE\u09CD\u09AC\u09B0 \u09AC\u09BE \u0995\u09CD\u09B2\u09BE\u09DF\u09C7\u09A8\u09CD\u099F \u09A6\u09BF\u09DF\u09C7 \u0996\u09C1\u0981\u099C\u09C1\u09A8',
+    history_no_data: '\u098F\u0987 \u09AB\u09BF\u09B2\u09CD\u099F\u09BE\u09B0\u09C7 \u0995\u09CB\u09A8\u09CB \u09A1\u0995\u09C1\u09AE\u09C7\u09A8\u09CD\u099F \u09AA\u09BE\u0993\u09DF\u09BE \u09AF\u09BE\u09DF\u09A8\u09BF\u0964',
+    actions: '\u0985\u09CD\u09AF\u09BE\u0995\u09B6\u09A8',
+    open: '\u0993\u09AA\u09C7\u09A8',
+    duplicate: '\u09A1\u09C1\u09AA\u09CD\u09B2\u09BF\u0995\u09C7\u099F',
+    settings_title: '\u09B8\u09C7\u099F\u09BF\u0982\u09B8',
+    install_app: '\u0985\u09CD\u09AF\u09BE\u09AA \u0987\u09A8\u09B8\u09CD\u099F\u09B2',
+    install_app_text: '\u09A6\u09CD\u09B0\u09C1\u09A4 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0993 \u09AB\u09C1\u09B2-\u09B8\u09CD\u0995\u09CD\u09B0\u09BF\u09A8 \u0985\u09AD\u09BF\u099C\u09CD\u099E\u09A4\u09BE\u09B0 \u099C\u09A8\u09CD\u09AF \u09AB\u09CB\u09A8 \u09AC\u09BE \u09AA\u09BF\u09B8\u09BF\u09A4\u09C7 \u0985\u09CD\u09AF\u09BE\u09AA \u0987\u09A8\u09B8\u09CD\u099F\u09B2 \u0995\u09B0\u09C1\u09A8\u0964',
+    install_now: '\u09AA\u09B2\u09BF\u09AA\u09BF\u0989\u09B0 \u0985\u09CD\u09AF\u09BE\u09AA \u0987\u09A8\u09B8\u09CD\u099F\u09B2 \u0995\u09B0\u09C1\u09A8',
+    installed: '\u0987\u09A8\u09B8\u09CD\u099F\u09B2 \u0995\u09B0\u09BE \u0986\u099B\u09C7',
+    company_settings: '\u0995\u09CB\u09AE\u09CD\u09AA\u09BE\u09A8\u09BF \u09B8\u09C7\u099F\u09BF\u0982\u09B8',
+    save_company_settings: '\u0995\u09CB\u09AE\u09CD\u09AA\u09BE\u09A8\u09BF \u09B8\u09C7\u099F\u09BF\u0982\u09B8 \u09B8\u09C7\u09AD \u0995\u09B0\u09C1\u09A8',
+    backup_restore: '\u09AC\u09CD\u09AF\u09BE\u0995\u0986\u09AA \u0993 \u09B0\u09BF\u09B8\u09CD\u099F\u09CB\u09B0',
+    export_backup: '\u09AC\u09CD\u09AF\u09BE\u0995\u0986\u09AA JSON \u09A1\u09BE\u0989\u09A8\u09B2\u09CB\u09A1',
+    import_backup: '\u09AC\u09CD\u09AF\u09BE\u0995\u0986\u09AA JSON \u0987\u09AE\u09CD\u09AA\u09CB\u09B0\u09CD\u099F'
   }
 }
 
@@ -86,7 +86,7 @@ export function UiLanguageProvider({ children }) {
     }
   }, [language])
 
-  return <UiLanguageContext.Provider value={value}>{children}</UiLanguageContext.Provider>
+  return createElement(UiLanguageContext.Provider, { value }, children)
 }
 
 export function useUiLanguage() {
