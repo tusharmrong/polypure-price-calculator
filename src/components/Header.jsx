@@ -29,7 +29,7 @@ export default function Header() {
               onClick={() => setLanguage('bn')}
               type="button"
             >
-              বাংলা
+              {'\u09AC\u09BE\u0982\u09B2\u09BE'}
             </button>
             <button
               className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}

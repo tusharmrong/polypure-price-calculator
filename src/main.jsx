@@ -6,7 +6,13 @@ import App from './App.jsx'
 import './index.css'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
 
-registerSW({ immediate: true })
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    updateSW(true)
+  },
+  onOfflineReady() {}
+})
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
