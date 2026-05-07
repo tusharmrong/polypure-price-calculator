@@ -13,6 +13,7 @@ import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 function createItem(draft) {
   return {
@@ -29,6 +30,8 @@ function itemAmount(item) {
 }
 
 export default function Quotation() {
+  const { language } = useUiLanguage()
+  const isBn = language === 'bn'
   const navigate = useNavigate()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
@@ -185,18 +188,18 @@ export default function Quotation() {
             />
             <div>
               <p className="text-sm font-semibold text-brand-700">Phase 4</p>
-              <h2 className="text-lg font-bold text-slate-950">Quotation Form</h2>
+              <h2 className="text-lg font-bold text-slate-950">{isBn ? 'কোটেশন ফর্ম' : 'Quotation Form'}</h2>
             </div>
           </div>
 
           <div className="grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Document Details</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ডকুমেন্ট বিস্তারিত' : 'Document Details'}</h3>
               <div className="grid gap-3">
-                <Input id="quotation-number" label="Quotation Number" readOnly value={documentNumber} />
+                <Input id="quotation-number" label={isBn ? 'কোটেশন নম্বর' : 'Quotation Number'} readOnly value={documentNumber} />
                 <Input
                   id="quotation-date"
-                  label="Date"
+                  label={isBn ? 'তারিখ' : 'Date'}
                   onChange={(event) => setDocumentDate(event.target.value)}
                   type="date"
                   value={documentDate}
@@ -205,22 +208,22 @@ export default function Quotation() {
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Client Details</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ক্লায়েন্ট বিস্তারিত' : 'Client Details'}</h3>
               <Input
                 id="quotation-client"
-                label="Client Name"
+                label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
                 onChange={(event) => setClientName(event.target.value)}
                 value={clientName}
               />
               <Input
                 id="quotation-phone"
-                label="Phone Number"
+                label={isBn ? 'ফোন নম্বর' : 'Phone Number'}
                 onChange={(event) => setPhone(event.target.value)}
                 value={phone}
               />
               <TextArea
                 id="quotation-address"
-                label="Address"
+                label={isBn ? 'ঠিকানা' : 'Address'}
                 onChange={(event) => setAddress(event.target.value)}
                 value={address}
               />
@@ -229,17 +232,17 @@ export default function Quotation() {
 
           <div className="mt-5 grid gap-3">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-slate-950">Quotation Items</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'কোটেশন আইটেম' : 'Quotation Items'}</h3>
               <Button className="min-h-10 px-3 py-2" onClick={addItem} type="button" variant="secondary">
                 <Plus size={16} aria-hidden="true" />
-                Add Item
+                {isBn ? 'আইটেম যোগ করুন' : 'Add Item'}
               </Button>
             </div>
 
             {items.map((item, index) => (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={item.id}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-slate-700">Item {index + 1}</p>
+                  <p className="text-sm font-bold text-slate-700">{isBn ? `আইটেম ${index + 1}` : `Item ${index + 1}`}</p>
                   <button
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={items.length === 1}
@@ -253,14 +256,14 @@ export default function Quotation() {
                 <div className="grid gap-3">
                   <Input
                     id={`quotation-item-${item.id}`}
-                    label="Type / Size Description"
+                    label={isBn ? 'টাইপ / সাইজ বিবরণ' : 'Type / Size Description'}
                     onChange={(event) => updateItem(item.id, 'description', event.target.value)}
                     value={item.description}
                   />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Input
                       id={`quotation-quantity-${item.id}`}
-                      label="Quantity"
+                      label={isBn ? 'পরিমাণ' : 'Quantity'}
                       min="0"
                       onChange={(event) => updateItem(item.id, 'quantity', event.target.value)}
                       type="number"
@@ -268,7 +271,7 @@ export default function Quotation() {
                     />
                     <Input
                       id={`quotation-rate-${item.id}`}
-                      label="Rate"
+                      label={isBn ? 'রেট' : 'Rate'}
                       min="0"
                       onBlur={() => formatItemRate(item.id)}
                       onChange={(event) => updateItem(item.id, 'rate', event.target.value)}
@@ -279,7 +282,7 @@ export default function Quotation() {
                     <Input
                       className="sm:col-span-2"
                       id={`quotation-amount-${item.id}`}
-                      label="Amount"
+                      label={isBn ? 'পরিমাণ (টাকা)' : 'Amount'}
                       readOnly
                       type="number"
                       value={formatDecimal(itemAmount(item))}
@@ -292,12 +295,12 @@ export default function Quotation() {
 
           <div className="mt-5 grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Totals</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'মোট হিসাব' : 'Totals'}</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input id="quotation-subtotal" label="Subtotal" readOnly type="number" value={formatDecimal(subtotal)} />
+                <Input id="quotation-subtotal" label={isBn ? 'সাবটোটাল' : 'Subtotal'} readOnly type="number" value={formatDecimal(subtotal)} />
                 <Input
                   id="quotation-discount"
-                  label="Discount"
+                  label={isBn ? 'ডিসকাউন্ট' : 'Discount'}
                   min="0"
                   onBlur={() => setDiscount(formatDecimal(discount))}
                   onChange={(event) => setDiscount(event.target.value)}
@@ -305,10 +308,10 @@ export default function Quotation() {
                   type="number"
                   value={discount}
                 />
-                <Input id="quotation-total" label="Total Amount" readOnly type="number" value={formatDecimal(totalAmount)} />
+                <Input id="quotation-total" label={isBn ? 'মোট টাকা' : 'Total Amount'} readOnly type="number" value={formatDecimal(totalAmount)} />
                 <Input
                   id="quotation-advance-percent"
-                  label="Advance Payment (%)"
+                  label={isBn ? 'অ্যাডভান্স (%)' : 'Advance Payment (%)'}
                   min="0"
                   onBlur={() => setAdvancePercent(formatDecimal(advancePercent, 0))}
                   onChange={(event) => setAdvancePercent(event.target.value)}
@@ -319,7 +322,7 @@ export default function Quotation() {
                 <Input
                   className="sm:col-span-2"
                   id="quotation-advance-amount"
-                  label="Advance Amount"
+                  label={isBn ? 'অ্যাডভান্স টাকা' : 'Advance Amount'}
                   readOnly
                   type="number"
                   value={formatDecimal(advanceAmount)}
@@ -328,16 +331,16 @@ export default function Quotation() {
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Notes and Terms</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'নোট ও শর্তাবলী' : 'Notes and Terms'}</h3>
               <TextArea
                 id="quotation-notes"
-                label="Notes"
+                label={isBn ? 'নোট' : 'Notes'}
                 onChange={(event) => setNotes(event.target.value)}
                 value={notes}
               />
               <TextArea
                 id="quotation-terms"
-                label="Terms and Conditions"
+                label={isBn ? 'শর্তাবলী' : 'Terms and Conditions'}
                 onChange={(event) => setTerms(event.target.value)}
                 value={terms}
               />
@@ -347,13 +350,13 @@ export default function Quotation() {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Button onClick={printQuotation} type="button">
               <Printer size={18} aria-hidden="true" />
-              Print Quotation
+              {isBn ? 'কোটেশন প্রিন্ট' : 'Print Quotation'}
             </Button>
             <Button onClick={saveQuotation} type="button" variant="secondary">
-              Save Quotation
+              {isBn ? 'কোটেশন সেভ' : 'Save Quotation'}
             </Button>
             <Button onClick={createInvoiceFromQuotation} type="button" variant="secondary">
-              Create Invoice
+              {isBn ? 'ইনভয়েস তৈরি' : 'Create Invoice'}
             </Button>
             <Button disabled variant="secondary">
               PDF Later

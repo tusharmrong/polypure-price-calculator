@@ -13,8 +13,11 @@ import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function MoneyReceipt() {
+  const { language } = useUiLanguage()
+  const isBn = language === 'bn'
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -100,17 +103,17 @@ export default function MoneyReceipt() {
             />
             <div>
               <p className="text-sm font-semibold text-brand-700">Phase 6</p>
-              <h2 className="text-lg font-bold text-slate-950">Money Receipt Form</h2>
+              <h2 className="text-lg font-bold text-slate-950">{isBn ? 'মানি রিসিপ্ট ফর্ম' : 'Money Receipt Form'}</h2>
             </div>
           </div>
 
           <div className="grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Receipt Details</h3>
-              <Input id="receipt-number" label="Receipt Number" readOnly value={documentNumber} />
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'রিসিপ্ট বিস্তারিত' : 'Receipt Details'}</h3>
+              <Input id="receipt-number" label={isBn ? 'রিসিপ্ট নম্বর' : 'Receipt Number'} readOnly value={documentNumber} />
               <Input
                 id="receipt-date"
-                label="Date"
+                label={isBn ? 'তারিখ' : 'Date'}
                 onChange={(event) => setDocumentDate(event.target.value)}
                 type="date"
                 value={documentDate}
@@ -118,22 +121,22 @@ export default function MoneyReceipt() {
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Client Details</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ক্লায়েন্ট বিস্তারিত' : 'Client Details'}</h3>
               <Input
                 id="receipt-client"
-                label="Client Name"
+                label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
                 onChange={(event) => setClientName(event.target.value)}
                 value={clientName}
               />
-              <Input id="receipt-phone" label="Phone Number" onChange={(event) => setPhone(event.target.value)} value={phone} />
-              <TextArea id="receipt-address" label="Address" onChange={(event) => setAddress(event.target.value)} value={address} />
+              <Input id="receipt-phone" label={isBn ? 'ফোন নম্বর' : 'Phone Number'} onChange={(event) => setPhone(event.target.value)} value={phone} />
+              <TextArea id="receipt-address" label={isBn ? 'ঠিকানা' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Payment Details</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'পেমেন্ট বিস্তারিত' : 'Payment Details'}</h3>
               <Input
                 id="receipt-amount"
-                label="Received Amount"
+                label={isBn ? 'গৃহীত টাকা' : 'Received Amount'}
                 min="0"
                 onBlur={() => setReceivedAmount(formatDecimal(receivedAmount))}
                 onChange={(event) => setReceivedAmount(event.target.value)}
@@ -143,32 +146,32 @@ export default function MoneyReceipt() {
               />
               <Select
                 id="receipt-payment-method"
-                label="Payment Method"
+                label={isBn ? 'পেমেন্ট মাধ্যম' : 'Payment Method'}
                 onChange={(event) => setPaymentMethod(event.target.value)}
                 value={paymentMethod}
               >
-                <option>Cash</option>
-                <option>Bank Transfer</option>
-                <option>Mobile Banking</option>
-                <option>Cheque</option>
+                <option>{isBn ? 'ক্যাশ' : 'Cash'}</option>
+                <option>{isBn ? 'ব্যাংক ট্রান্সফার' : 'Bank Transfer'}</option>
+                <option>{isBn ? 'মোবাইল ব্যাংকিং' : 'Mobile Banking'}</option>
+                <option>{isBn ? 'চেক' : 'Cheque'}</option>
               </Select>
               <Input
                 id="receipt-work"
-                label="For Invoice / Work Details"
+                label={isBn ? 'ইনভয়েস / কাজের বিবরণ' : 'For Invoice / Work Details'}
                 onChange={(event) => setWorkDetails(event.target.value)}
                 value={workDetails}
               />
-              <TextArea id="receipt-notes" label="Notes" onChange={(event) => setNotes(event.target.value)} value={notes} />
+              <TextArea id="receipt-notes" label={isBn ? 'নোট' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
             </section>
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Button onClick={printReceipt} type="button">
               <Printer size={18} aria-hidden="true" />
-              Print Receipt
+              {isBn ? 'রিসিপ্ট প্রিন্ট' : 'Print Receipt'}
             </Button>
             <Button onClick={saveReceipt} type="button" variant="secondary">
-              Save Receipt
+              {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
             </Button>
             <Button disabled variant="secondary">
               PDF Later

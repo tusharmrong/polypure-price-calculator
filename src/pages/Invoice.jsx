@@ -13,6 +13,7 @@ import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 function createItem(draft) {
   return {
@@ -29,6 +30,8 @@ function itemAmount(item) {
 }
 
 export default function Invoice() {
+  const { language } = useUiLanguage()
+  const isBn = language === 'bn'
   const navigate = useNavigate()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
@@ -189,17 +192,17 @@ export default function Invoice() {
             />
             <div>
               <p className="text-sm font-semibold text-brand-700">Phase 5</p>
-              <h2 className="text-lg font-bold text-slate-950">Invoice Form</h2>
+              <h2 className="text-lg font-bold text-slate-950">{isBn ? 'ইনভয়েস ফর্ম' : 'Invoice Form'}</h2>
             </div>
           </div>
 
           <div className="grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Document Details</h3>
-              <Input id="invoice-number" label="Invoice Number" readOnly value={documentNumber} />
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ডকুমেন্ট বিস্তারিত' : 'Document Details'}</h3>
+              <Input id="invoice-number" label={isBn ? 'ইনভয়েস নম্বর' : 'Invoice Number'} readOnly value={documentNumber} />
               <Input
                 id="invoice-date"
-                label="Date"
+                label={isBn ? 'তারিখ' : 'Date'}
                 onChange={(event) => setDocumentDate(event.target.value)}
                 type="date"
                 value={documentDate}
@@ -207,31 +210,31 @@ export default function Invoice() {
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Client Details</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ক্লায়েন্ট বিস্তারিত' : 'Client Details'}</h3>
               <Input
                 id="invoice-client"
-                label="Client Name"
+                label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
                 onChange={(event) => setClientName(event.target.value)}
                 value={clientName}
               />
-              <Input id="invoice-phone" label="Phone Number" onChange={(event) => setPhone(event.target.value)} value={phone} />
-              <TextArea id="invoice-address" label="Address" onChange={(event) => setAddress(event.target.value)} value={address} />
+              <Input id="invoice-phone" label={isBn ? 'ফোন নম্বর' : 'Phone Number'} onChange={(event) => setPhone(event.target.value)} value={phone} />
+              <TextArea id="invoice-address" label={isBn ? 'ঠিকানা' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
             </section>
           </div>
 
           <div className="mt-5 grid gap-3">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-slate-950">Invoice Items</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ইনভয়েস আইটেম' : 'Invoice Items'}</h3>
               <Button className="min-h-10 px-3 py-2" onClick={addItem} type="button" variant="secondary">
                 <Plus size={16} aria-hidden="true" />
-                Add Item
+                {isBn ? 'আইটেম যোগ করুন' : 'Add Item'}
               </Button>
             </div>
 
             {items.map((item, index) => (
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={item.id}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-slate-700">Item {index + 1}</p>
+                  <p className="text-sm font-bold text-slate-700">{isBn ? `আইটেম ${index + 1}` : `Item ${index + 1}`}</p>
                   <button
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={items.length === 1}
@@ -245,14 +248,14 @@ export default function Invoice() {
                 <div className="grid gap-3">
                   <Input
                     id={`invoice-item-${item.id}`}
-                    label="Type / Size Description"
+                    label={isBn ? 'টাইপ / সাইজ বিবরণ' : 'Type / Size Description'}
                     onChange={(event) => updateItem(item.id, 'description', event.target.value)}
                     value={item.description}
                   />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Input
                       id={`invoice-quantity-${item.id}`}
-                      label="Quantity"
+                      label={isBn ? 'পরিমাণ' : 'Quantity'}
                       min="0"
                       onChange={(event) => updateItem(item.id, 'quantity', event.target.value)}
                       type="number"
@@ -260,7 +263,7 @@ export default function Invoice() {
                     />
                     <Input
                       id={`invoice-rate-${item.id}`}
-                      label="Rate"
+                      label={isBn ? 'রেট' : 'Rate'}
                       min="0"
                       onBlur={() => formatItemRate(item.id)}
                       onChange={(event) => updateItem(item.id, 'rate', event.target.value)}
@@ -271,7 +274,7 @@ export default function Invoice() {
                     <Input
                       className="sm:col-span-2"
                       id={`invoice-amount-${item.id}`}
-                      label="Amount"
+                      label={isBn ? 'পরিমাণ (টাকা)' : 'Amount'}
                       readOnly
                       type="number"
                       value={formatDecimal(itemAmount(item))}
@@ -284,12 +287,12 @@ export default function Invoice() {
 
           <div className="mt-5 grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Payment Summary</h3>
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'পেমেন্ট সারাংশ' : 'Payment Summary'}</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input id="invoice-subtotal" label="Subtotal" readOnly type="number" value={formatDecimal(subtotal)} />
+                <Input id="invoice-subtotal" label={isBn ? 'সাবটোটাল' : 'Subtotal'} readOnly type="number" value={formatDecimal(subtotal)} />
                 <Input
                   id="invoice-discount"
-                  label="Discount"
+                  label={isBn ? 'ডিসকাউন্ট' : 'Discount'}
                   min="0"
                   onBlur={() => setDiscount(formatDecimal(discount))}
                   onChange={(event) => setDiscount(event.target.value)}
@@ -297,10 +300,10 @@ export default function Invoice() {
                   type="number"
                   value={discount}
                 />
-                <Input id="invoice-total" label="Total Amount" readOnly type="number" value={formatDecimal(totalAmount)} />
+                <Input id="invoice-total" label={isBn ? 'মোট টাকা' : 'Total Amount'} readOnly type="number" value={formatDecimal(totalAmount)} />
                 <Input
                   id="invoice-paid"
-                  label="Paid Amount"
+                  label={isBn ? 'পরিশোধিত টাকা' : 'Paid Amount'}
                   min="0"
                   onBlur={() => setPaidAmount(formatDecimal(paidAmount))}
                   onChange={(event) => setPaidAmount(event.target.value)}
@@ -308,27 +311,27 @@ export default function Invoice() {
                   type="number"
                   value={paidAmount}
                 />
-                <Input className="sm:col-span-2" id="invoice-due" label="Due Amount" readOnly type="number" value={formatDecimal(dueAmount)} />
+                <Input className="sm:col-span-2" id="invoice-due" label={isBn ? 'বকেয়া টাকা' : 'Due Amount'} readOnly type="number" value={formatDecimal(dueAmount)} />
               </div>
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-sm font-bold text-slate-950">Notes and Terms</h3>
-              <TextArea id="invoice-notes" label="Notes" onChange={(event) => setNotes(event.target.value)} value={notes} />
-              <TextArea id="invoice-terms" label="Terms and Conditions" onChange={(event) => setTerms(event.target.value)} value={terms} />
+              <h3 className="text-sm font-bold text-slate-950">{isBn ? 'নোট ও শর্তাবলী' : 'Notes and Terms'}</h3>
+              <TextArea id="invoice-notes" label={isBn ? 'নোট' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
+              <TextArea id="invoice-terms" label={isBn ? 'শর্তাবলী' : 'Terms and Conditions'} onChange={(event) => setTerms(event.target.value)} value={terms} />
             </section>
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Button onClick={printInvoice} type="button">
               <Printer size={18} aria-hidden="true" />
-              Print Invoice
+              {isBn ? 'ইনভয়েস প্রিন্ট' : 'Print Invoice'}
             </Button>
             <Button onClick={saveInvoice} type="button" variant="secondary">
-              Save Invoice
+              {isBn ? 'ইনভয়েস সেভ' : 'Save Invoice'}
             </Button>
             <Button onClick={createReceiptFromInvoice} type="button" variant="secondary">
-              Create Money Receipt
+              {isBn ? 'মানি রিসিপ্ট তৈরি' : 'Create Money Receipt'}
             </Button>
             <Button disabled variant="secondary">
               PDF Later

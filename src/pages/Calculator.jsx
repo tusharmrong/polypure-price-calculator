@@ -5,6 +5,7 @@ import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import { createDocumentDraft, saveCalculatorDraft } from '../utils/calculatorDraft.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const bagModes = {
   shopping: {
@@ -60,6 +61,8 @@ function ResultLine({ label, value, strong = false }) {
 }
 
 export default function Calculator() {
+  const { language } = useUiLanguage()
+  const isBn = language === 'bn'
   const navigate = useNavigate()
   const [mode, setMode] = useState('shopping')
   const [values, setValues] = useState(initialValues)
@@ -67,6 +70,28 @@ export default function Calculator() {
   const [submitted, setSubmitted] = useState(false)
 
   const activeMode = bagModes[mode]
+  const ui = {
+    calculator: isBn ? 'ক্যালকুলেটর' : 'Calculator',
+    width: isBn ? 'প্রস্থ' : 'Width',
+    height: isBn ? 'উচ্চতা / লেন্থ' : 'Height / Length',
+    thickness: isBn ? 'থিকনেস / মাইক্রন' : 'Thickness / Micron',
+    poundRate: isBn ? 'পাউন্ড রেট' : 'Pound Rate',
+    blockCharge: isBn ? 'ব্লক চার্জ' : 'Block Charge',
+    printingCharge: isBn ? 'প্রিন্টিং চার্জ' : 'Printing Charge',
+    adhesiveCost: isBn ? 'গাম চার্জ' : 'Adhesive Cost',
+    profit: isBn ? 'প্রফিট' : 'Profit',
+    discount: isBn ? 'ডিসকাউন্ট' : 'Discount',
+    addHandle: isBn ? 'হ্যান্ডেল চার্জ যোগ করুন' : 'Add Handle Cost',
+    handleCost: isBn ? 'হ্যান্ডেল চার্জ' : 'Handle Cost',
+    calculate: isBn ? 'দাম হিসাব করুন' : 'Calculate Price',
+    reset: isBn ? 'রিসেট' : 'Reset',
+    result: isBn ? 'ফলাফল' : 'Result',
+    resultHint: isBn ? 'ব্যাগের তথ্য দিয়ে দাম হিসাব করুন।' : 'Enter the bag details and calculate the final price.',
+    createQuotation: isBn ? 'কোটেশন তৈরি করুন' : 'Create Quotation',
+    createInvoice: isBn ? 'ইনভয়েস তৈরি করুন' : 'Create Invoice',
+    createReceipt: isBn ? 'মানি রিসিপ্ট তৈরি করুন' : 'Create Money Receipt',
+    calcFirst: isBn ? 'ডকুমেন্ট তৈরি করতে আগে হিসাব করুন।' : 'Calculate first to create a document.'
+  }
 
   const result = useMemo(() => {
     const width = numberValue(values.width)
@@ -195,8 +220,14 @@ export default function Calculator() {
       <Card>
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-brand-700">Calculator</p>
-            <h2 className="text-xl font-bold text-slate-950">{activeMode.sectionTitle}</h2>
+            <p className="text-sm font-semibold text-brand-700">{ui.calculator}</p>
+            <h2 className="text-xl font-bold text-slate-950">
+              {isBn
+                ? mode === 'shopping'
+                  ? 'শপিং ব্যাগ বিস্তারিত'
+                  : 'কুরিয়ার ব্যাগ বিস্তারিত'
+                : activeMode.sectionTitle}
+            </h2>
           </div>
           <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1">
             {Object.entries(bagModes).map(([key, item]) => (
@@ -208,7 +239,11 @@ export default function Calculator() {
                 onClick={() => changeMode(key)}
                 type="button"
               >
-                {item.title}
+                {isBn
+                  ? key === 'shopping'
+                    ? 'শপিং ব্যাগ'
+                    : 'কুরিয়ার ব্যাগ'
+                  : item.title}
               </button>
             ))}
           </div>
@@ -224,7 +259,7 @@ export default function Calculator() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               id="width"
-              label="Width"
+              label={ui.width}
               min="0"
               onChange={(event) => updateValue('width', event.target.value)}
               placeholder="Example: 10"
@@ -234,7 +269,7 @@ export default function Calculator() {
             />
             <Input
               id="height"
-              label="Height / Length"
+              label={ui.height}
               min="0"
               onChange={(event) => updateValue('height', event.target.value)}
               placeholder="Example: 14"
@@ -244,17 +279,17 @@ export default function Calculator() {
             />
             <Input
               id="extra-measure"
-              label={activeMode.extraLabel}
+              label={isBn ? (mode === 'shopping' ? 'ফোল্ডিং' : 'ফ্ল্যাপ') : activeMode.extraLabel}
               min="0"
               onChange={(event) => updateValue('extraMeasure', event.target.value)}
-              placeholder={mode === 'shopping' ? 'Folding size' : 'Flap size'}
+              placeholder={isBn ? (mode === 'shopping' ? 'ফোল্ডিং সাইজ' : 'ফ্ল্যাপ সাইজ') : mode === 'shopping' ? 'Folding size' : 'Flap size'}
               step="0.01"
               type="number"
               value={values.extraMeasure}
             />
             <Input
               id="thickness"
-              label="Thickness / Micron"
+              label={ui.thickness}
               min="0"
               onChange={(event) => updateValue('thickness', event.target.value)}
               step="0.01"
@@ -263,7 +298,7 @@ export default function Calculator() {
             />
             <Input
               id="quantity"
-              label="Pound Rate"
+              label={ui.poundRate}
               min="0"
               onChange={(event) => updateValue('quantity', event.target.value)}
               step="0.01"
@@ -272,7 +307,7 @@ export default function Calculator() {
             />
             <Input
               id="block-charge"
-              label="Block Charge"
+              label={ui.blockCharge}
               min="0"
               onChange={(event) => updateValue('blockCharge', event.target.value)}
               placeholder="0"
@@ -282,7 +317,7 @@ export default function Calculator() {
             />
             <Input
               id="printing-charge"
-              label="Printing Charge"
+              label={ui.printingCharge}
               min="0"
               onChange={(event) => updateValue('printingCharge', event.target.value)}
               placeholder="0"
@@ -293,7 +328,7 @@ export default function Calculator() {
             {mode === 'courier' ? (
               <Input
                 id="adhesive-cost"
-                label="Adhesive Cost"
+                label={ui.adhesiveCost}
                 min="0"
                 onChange={(event) => updateValue('adhesiveCost', event.target.value)}
                 placeholder="0"
@@ -304,7 +339,7 @@ export default function Calculator() {
             ) : null}
             <Input
               id="profit"
-              label="Profit"
+              label={ui.profit}
               min="0"
               onChange={(event) => updateValue('profit', event.target.value)}
               placeholder="0"
@@ -314,7 +349,7 @@ export default function Calculator() {
             />
             <Input
               id="discount"
-              label="Discount"
+              label={ui.discount}
               min="0"
               onChange={(event) => updateValue('discount', event.target.value)}
               placeholder="0"
@@ -333,13 +368,13 @@ export default function Calculator() {
                   onChange={(event) => setHandleEnabled(event.target.checked)}
                   type="checkbox"
                 />
-                Add Handle Cost
+                {ui.addHandle}
               </label>
               {handleEnabled ? (
                 <div className="mt-4 max-w-sm">
                   <Input
                     id="handle-cost"
-                    label="Handle Cost"
+                    label={ui.handleCost}
                     min="0"
                     onChange={(event) => updateValue('handleCost', event.target.value)}
                     step="0.01"
@@ -354,11 +389,11 @@ export default function Calculator() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button className="sm:flex-1" type="submit">
               <CalculatorIcon size={18} aria-hidden="true" />
-              Calculate Price
+              {ui.calculate}
             </Button>
             <Button onClick={reset} type="button" variant="secondary">
               <RotateCcw size={18} aria-hidden="true" />
-              Reset
+              {ui.reset}
             </Button>
           </div>
         </form>
@@ -366,10 +401,10 @@ export default function Calculator() {
 
       <div className="grid content-start gap-5">
         <Card>
-          <h2 className="mb-4 text-lg font-bold text-slate-950">Result</h2>
+          <h2 className="mb-4 text-lg font-bold text-slate-950">{ui.result}</h2>
           {result.status === 'idle' ? (
             <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
-              Enter the bag details and calculate the final price.
+              {ui.resultHint}
             </div>
           ) : null}
           {result.status === 'error' ? (
@@ -404,16 +439,16 @@ export default function Calculator() {
 
         <Card className="grid gap-3">
           <Button disabled={result.status !== 'ready'} onClick={() => openDocument('/quotation')} type="button">
-            Create Quotation
+            {ui.createQuotation}
           </Button>
           <Button disabled={result.status !== 'ready'} onClick={() => openDocument('/invoice')} type="button">
-            Create Invoice
+            {ui.createInvoice}
           </Button>
           <Button disabled={result.status !== 'ready'} onClick={() => openDocument('/money-receipt')} type="button">
-            Create Money Receipt
+            {ui.createReceipt}
           </Button>
           {result.status !== 'ready' ? (
-            <p className="text-center text-xs font-medium text-slate-500">Calculate first to create a document.</p>
+            <p className="text-center text-xs font-medium text-slate-500">{ui.calcFirst}</p>
           ) : null}
         </Card>
       </div>
