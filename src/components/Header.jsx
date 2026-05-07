@@ -1,17 +1,18 @@
 import { useLocation } from 'react-router-dom'
-
-const titles = {
-  '/': 'Dashboard',
-  '/calculator': 'Calculator',
-  '/quotation': 'Quotation',
-  '/invoice': 'Invoice',
-  '/money-receipt': 'Money Receipt',
-  '/history': 'History',
-  '/settings': 'Settings'
-}
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Header() {
+  const { language, setLanguage, t } = useUiLanguage()
   const location = useLocation()
+  const titles = {
+    '/': t('nav_dashboard'),
+    '/calculator': t('nav_calculator'),
+    '/quotation': 'Quotation',
+    '/invoice': 'Invoice',
+    '/money-receipt': 'Money Receipt',
+    '/history': t('nav_history'),
+    '/settings': t('settings_title')
+  }
   const title = titles[location.pathname] || 'Poly Pure'
 
   return (
@@ -22,6 +23,22 @@ export default function Header() {
           <h1 className="text-xl font-bold text-slate-950">{title}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
+            <button
+              className={`min-h-9 px-3 text-xs font-semibold ${language === 'bn' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+              onClick={() => setLanguage('bn')}
+              type="button"
+            >
+              বাংলা
+            </button>
+            <button
+              className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+              onClick={() => setLanguage('en')}
+              type="button"
+            >
+              EN
+            </button>
+          </div>
           <img
             alt="Poly Pure"
             className="hidden h-10 w-10 rounded-full border border-brand-100 bg-white object-contain sm:block md:hidden"

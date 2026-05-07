@@ -10,17 +10,19 @@ import { Link } from 'react-router-dom'
 import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
-
-const actions = [
-  { label: 'Calculator', path: '/calculator', icon: WalletCards },
-  { label: 'Create Quotation', path: '/quotation', icon: SquarePen },
-  { label: 'Create Invoice', path: '/invoice', icon: FileText },
-  { label: 'Create Money Receipt', path: '/money-receipt', icon: ReceiptText },
-  { label: 'Recent Documents', path: '/history', icon: FileClock },
-  { label: 'Settings', path: '/settings', icon: Settings }
-]
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Dashboard() {
+  const { t } = useUiLanguage()
+  const actions = [
+    { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
+    { label: t('nav_quotation'), path: '/quotation', icon: SquarePen },
+    { label: t('nav_invoice'), path: '/invoice', icon: FileText },
+    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText },
+    { label: t('dashboard_recent_documents'), path: '/history', icon: FileClock },
+    { label: t('nav_settings'), path: '/settings', icon: Settings }
+  ]
+
   return (
     <div className="grid gap-5">
       <section className="rounded-lg bg-brand-600 px-5 py-6 text-white shadow-soft">
@@ -32,7 +34,7 @@ export default function Dashboard() {
           />
           <div>
             <p className="text-sm font-semibold opacity-90">Poly Pure Price Calculator</p>
-            <h2 className="mt-2 text-2xl font-bold">Bag pricing and business documents in one place.</h2>
+            <h2 className="mt-2 text-2xl font-bold">{t('dashboard_tagline')}</h2>
           </div>
         </div>
       </section>
@@ -57,9 +59,9 @@ export default function Dashboard() {
 
       <Card>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="text-lg font-bold text-slate-950">Recent Documents</h3>
+          <h3 className="text-lg font-bold text-slate-950">{t('dashboard_recent_documents')}</h3>
           <Link className="text-sm font-semibold text-brand-700" to="/history">
-            View all
+            {t('view_all')}
           </Link>
         </div>
         <div className="grid gap-3">

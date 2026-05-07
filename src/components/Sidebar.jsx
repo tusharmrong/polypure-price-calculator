@@ -8,18 +8,20 @@ import {
   WalletCards
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-
-const items = [
-  { label: 'Dashboard', path: '/', icon: Home },
-  { label: 'Calculator', path: '/calculator', icon: WalletCards },
-  { label: 'Quotation', path: '/quotation', icon: SquarePen },
-  { label: 'Invoice', path: '/invoice', icon: FileText },
-  { label: 'Money Receipt', path: '/money-receipt', icon: ReceiptText },
-  { label: 'History', path: '/history', icon: FileClock },
-  { label: 'Settings', path: '/settings', icon: Settings }
-]
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Sidebar() {
+  const { t } = useUiLanguage()
+  const items = [
+    { label: t('nav_dashboard'), path: '/', icon: Home },
+    { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
+    { label: t('nav_quotation'), path: '/quotation', icon: SquarePen },
+    { label: t('nav_invoice'), path: '/invoice', icon: FileText },
+    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText },
+    { label: t('nav_history'), path: '/history', icon: FileClock },
+    { label: t('nav_settings'), path: '/settings', icon: Settings }
+  ]
+
   return (
     <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white md:block">
       <div className="sticky top-0 flex h-screen flex-col p-5">
@@ -32,7 +34,7 @@ export default function Sidebar() {
             />
             <div>
               <p className="text-sm font-semibold opacity-90">Poly Pure</p>
-              <p className="mt-1 text-xl font-bold">Price Calculator</p>
+              <p className="mt-1 text-xl font-bold">{t('app_title')}</p>
             </div>
           </div>
         </div>

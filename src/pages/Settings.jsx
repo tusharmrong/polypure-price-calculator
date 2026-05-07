@@ -7,8 +7,10 @@ import TextArea from '../components/TextArea.jsx'
 import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
 import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Settings() {
+  const { t } = useUiLanguage()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [installStatus, setInstallStatus] = useState('')
@@ -212,10 +214,10 @@ export default function Settings() {
   return (
     <div className="grid gap-5">
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-950">Install App</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-950">{t('install_app')}</h2>
         <div className="rounded-lg border border-brand-100 bg-brand-50 p-4">
           <p className="text-sm text-slate-700">
-            Install this app on your phone or PC for quick access and full-screen experience.
+            {t('install_app_text')}
           </p>
           <div className="mt-3">
             <Button
@@ -224,7 +226,7 @@ export default function Settings() {
               type="button"
             >
               <Download size={18} />
-              {isInstalled ? 'Already Installed' : 'Install Polypure App'}
+              {isInstalled ? t('installed') : t('install_now')}
             </Button>
           </div>
           {isiOS ? (
@@ -237,7 +239,7 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <h2 className="mb-5 text-lg font-bold text-slate-950">Company Settings</h2>
+        <h2 className="mb-5 text-lg font-bold text-slate-950">{t('company_settings')}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input id="company-name" label="Company Name" onChange={(event) => updateCompanySetting('companyName', event.target.value)} value={companySettings.companyName} />
           <Input id="company-phone" label="Phone" onChange={(event) => updateCompanySetting('phone', event.target.value)} value={companySettings.phone} />
@@ -306,24 +308,24 @@ export default function Settings() {
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button onClick={handleSaveCompanySettings} type="button">
-            Save Company Settings
+            {t('save_company_settings')}
           </Button>
         </div>
         {settingsStatus ? <p className="mt-3 text-xs font-semibold text-brand-700">{settingsStatus}</p> : null}
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-950">Backup and Restore</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-950">{t('backup_restore')}</h2>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm text-slate-700">
             Backup includes company settings, saved documents, and this device signature.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={exportBackup} type="button" variant="secondary">
-              Export Backup JSON
+              {t('export_backup')}
             </Button>
             <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">
-              Import Backup JSON
+              {t('import_backup')}
               <input accept="application/json,.json" className="hidden" onChange={importBackup} type="file" />
             </label>
           </div>
