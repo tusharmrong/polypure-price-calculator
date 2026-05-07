@@ -70,13 +70,11 @@ export default function Settings() {
       return
     }
 
-    if (file.type !== 'image/png') {
+    const fileName = (file.name || '').toLowerCase()
+    const isPngByType = file.type === 'image/png'
+    const isPngByName = fileName.endsWith('.png')
+    if (!isPngByType && !isPngByName) {
       setSignatureStatus('Please upload only PNG signature file.')
-      event.target.value = ''
-      return
-    }
-    if (file.size > 900 * 1024) {
-      setSignatureStatus('PNG is too large. Please use a smaller signature image (under 900KB).')
       event.target.value = ''
       return
     }
@@ -91,13 +89,28 @@ export default function Settings() {
       }
       const image = new Image()
       image.onload = () => {
-        const didSave = saveValue('signaturePngDataUrl', pngDataUrl)
+        const canvas = document.createElement('canvas')
+        const maxWidth = 900
+        const scale = image.width > maxWidth ? maxWidth / image.width : 1
+        canvas.width = Math.max(1, Math.round(image.width * scale))
+        canvas.height = Math.max(1, Math.round(image.height * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          setSignatureStatus('Could not process this image. Please try another PNG.')
+          event.target.value = ''
+          return
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+        const normalizedPngDataUrl = canvas.toDataURL('image/png')
+
+        const didSave = saveValue('signaturePngDataUrl', normalizedPngDataUrl)
         if (!didSave) {
           setSignatureStatus('Could not save signature. Please use a smaller PNG file.')
           event.target.value = ''
           return
         }
-        setSignatureImage(pngDataUrl)
+        setSignatureImage(normalizedPngDataUrl)
         setSignatureStatus('Signature saved for this device.')
         event.target.value = ''
       }
