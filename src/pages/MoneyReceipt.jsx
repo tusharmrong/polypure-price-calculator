@@ -32,16 +32,29 @@ export default function MoneyReceipt() {
   )
   const [notes, setNotes] = useState(prefill?.notes || '')
   const [saveStatus, setSaveStatus] = useState('')
+  const [formError, setFormError] = useState('')
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
 
   const printReceipt = () => {
+    const error = validateReceipt()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
     window.print()
   }
 
   const saveReceipt = () => {
+    const error = validateReceipt()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
     saveDocument({
       type: 'Money Receipt',
       number: documentNumber,
@@ -57,6 +70,13 @@ export default function MoneyReceipt() {
       notes
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+  }
+
+  const validateReceipt = () => {
+    if (!clientName.trim()) return 'Please enter client name.'
+    if (Number(receivedAmount || 0) <= 0) return 'Received amount must be greater than zero.'
+    if (!workDetails.trim()) return 'Please enter invoice or work details.'
+    return ''
   }
 
   return (
@@ -157,6 +177,7 @@ export default function MoneyReceipt() {
           {saveStatus ? (
             <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700">{saveStatus}</p>
           ) : null}
+          {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
         <Card className="print-area bg-white p-0">

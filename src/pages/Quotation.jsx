@@ -54,6 +54,7 @@ export default function Quotation() {
   const [notes, setNotes] = useState(prefill?.notes || '')
   const [terms, setTerms] = useState(prefill?.terms || companySettings.terms || defaultSettings.terms)
   const [saveStatus, setSaveStatus] = useState('')
+  const [formError, setFormError] = useState('')
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-Q', documentDate), [documentDate])
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
@@ -87,10 +88,22 @@ export default function Quotation() {
   }
 
   const printQuotation = () => {
+    const error = validateQuotation()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
     window.print()
   }
 
   const saveQuotation = () => {
+    const error = validateQuotation()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
     saveDocument({
       type: 'Quotation',
       number: documentNumber,
@@ -116,6 +129,12 @@ export default function Quotation() {
   }
 
   const createInvoiceFromQuotation = () => {
+    const error = validateQuotation()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
     navigate('/invoice', {
       state: {
         prefillDocument: {
@@ -131,6 +150,18 @@ export default function Quotation() {
         }
       }
     })
+  }
+
+  const validateQuotation = () => {
+    if (!clientName.trim()) return 'Please enter client name.'
+    if (!items.length) return 'Please add at least one item.'
+    for (const item of items) {
+      if (!item.description?.trim()) return 'Please enter item description.'
+      if (Number(item.quantity || 0) <= 0) return 'Item quantity must be greater than zero.'
+      if (Number(item.rate || 0) <= 0) return 'Item rate must be greater than zero.'
+    }
+    if (totalAmount <= 0) return 'Total amount must be greater than zero.'
+    return ''
   }
 
   return (
@@ -331,6 +362,7 @@ export default function Quotation() {
           {saveStatus ? (
             <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700">{saveStatus}</p>
           ) : null}
+          {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
         <Card className="print-area bg-white p-0">
