@@ -7,12 +7,16 @@ export function getTodayInputDate() {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function createDocumentNumber(prefix, inputDate = getTodayInputDate(), count = 1) {
-  const date = new Date(`${inputDate}T00:00:00`)
+export function createDocumentNumber(prefix, inputDate = getTodayInputDate()) {
+  const now = new Date()
+  const date = new Date(`${inputDate}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`)
   const day = pad(date.getDate())
   const month = pad(date.getMonth() + 1)
   const year = date.getFullYear()
-  return `${prefix}-${day}${month}${year}-${String(count).padStart(4, '0')}`
+  const hour = pad(date.getHours())
+  const minute = pad(date.getMinutes())
+  const second = pad(date.getSeconds())
+  return `${prefix}-${day}${month}${year}-${hour}${minute}${second}`
 }
 
 export function formatDocumentDate(inputDate = getTodayInputDate()) {
