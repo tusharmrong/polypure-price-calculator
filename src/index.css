@@ -27,6 +27,23 @@ textarea {
   font: inherit;
 }
 
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+input[type='date'],
+input[type='number'],
+input[type='text'],
+input[type='email'],
+input[type='tel'] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 a {
   color: inherit;
   text-decoration: none;
