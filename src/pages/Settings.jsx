@@ -17,6 +17,7 @@ export default function Settings() {
   const [signatureImage, setSignatureImage] = useState(() => loadSignatureImage())
   const [signatureStatus, setSignatureStatus] = useState('')
   const [backupStatus, setBackupStatus] = useState('')
+  const [lastAutoBackupAt, setLastAutoBackupAt] = useState(() => loadValue('autoBackupLastAt', ''))
   const [companySettings, setCompanySettings] = useState(() => loadCompanySettings())
   const [settingsStatus, setSettingsStatus] = useState('')
 
@@ -148,8 +149,8 @@ export default function Settings() {
     setSettingsStatus('Company settings saved on this device.')
   }
 
-  const exportBackup = () => {
-    const backupData = {
+  const buildBackupData = () => {
+    return {
       version: 1,
       exportedAt: new Date().toISOString(),
       data: {
@@ -158,18 +159,48 @@ export default function Settings() {
         signaturePngDataUrl: loadValue('signaturePngDataUrl', '')
       }
     }
+  }
+
+  const downloadBackupFile = (backupData) => {
+    const exportedDate = String(backupData.exportedAt || new Date().toISOString()).slice(0, 10)
+    const exportedTime = String(backupData.exportedAt || new Date().toISOString())
+      .slice(11, 19)
+      .replaceAll(':', '-')
 
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `polypure-backup-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `polypure-backup-${exportedDate}-${exportedTime}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+  }
+
+  const exportBackup = () => {
+    const backupData = buildBackupData()
+    downloadBackupFile(backupData)
     setBackupStatus('Backup exported successfully.')
   }
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const lastDate = loadValue('autoBackupLastDate', '')
+
+    if (lastDate === today) return
+
+    const backupData = buildBackupData()
+    try {
+      downloadBackupFile(backupData)
+      saveValue('autoBackupLastDate', today)
+      saveValue('autoBackupLastAt', backupData.exportedAt)
+      setLastAutoBackupAt(backupData.exportedAt)
+      setBackupStatus('Daily auto-backup completed for today.')
+    } catch {
+      setBackupStatus('Daily auto-backup could not download automatically. Please use Export Backup JSON.')
+    }
+  }, [])
 
   const importBackup = (event) => {
     const file = event.target.files?.[0]
@@ -319,6 +350,9 @@ export default function Settings() {
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm text-slate-700">
             Backup includes company settings, saved documents, and this device signature.
+          </p>
+          <p className="mt-2 text-xs font-medium text-slate-500">
+            Last daily auto-backup: {lastAutoBackupAt ? new Date(lastAutoBackupAt).toLocaleString() : 'Not yet'}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={exportBackup} type="button" variant="secondary">
