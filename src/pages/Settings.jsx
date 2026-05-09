@@ -8,9 +8,11 @@ import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
 import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { useToast } from '../utils/toast.js'
 
 export default function Settings() {
   const { t } = useUiLanguage()
+  const { showToast } = useToast()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [installStatus, setInstallStatus] = useState('')
@@ -147,6 +149,7 @@ export default function Settings() {
   const handleSaveCompanySettings = () => {
     saveCompanySettings(companySettings)
     setSettingsStatus('Company settings saved on this device.')
+    showToast('Company settings saved.', 'success')
   }
 
   const buildBackupData = () => {
@@ -182,6 +185,7 @@ export default function Settings() {
     const backupData = buildBackupData()
     downloadBackupFile(backupData)
     setBackupStatus('Backup exported successfully.')
+    showToast('Backup exported successfully.', 'success')
   }
 
   useEffect(() => {
@@ -197,8 +201,10 @@ export default function Settings() {
       saveValue('autoBackupLastAt', backupData.exportedAt)
       setLastAutoBackupAt(backupData.exportedAt)
       setBackupStatus('Daily auto-backup completed for today.')
+      showToast('Daily auto-backup completed.', 'success')
     } catch {
       setBackupStatus('Daily auto-backup could not download automatically. Please use Export Backup JSON.')
+      showToast('Daily auto-backup failed. Please export manually.', 'error')
     }
   }, [])
 
@@ -229,14 +235,17 @@ export default function Settings() {
         setCompanySettings(nextCompanySettings)
         setSignatureImage(importedSignature)
         setBackupStatus('Backup imported successfully.')
+        showToast('Backup imported successfully.', 'success')
       } catch {
         setBackupStatus('Invalid backup file. Please select a valid Polypure backup JSON.')
+        showToast('Invalid backup file.', 'error')
       } finally {
         event.target.value = ''
       }
     }
     reader.onerror = () => {
       setBackupStatus('Could not read backup file. Please try again.')
+      showToast('Could not read backup file.', 'error')
       event.target.value = ''
     }
     reader.readAsText(file)

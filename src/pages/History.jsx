@@ -7,10 +7,12 @@ import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
 import { hardDeleteDocument, loadDocuments, restoreDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { useToast } from '../utils/toast.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function History() {
   const { t } = useUiLanguage()
+  const { showToast } = useToast()
   const navigate = useNavigate()
   const [savedDocuments, setSavedDocuments] = useState(() => loadDocuments())
   const [typeFilter, setTypeFilter] = useState('All')
@@ -33,7 +35,10 @@ export default function History() {
   }, [documents, search, typeFilter, viewMode])
 
   const exportHistoryCsv = () => {
-    if (!savedDocuments.length) return
+    if (!savedDocuments.length) {
+      showToast('No saved documents to export.', 'error')
+      return
+    }
     const rows = savedDocuments.map((doc) => ({
       date: doc.displayDate || doc.date || '',
       type: doc.type || '',
@@ -69,6 +74,7 @@ export default function History() {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+    showToast('History CSV exported.', 'success')
   }
 
   const openDocument = (document, duplicate = false) => {
@@ -97,6 +103,7 @@ export default function History() {
     softDeleteDocument(documentId)
     setSavedDocuments(loadDocuments())
     setUndoInfo(target)
+    showToast('Moved to trash.', 'success')
     window.setTimeout(() => {
       setUndoInfo((current) => (current?.id === target.id ? null : current))
     }, 8000)
@@ -105,6 +112,7 @@ export default function History() {
   const handleRestore = (documentId) => {
     restoreDocument(documentId)
     setSavedDocuments(loadDocuments())
+    showToast('Document restored.', 'success')
   }
 
   const handleHardDelete = (documentId) => {
@@ -114,6 +122,7 @@ export default function History() {
     if (!ok) return
     hardDeleteDocument(documentId)
     setSavedDocuments(loadDocuments())
+    showToast('Document permanently deleted.', 'success')
   }
 
   const undoSoftDelete = () => {
@@ -121,6 +130,7 @@ export default function History() {
     restoreDocument(undoInfo.id)
     setSavedDocuments(loadDocuments())
     setUndoInfo(null)
+    showToast('Delete undone.', 'success')
   }
 
   return (

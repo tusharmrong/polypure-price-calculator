@@ -5,6 +5,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.jsx'
 import './index.css'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
+import { ToastProvider } from './utils/toast.js'
 
 const updateSW = registerSW({
   immediate: true,
@@ -17,9 +18,11 @@ const updateSW = registerSW({
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <UiLanguageProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
+      <ToastProvider>
+        <HashRouter>
+          <App />
+        </HashRouter>
+      </ToastProvider>
     </UiLanguageProvider>
   </React.StrictMode>
 )

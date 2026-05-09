@@ -16,6 +16,8 @@ import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { printWithFileName } from '../utils/pdf.js'
+import { useToast } from '../utils/toast.js'
+import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
 
 function createItem(draft) {
   return {
@@ -34,6 +36,7 @@ function itemAmount(item) {
 export default function Invoice() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
+  const { showToast } = useToast()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -76,6 +79,7 @@ export default function Invoice() {
   const [terms, setTerms] = useState(prefill?.terms || savedDraft?.terms || companySettings.terms || defaultSettings.terms)
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
+  const [baselineFingerprint, setBaselineFingerprint] = useState('')
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
@@ -88,6 +92,26 @@ export default function Invoice() {
   }, [paidAmount, totalAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
+  const formFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        documentDate,
+        documentNumber,
+        editingDocumentId,
+        clientName,
+        phone,
+        address,
+        items: items.map((item) => ({ description: item.description, quantity: item.quantity, rate: item.rate })),
+        discount,
+        paidAmount,
+        notes,
+        terms
+      }),
+    [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms]
+  )
+  const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
+
+  useUnsavedChangesGuard(isDirty)
 
   useEffect(() => {
     saveFormDraft('invoice', {
@@ -111,6 +135,12 @@ export default function Invoice() {
     }
   }, [documentDate, editingDocumentId])
 
+  useEffect(() => {
+    if (!baselineFingerprint) {
+      setBaselineFingerprint(formFingerprint)
+    }
+  }, [baselineFingerprint, formFingerprint])
+
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
   }
@@ -133,6 +163,7 @@ export default function Invoice() {
     const error = validateInvoice()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -159,12 +190,15 @@ export default function Invoice() {
       terms
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+    setBaselineFingerprint(formFingerprint)
+    showToast('Invoice saved successfully.', 'success')
   }
 
   const saveInvoiceAsCopy = () => {
     const error = validateInvoice()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -193,12 +227,15 @@ export default function Invoice() {
     setDocumentNumber(copyNumber)
     setEditingDocumentId('')
     setSaveStatus(`${copyNumber} saved as a new copy.`)
+    setBaselineFingerprint('')
+    showToast('Invoice copy saved.', 'success')
   }
 
   const savePdfInvoice = () => {
     const error = validateInvoice()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -208,6 +245,7 @@ export default function Invoice() {
       documentNumber,
       type: 'Invoice'
     })
+    showToast('PDF save window opened.', 'success')
   }
 
   const resetInvoiceForm = () => {
@@ -225,7 +263,9 @@ export default function Invoice() {
     setTerms(companySettings.terms || defaultSettings.terms)
     setSaveStatus('')
     setFormError('')
+    setBaselineFingerprint('')
     clearFormDraft('invoice')
+    showToast('Invoice form reset.', 'success')
   }
 
   const validateInvoice = () => {
@@ -392,7 +432,7 @@ export default function Invoice() {
             </section>
           </div>
 
-          <div className="document-action-grid mt-5">
+          <div className="document-action-grid form-action-sticky mt-5">
             <Button onClick={saveInvoice} type="button" variant="secondary">
               {isBn ? 'ইনভয়েস সেভ' : 'Save Invoice'}
             </Button>

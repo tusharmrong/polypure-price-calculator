@@ -16,6 +16,8 @@ import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { printWithFileName } from '../utils/pdf.js'
+import { useToast } from '../utils/toast.js'
+import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
 
 function createItem(draft) {
   return {
@@ -34,6 +36,7 @@ function itemAmount(item) {
 export default function Quotation() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
+  const { showToast } = useToast()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -78,6 +81,7 @@ export default function Quotation() {
   const [terms, setTerms] = useState(prefill?.terms || savedDraft?.terms || companySettings.terms || defaultSettings.terms)
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
+  const [baselineFingerprint, setBaselineFingerprint] = useState('')
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
@@ -90,6 +94,26 @@ export default function Quotation() {
   }, [advancePercent, totalAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
+  const formFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        documentDate,
+        documentNumber,
+        editingDocumentId,
+        clientName,
+        phone,
+        address,
+        items: items.map((item) => ({ description: item.description, quantity: item.quantity, rate: item.rate })),
+        discount,
+        advancePercent,
+        notes,
+        terms
+      }),
+    [address, advancePercent, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, phone, terms]
+  )
+  const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
+
+  useUnsavedChangesGuard(isDirty)
 
   useEffect(() => {
     saveFormDraft('quotation', {
@@ -113,6 +137,12 @@ export default function Quotation() {
     }
   }, [documentDate, editingDocumentId])
 
+  useEffect(() => {
+    if (!baselineFingerprint) {
+      setBaselineFingerprint(formFingerprint)
+    }
+  }, [baselineFingerprint, formFingerprint])
+
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
   }
@@ -135,6 +165,7 @@ export default function Quotation() {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -161,12 +192,15 @@ export default function Quotation() {
       terms
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+    setBaselineFingerprint(formFingerprint)
+    showToast('Quotation saved successfully.', 'success')
   }
 
   const saveQuotationAsCopy = () => {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -195,12 +229,15 @@ export default function Quotation() {
     setDocumentNumber(copyNumber)
     setEditingDocumentId('')
     setSaveStatus(`${copyNumber} saved as a new copy.`)
+    setBaselineFingerprint('')
+    showToast('Quotation copy saved.', 'success')
   }
 
   const savePdfQuotation = () => {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -210,6 +247,7 @@ export default function Quotation() {
       documentNumber,
       type: 'Quotation'
     })
+    showToast('PDF save window opened.', 'success')
   }
 
   const resetQuotationForm = () => {
@@ -227,7 +265,9 @@ export default function Quotation() {
     setTerms(companySettings.terms || defaultSettings.terms)
     setSaveStatus('')
     setFormError('')
+    setBaselineFingerprint('')
     clearFormDraft('quotation')
+    showToast('Quotation form reset.', 'success')
   }
 
   const validateQuotation = () => {
@@ -422,7 +462,7 @@ export default function Quotation() {
             </section>
           </div>
 
-          <div className="document-action-grid mt-5">
+          <div className="document-action-grid form-action-sticky mt-5">
             <Button onClick={saveQuotation} type="button" variant="secondary">
               {isBn ? 'কোটেশন সেভ' : 'Save Quotation'}
             </Button>

@@ -15,10 +15,13 @@ import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { printWithFileName } from '../utils/pdf.js'
+import { useToast } from '../utils/toast.js'
+import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
 
 export default function MoneyReceipt() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
+  const { showToast } = useToast()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -43,9 +46,29 @@ export default function MoneyReceipt() {
   const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
+  const [baselineFingerprint, setBaselineFingerprint] = useState('')
 
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
+  const formFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        documentDate,
+        documentNumber,
+        editingDocumentId,
+        clientName,
+        phone,
+        address,
+        receivedAmount,
+        paymentMethod,
+        workDetails,
+        notes
+      }),
+    [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, workDetails]
+  )
+  const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
+
+  useUnsavedChangesGuard(isDirty)
 
   useEffect(() => {
     saveFormDraft('moneyReceipt', {
@@ -68,10 +91,17 @@ export default function MoneyReceipt() {
     }
   }, [documentDate, editingDocumentId])
 
+  useEffect(() => {
+    if (!baselineFingerprint) {
+      setBaselineFingerprint(formFingerprint)
+    }
+  }, [baselineFingerprint, formFingerprint])
+
   const saveReceipt = () => {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -91,12 +121,15 @@ export default function MoneyReceipt() {
       notes
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+    setBaselineFingerprint(formFingerprint)
+    showToast('Money receipt saved successfully.', 'success')
   }
 
   const saveReceiptAsCopy = () => {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -118,6 +151,8 @@ export default function MoneyReceipt() {
     setDocumentNumber(copyNumber)
     setEditingDocumentId('')
     setSaveStatus(`${copyNumber} saved as a new copy.`)
+    setBaselineFingerprint('')
+    showToast('Money receipt copy saved.', 'success')
   }
 
   const validateReceipt = () => {
@@ -131,6 +166,7 @@ export default function MoneyReceipt() {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
+      showToast(error, 'error')
       return
     }
     setFormError('')
@@ -140,6 +176,7 @@ export default function MoneyReceipt() {
       documentNumber,
       type: 'Money-Receipt'
     })
+    showToast('PDF save window opened.', 'success')
   }
 
   const resetReceiptForm = () => {
@@ -156,7 +193,9 @@ export default function MoneyReceipt() {
     setNotes('')
     setSaveStatus('')
     setFormError('')
+    setBaselineFingerprint('')
     clearFormDraft('moneyReceipt')
+    showToast('Money receipt form reset.', 'success')
   }
 
   return (
@@ -242,7 +281,7 @@ export default function MoneyReceipt() {
             </section>
           </div>
 
-          <div className="document-action-grid mt-5">
+          <div className="document-action-grid form-action-sticky mt-5">
             <Button onClick={saveReceipt} type="button" variant="secondary">
               {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
             </Button>
