@@ -408,7 +408,7 @@ export default function Quotation() {
             </section>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <div className="document-action-grid mt-5">
             <Button onClick={printQuotation} type="button">
               <Printer size={18} aria-hidden="true" />
               {isBn ? 'কোটেশন প্রিন্ট' : 'Print Quotation'}

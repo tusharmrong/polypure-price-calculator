@@ -381,7 +381,7 @@ export default function Invoice() {
             </section>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <div className="document-action-grid mt-5">
             <Button onClick={printInvoice} type="button">
               <Printer size={18} aria-hidden="true" />
               {isBn ? 'ইনভয়েস প্রিন্ট' : 'Print Invoice'}
