@@ -32,6 +32,45 @@ export default function History() {
     })
   }, [documents, search, typeFilter, viewMode])
 
+  const exportHistoryCsv = () => {
+    if (!savedDocuments.length) return
+    const rows = savedDocuments.map((doc) => ({
+      date: doc.displayDate || doc.date || '',
+      type: doc.type || '',
+      number: doc.number || '',
+      client: doc.clientName || '',
+      amount: doc.totalAmount ?? doc.amount ?? 0,
+      status: doc.deletedAt ? 'Trash' : 'Active'
+    }))
+
+    const header = ['Date', 'Document Type', 'Document Number', 'Client Name', 'Amount', 'Status']
+    const escapeValue = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
+    const lines = [
+      header.join(','),
+      ...rows.map((row) =>
+        [
+          escapeValue(row.date),
+          escapeValue(row.type),
+          escapeValue(row.number),
+          escapeValue(row.client),
+          escapeValue(Number(row.amount).toFixed(2)),
+          escapeValue(row.status)
+        ].join(',')
+      )
+    ]
+
+    const csv = '\uFEFF' + lines.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `polypure-history-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const openDocument = (document, duplicate = false) => {
     if (isShowingSamples || document.deletedAt) {
       return
@@ -93,7 +132,18 @@ export default function History() {
             {isShowingSamples ? t('history_sample_note') : t('history_saved_note')}
           </p>
         </div>
-        <p className="text-sm font-semibold text-brand-700">{documents.length} document{documents.length === 1 ? '' : 's'}</p>
+        <div className="flex items-center gap-2">
+          <Button
+            className="min-h-9 px-3 py-2 text-xs"
+            disabled={!savedDocuments.length}
+            onClick={exportHistoryCsv}
+            type="button"
+            variant="secondary"
+          >
+            Export CSV
+          </Button>
+          <p className="text-sm font-semibold text-brand-700">{documents.length} document{documents.length === 1 ? '' : 's'}</p>
+        </div>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
