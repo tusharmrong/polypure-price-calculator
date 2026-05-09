@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useBeforeUnload, useBlocker } from 'react-router-dom'
+import { useBeforeUnload, useBlocker } from 'react-router'
 
 export function useUnsavedChangesGuard(when, message = 'You have unsaved changes. Leave this page?') {
   useBeforeUnload((event) => {
