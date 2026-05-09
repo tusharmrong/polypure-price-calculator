@@ -5,29 +5,34 @@ import Input from '../components/Input.jsx'
 import Select from '../components/Select.jsx'
 import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
-import { loadDocuments } from '../utils/documents.js'
+import { hardDeleteDocument, loadDocuments, restoreDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function History() {
   const { t } = useUiLanguage()
   const navigate = useNavigate()
-  const savedDocuments = useMemo(() => loadDocuments(), [])
+  const [savedDocuments, setSavedDocuments] = useState(() => loadDocuments())
   const [typeFilter, setTypeFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [viewMode, setViewMode] = useState('active')
   const documents = savedDocuments.length > 0 ? savedDocuments : sampleDocuments
   const isShowingSamples = savedDocuments.length === 0
+  const activeCount = useMemo(() => savedDocuments.filter((doc) => !doc.deletedAt).length, [savedDocuments])
+  const trashCount = useMemo(() => savedDocuments.filter((doc) => doc.deletedAt).length, [savedDocuments])
   const filteredDocuments = useMemo(() => {
     return documents.filter((document) => {
+      if (viewMode === 'active' && document.deletedAt) return false
+      if (viewMode === 'trash' && !document.deletedAt) return false
       const typeMatch = typeFilter === 'All' || document.type === typeFilter
       const searchText = `${document.number} ${document.clientName}`.toLowerCase()
       const searchMatch = search.trim() === '' || searchText.includes(search.trim().toLowerCase())
       return typeMatch && searchMatch
     })
-  }, [documents, search, typeFilter])
+  }, [documents, search, typeFilter, viewMode])
 
   const openDocument = (document, duplicate = false) => {
-    if (isShowingSamples) {
+    if (isShowingSamples || document.deletedAt) {
       return
     }
     const targetByType = {
@@ -41,6 +46,22 @@ export default function History() {
     }
     const prefillDocument = duplicate ? { ...document, id: '', number: '' } : document
     navigate(targetPath, { state: { prefillDocument } })
+  }
+
+  const handleSoftDelete = (documentId) => {
+    if (isShowingSamples) return
+    softDeleteDocument(documentId)
+    setSavedDocuments(loadDocuments())
+  }
+
+  const handleRestore = (documentId) => {
+    restoreDocument(documentId)
+    setSavedDocuments(loadDocuments())
+  }
+
+  const handleHardDelete = (documentId) => {
+    hardDeleteDocument(documentId)
+    setSavedDocuments(loadDocuments())
   }
 
   return (
@@ -71,8 +92,29 @@ export default function History() {
         />
       </div>
 
+      {!isShowingSamples ? (
+        <div className="mb-4 flex gap-2">
+          <Button
+            className="min-h-10 px-3 py-2 text-xs"
+            onClick={() => setViewMode('active')}
+            type="button"
+            variant={viewMode === 'active' ? 'primary' : 'secondary'}
+          >
+            Active ({activeCount})
+          </Button>
+          <Button
+            className="min-h-10 px-3 py-2 text-xs"
+            onClick={() => setViewMode('trash')}
+            type="button"
+            variant={viewMode === 'trash' ? 'primary' : 'secondary'}
+          >
+            Trash ({trashCount})
+          </Button>
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-lg border border-slate-200">
-        <div className="hidden grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_170px] bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 md:grid">
+        <div className="hidden grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_230px] bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 md:grid">
           <span>Document Type</span>
           <span>Document Number</span>
           <span>Client Name</span>
@@ -83,7 +125,7 @@ export default function History() {
         <div className="divide-y divide-slate-200">
           {filteredDocuments.map((document) => (
             <div
-              className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_170px] md:items-center"
+              className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr_230px] md:items-center"
               key={document.id || document.number}
             >
               <p className="font-semibold text-slate-950">{document.type}</p>
@@ -92,12 +134,28 @@ export default function History() {
               <p className="text-slate-600">{document.displayDate || document.date}</p>
               <p className="font-bold text-brand-700 md:text-right">{formatCurrency(document.totalAmount || document.amount)}</p>
               <div className="flex gap-2 md:justify-end">
-                <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document)} type="button" variant="secondary">
-                  {t('open')}
-                </Button>
-                <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document, true)} type="button" variant="secondary">
-                  {t('duplicate')}
-                </Button>
+                {viewMode === 'active' ? (
+                  <>
+                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document)} type="button" variant="secondary">
+                      {t('open')}
+                    </Button>
+                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => openDocument(document, true)} type="button" variant="secondary">
+                      {t('duplicate')}
+                    </Button>
+                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isShowingSamples} onClick={() => handleSoftDelete(document.id)} type="button" variant="secondary">
+                      Delete
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleRestore(document.id)} type="button" variant="secondary">
+                      Restore
+                    </Button>
+                    <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleHardDelete(document.id)} type="button" variant="secondary">
+                      Delete Permanently
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ))}
