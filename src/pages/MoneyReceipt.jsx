@@ -14,7 +14,7 @@ import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
-import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
+import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { printWithFileName } from '../utils/pdf.js'
 
 export default function MoneyReceipt() {
@@ -113,6 +113,21 @@ export default function MoneyReceipt() {
     })
   }
 
+  const resetReceiptForm = () => {
+    const today = getTodayInputDate()
+    setDocumentDate(today)
+    setClientName('')
+    setPhone('')
+    setAddress('')
+    setReceivedAmount('')
+    setPaymentMethod('Cash')
+    setWorkDetails('')
+    setNotes('')
+    setSaveStatus('')
+    setFormError('')
+    clearFormDraft('moneyReceipt')
+  }
+
   return (
     <div className="grid gap-5">
       {draft ? (
@@ -206,6 +221,9 @@ export default function MoneyReceipt() {
             </Button>
             <Button onClick={savePdfReceipt} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={resetReceiptForm} type="button" variant="secondary">
+              {isBn ? 'নতুন রিসিপ্ট' : 'New Receipt'}
             </Button>
           </div>
           {saveStatus ? (

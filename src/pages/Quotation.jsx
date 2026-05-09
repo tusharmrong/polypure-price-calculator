@@ -10,7 +10,7 @@ import { loadCalculatorDraft, normalizeThicknessText } from '../utils/calculator
 import { loadCompanySettings } from '../utils/companySettings.js'
 import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../utils/documentNumber.js'
 import { saveDocument } from '../utils/documents.js'
-import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
+import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
@@ -198,6 +198,22 @@ export default function Quotation() {
         }
       }
     })
+  }
+
+  const resetQuotationForm = () => {
+    const today = getTodayInputDate()
+    setDocumentDate(today)
+    setClientName('')
+    setPhone('')
+    setAddress('')
+    setItems([createItem()])
+    setDiscount(formatDecimal(0))
+    setAdvancePercent(formatDecimal(40, 0))
+    setNotes('')
+    setTerms(companySettings.terms || defaultSettings.terms)
+    setSaveStatus('')
+    setFormError('')
+    clearFormDraft('quotation')
   }
 
   const validateQuotation = () => {
@@ -405,6 +421,9 @@ export default function Quotation() {
             </Button>
             <Button onClick={savePdfQuotation} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={resetQuotationForm} type="button" variant="secondary">
+              {isBn ? 'নতুন কোটেশন' : 'New Quotation'}
             </Button>
           </div>
           {saveStatus ? (

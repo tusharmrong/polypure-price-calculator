@@ -14,7 +14,7 @@ import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
-import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
+import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { printWithFileName } from '../utils/pdf.js'
 
 function createItem(draft) {
@@ -201,6 +201,22 @@ export default function Invoice() {
     })
   }
 
+  const resetInvoiceForm = () => {
+    const today = getTodayInputDate()
+    setDocumentDate(today)
+    setClientName('')
+    setPhone('')
+    setAddress('')
+    setItems([createItem()])
+    setDiscount(formatDecimal(0))
+    setPaidAmount(formatDecimal(0))
+    setNotes('')
+    setTerms(companySettings.terms || defaultSettings.terms)
+    setSaveStatus('')
+    setFormError('')
+    clearFormDraft('invoice')
+  }
+
   const validateInvoice = () => {
     if (!clientName.trim()) return 'Please enter client name.'
     if (!items.length) return 'Please add at least one item.'
@@ -378,6 +394,9 @@ export default function Invoice() {
             </Button>
             <Button onClick={savePdfInvoice} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={resetInvoiceForm} type="button" variant="secondary">
+              {isBn ? 'নতুন ইনভয়েস' : 'New Invoice'}
             </Button>
           </div>
           {saveStatus ? (
