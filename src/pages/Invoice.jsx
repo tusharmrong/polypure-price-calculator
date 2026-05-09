@@ -15,6 +15,7 @@ import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
+import { printWithFileName } from '../utils/pdf.js'
 
 function createItem(draft) {
   return {
@@ -179,6 +180,21 @@ export default function Invoice() {
           notes
         }
       }
+    })
+  }
+
+  const savePdfInvoice = () => {
+    const error = validateInvoice()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    saveInvoice()
+    printWithFileName({
+      clientName: clientName || 'Client',
+      documentNumber,
+      type: 'Invoice'
     })
   }
 
@@ -357,8 +373,8 @@ export default function Invoice() {
             <Button onClick={createReceiptFromInvoice} type="button" variant="secondary">
               {isBn ? 'মানি রিসিপ্ট তৈরি' : 'Create Money Receipt'}
             </Button>
-            <Button disabled variant="secondary">
-              PDF Later
+            <Button onClick={savePdfInvoice} type="button" variant="secondary">
+              {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>
           </div>
           {saveStatus ? (

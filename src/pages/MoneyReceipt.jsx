@@ -15,6 +15,7 @@ import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
+import { printWithFileName } from '../utils/pdf.js'
 
 export default function MoneyReceipt() {
   const { language } = useUiLanguage()
@@ -95,6 +96,21 @@ export default function MoneyReceipt() {
     if (Number(receivedAmount || 0) <= 0) return 'Received amount must be greater than zero.'
     if (!workDetails.trim()) return 'Please enter invoice or work details.'
     return ''
+  }
+
+  const savePdfReceipt = () => {
+    const error = validateReceipt()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    saveReceipt()
+    printWithFileName({
+      clientName: clientName || 'Client',
+      documentNumber,
+      type: 'Money-Receipt'
+    })
   }
 
   return (
@@ -188,8 +204,8 @@ export default function MoneyReceipt() {
             <Button onClick={saveReceipt} type="button" variant="secondary">
               {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
             </Button>
-            <Button disabled variant="secondary">
-              PDF Later
+            <Button onClick={savePdfReceipt} type="button" variant="secondary">
+              {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>
           </div>
           {saveStatus ? (

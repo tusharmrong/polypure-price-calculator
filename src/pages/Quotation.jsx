@@ -15,6 +15,7 @@ import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { printWithFileName } from '../utils/pdf.js'
 
 function createItem(draft) {
   return {
@@ -155,6 +156,21 @@ export default function Quotation() {
       terms
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+  }
+
+  const savePdfQuotation = () => {
+    const error = validateQuotation()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    saveQuotation()
+    printWithFileName({
+      clientName: clientName || 'Client',
+      documentNumber,
+      type: 'Quotation'
+    })
   }
 
   const createInvoiceFromQuotation = () => {
@@ -384,8 +400,8 @@ export default function Quotation() {
             <Button onClick={createInvoiceFromQuotation} type="button" variant="secondary">
               {isBn ? 'ইনভয়েস তৈরি' : 'Create Invoice'}
             </Button>
-            <Button disabled variant="secondary">
-              PDF Later
+            <Button onClick={savePdfQuotation} type="button" variant="secondary">
+              {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>
           </div>
           {saveStatus ? (
