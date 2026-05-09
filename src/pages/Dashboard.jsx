@@ -4,16 +4,50 @@ import {
   ReceiptText,
   Settings,
   SquarePen,
+  TrendingUp,
   WalletCards
 } from 'lucide-react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
+import { loadDocuments } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Dashboard() {
   const { t } = useUiLanguage()
+  const savedDocuments = useMemo(() => loadDocuments(), [])
+  const documents = savedDocuments.length > 0 ? savedDocuments : sampleDocuments
+  const activeDocuments = useMemo(
+    () => documents.filter((document) => !document.deletedAt),
+    [documents]
+  )
+  const monthlySummary = useMemo(() => {
+    const now = new Date()
+    const month = now.getMonth()
+    const year = now.getFullYear()
+    const summary = {
+      quotationCount: 0,
+      invoiceCount: 0,
+      receiptCount: 0,
+      totalAmount: 0
+    }
+
+    activeDocuments.forEach((document) => {
+      const dateValue = document.date ? new Date(`${document.date}T00:00:00`) : null
+      if (!dateValue || Number.isNaN(dateValue.getTime())) return
+      if (dateValue.getMonth() !== month || dateValue.getFullYear() !== year) return
+
+      if (document.type === 'Quotation') summary.quotationCount += 1
+      if (document.type === 'Invoice') summary.invoiceCount += 1
+      if (document.type === 'Money Receipt') summary.receiptCount += 1
+      summary.totalAmount += Number(document.totalAmount ?? document.amount ?? 0)
+    })
+
+    return summary
+  }, [activeDocuments])
+
   const actions = [
     { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
     { label: t('nav_quotation'), path: '/quotation', icon: SquarePen },
@@ -59,26 +93,54 @@ export default function Dashboard() {
 
       <Card>
         <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="text-lg font-bold text-slate-950">This Month Summary</h3>
+          <span className="inline-flex items-center gap-2 rounded-lg bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+            <TrendingUp size={14} aria-hidden="true" />
+            Live
+          </span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm text-slate-500">Quotations</p>
+            <p className="mt-1 text-xl font-bold text-slate-950">{monthlySummary.quotationCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm text-slate-500">Invoices</p>
+            <p className="mt-1 text-xl font-bold text-slate-950">{monthlySummary.invoiceCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm text-slate-500">Money Receipts</p>
+            <p className="mt-1 text-xl font-bold text-slate-950">{monthlySummary.receiptCount}</p>
+          </div>
+          <div className="rounded-lg border border-brand-100 bg-brand-50 p-3">
+            <p className="text-sm text-brand-700">Total Amount</p>
+            <p className="mt-1 text-xl font-bold text-brand-700">{formatCurrency(monthlySummary.totalAmount)}</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="text-lg font-bold text-slate-950">{t('dashboard_recent_documents')}</h3>
           <Link className="text-sm font-semibold text-brand-700" to="/history">
             {t('view_all')}
           </Link>
         </div>
         <div className="grid gap-3">
-          {sampleDocuments.map((document) => (
+          {activeDocuments.slice(0, 6).map((document) => (
             <div
               className="grid gap-1 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
-              key={document.number}
+              key={document.id || document.number}
             >
               <div>
                 <p className="font-semibold text-slate-950">
                   {document.type} | {document.number}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {document.clientName} | {document.date}
+                  {document.clientName} | {document.displayDate || document.date}
                 </p>
               </div>
-              <p className="font-bold text-brand-700">{formatCurrency(document.amount)}</p>
+              <p className="font-bold text-brand-700">{formatCurrency(document.totalAmount || document.amount)}</p>
             </div>
           ))}
         </div>
