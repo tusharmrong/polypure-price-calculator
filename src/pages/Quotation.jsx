@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Printer, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -409,13 +409,6 @@ export default function Quotation() {
           </div>
 
           <div className="document-action-grid mt-5">
-            <Button onClick={printQuotation} type="button">
-              <Printer size={18} aria-hidden="true" />
-              {isBn ? 'কোটেশন প্রিন্ট' : 'Print Quotation'}
-            </Button>
-            <Button onClick={saveQuotation} type="button" variant="secondary">
-              {isBn ? 'কোটেশন সেভ' : 'Save Quotation'}
-            </Button>
             <Button onClick={createInvoiceFromQuotation} type="button" variant="secondary">
               {isBn ? 'ইনভয়েস তৈরি' : 'Create Invoice'}
             </Button>
