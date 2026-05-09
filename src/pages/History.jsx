@@ -16,6 +16,7 @@ export default function History() {
   const [typeFilter, setTypeFilter] = useState('All')
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('active')
+  const [undoInfo, setUndoInfo] = useState(null)
   const documents = savedDocuments.length > 0 ? savedDocuments : sampleDocuments
   const isShowingSamples = savedDocuments.length === 0
   const activeCount = useMemo(() => savedDocuments.filter((doc) => !doc.deletedAt).length, [savedDocuments])
@@ -50,8 +51,16 @@ export default function History() {
 
   const handleSoftDelete = (documentId) => {
     if (isShowingSamples) return
+    const target = savedDocuments.find((doc) => doc.id === documentId)
+    if (!target) return
+    const ok = window.confirm(`Move "${target.number}" to Trash?`)
+    if (!ok) return
     softDeleteDocument(documentId)
     setSavedDocuments(loadDocuments())
+    setUndoInfo(target)
+    window.setTimeout(() => {
+      setUndoInfo((current) => (current?.id === target.id ? null : current))
+    }, 8000)
   }
 
   const handleRestore = (documentId) => {
@@ -60,8 +69,19 @@ export default function History() {
   }
 
   const handleHardDelete = (documentId) => {
+    const target = savedDocuments.find((doc) => doc.id === documentId)
+    if (!target) return
+    const ok = window.confirm(`Permanently delete "${target.number}"? This cannot be undone.`)
+    if (!ok) return
     hardDeleteDocument(documentId)
     setSavedDocuments(loadDocuments())
+  }
+
+  const undoSoftDelete = () => {
+    if (!undoInfo?.id) return
+    restoreDocument(undoInfo.id)
+    setSavedDocuments(loadDocuments())
+    setUndoInfo(null)
   }
 
   return (
@@ -164,6 +184,17 @@ export default function History() {
           ) : null}
         </div>
       </div>
+
+      {undoInfo ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3">
+          <p className="text-sm font-medium text-slate-700">
+            Moved <span className="font-bold">{undoInfo.number}</span> to Trash.
+          </p>
+          <Button className="min-h-9 px-3 py-2 text-xs" onClick={undoSoftDelete} type="button" variant="secondary">
+            Undo
+          </Button>
+        </div>
+      ) : null}
     </Card>
   )
 }
