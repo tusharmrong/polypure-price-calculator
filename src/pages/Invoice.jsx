@@ -39,7 +39,12 @@ export default function Invoice() {
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
   const savedDraft = useMemo(() => loadFormDraft('invoice', null), [])
-  const [documentDate, setDocumentDate] = useState(prefill?.date || savedDraft?.documentDate || getTodayInputDate())
+  const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
+  const [documentDate, setDocumentDate] = useState(initialDate)
+  const [documentNumber, setDocumentNumber] = useState(
+    prefill?.number || savedDraft?.documentNumber || createDocumentNumber('PP-I', initialDate)
+  )
+  const [editingDocumentId, setEditingDocumentId] = useState(prefill?.id || savedDraft?.editingDocumentId || '')
   const [clientName, setClientName] = useState(prefill?.clientName || savedDraft?.clientName || '')
   const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
   const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
@@ -72,7 +77,6 @@ export default function Invoice() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
 
-  const documentNumber = useMemo(() => createDocumentNumber('PP-I', documentDate), [documentDate])
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
     const nextTotal = subtotal - Number(discount || 0)
@@ -88,6 +92,8 @@ export default function Invoice() {
   useEffect(() => {
     saveFormDraft('invoice', {
       documentDate,
+      documentNumber,
+      editingDocumentId,
       clientName,
       phone,
       address,
@@ -97,7 +103,13 @@ export default function Invoice() {
       notes,
       terms
     })
-  }, [address, clientName, discount, documentDate, items, notes, paidAmount, phone, terms])
+  }, [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms])
+
+  useEffect(() => {
+    if (!editingDocumentId) {
+      setDocumentNumber(createDocumentNumber('PP-I', documentDate))
+    }
+  }, [documentDate, editingDocumentId])
 
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
@@ -117,16 +129,6 @@ export default function Invoice() {
     setItems((current) => (current.length > 1 ? current.filter((item) => item.id !== id) : current))
   }
 
-  const printInvoice = () => {
-    const error = validateInvoice()
-    if (error) {
-      setFormError(error)
-      return
-    }
-    setFormError('')
-    window.print()
-  }
-
   const saveInvoice = () => {
     const error = validateInvoice()
     if (error) {
@@ -135,6 +137,7 @@ export default function Invoice() {
     }
     setFormError('')
     saveDocument({
+      id: editingDocumentId || undefined,
       type: 'Invoice',
       number: documentNumber,
       date: documentDate,
@@ -158,6 +161,40 @@ export default function Invoice() {
     setSaveStatus(`${documentNumber} saved to History.`)
   }
 
+  const saveInvoiceAsCopy = () => {
+    const error = validateInvoice()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    const copyNumber = createDocumentNumber('PP-I', documentDate)
+    saveDocument({
+      type: 'Invoice',
+      number: copyNumber,
+      date: documentDate,
+      displayDate: readableDate,
+      clientName: clientName || 'Client Name',
+      phone,
+      address,
+      items: items.map((item, index) => ({
+        ...item,
+        no: index + 1,
+        amount: itemAmount(item)
+      })),
+      subtotal,
+      discount: Number(discount || 0),
+      totalAmount,
+      paidAmount: Number(paidAmount || 0),
+      dueAmount,
+      notes,
+      terms
+    })
+    setDocumentNumber(copyNumber)
+    setEditingDocumentId('')
+    setSaveStatus(`${copyNumber} saved as a new copy.`)
+  }
+
   const savePdfInvoice = () => {
     const error = validateInvoice()
     if (error) {
@@ -176,6 +213,8 @@ export default function Invoice() {
   const resetInvoiceForm = () => {
     const today = getTodayInputDate()
     setDocumentDate(today)
+    setDocumentNumber(createDocumentNumber('PP-I', today))
+    setEditingDocumentId('')
     setClientName('')
     setPhone('')
     setAddress('')
@@ -354,8 +393,14 @@ export default function Invoice() {
           </div>
 
           <div className="document-action-grid mt-5">
+            <Button onClick={saveInvoice} type="button" variant="secondary">
+              {isBn ? 'ইনভয়েস সেভ' : 'Save Invoice'}
+            </Button>
             <Button onClick={savePdfInvoice} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={saveInvoiceAsCopy} type="button" variant="secondary">
+              {isBn ? 'নতুন কপি সেভ' : 'Save as Copy'}
             </Button>
             <Button onClick={resetInvoiceForm} type="button" variant="secondary">
               {isBn ? 'নতুন ইনভয়েস' : 'New Invoice'}

@@ -39,7 +39,12 @@ export default function Quotation() {
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
   const savedDraft = useMemo(() => loadFormDraft('quotation', null), [])
-  const [documentDate, setDocumentDate] = useState(prefill?.date || savedDraft?.documentDate || getTodayInputDate())
+  const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
+  const [documentDate, setDocumentDate] = useState(initialDate)
+  const [documentNumber, setDocumentNumber] = useState(
+    prefill?.number || savedDraft?.documentNumber || createDocumentNumber('PP-Q', initialDate)
+  )
+  const [editingDocumentId, setEditingDocumentId] = useState(prefill?.id || savedDraft?.editingDocumentId || '')
   const [clientName, setClientName] = useState(prefill?.clientName || savedDraft?.clientName || '')
   const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
   const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
@@ -74,7 +79,6 @@ export default function Quotation() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
 
-  const documentNumber = useMemo(() => createDocumentNumber('PP-Q', documentDate), [documentDate])
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
     const nextTotal = subtotal - Number(discount || 0)
@@ -90,6 +94,8 @@ export default function Quotation() {
   useEffect(() => {
     saveFormDraft('quotation', {
       documentDate,
+      documentNumber,
+      editingDocumentId,
       clientName,
       phone,
       address,
@@ -99,7 +105,13 @@ export default function Quotation() {
       notes,
       terms
     })
-  }, [address, advancePercent, clientName, discount, documentDate, items, notes, phone, terms])
+  }, [address, advancePercent, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, phone, terms])
+
+  useEffect(() => {
+    if (!editingDocumentId) {
+      setDocumentNumber(createDocumentNumber('PP-Q', documentDate))
+    }
+  }, [documentDate, editingDocumentId])
 
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
@@ -119,16 +131,6 @@ export default function Quotation() {
     setItems((current) => (current.length > 1 ? current.filter((item) => item.id !== id) : current))
   }
 
-  const printQuotation = () => {
-    const error = validateQuotation()
-    if (error) {
-      setFormError(error)
-      return
-    }
-    setFormError('')
-    window.print()
-  }
-
   const saveQuotation = () => {
     const error = validateQuotation()
     if (error) {
@@ -137,6 +139,7 @@ export default function Quotation() {
     }
     setFormError('')
     saveDocument({
+      id: editingDocumentId || undefined,
       type: 'Quotation',
       number: documentNumber,
       date: documentDate,
@@ -160,6 +163,40 @@ export default function Quotation() {
     setSaveStatus(`${documentNumber} saved to History.`)
   }
 
+  const saveQuotationAsCopy = () => {
+    const error = validateQuotation()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    const copyNumber = createDocumentNumber('PP-Q', documentDate)
+    saveDocument({
+      type: 'Quotation',
+      number: copyNumber,
+      date: documentDate,
+      displayDate: readableDate,
+      clientName: clientName || 'Client Name',
+      phone,
+      address,
+      items: items.map((item, index) => ({
+        ...item,
+        no: index + 1,
+        amount: itemAmount(item)
+      })),
+      subtotal,
+      discount: Number(discount || 0),
+      totalAmount,
+      advancePercent: Number(advancePercent || 0),
+      advanceAmount,
+      notes,
+      terms
+    })
+    setDocumentNumber(copyNumber)
+    setEditingDocumentId('')
+    setSaveStatus(`${copyNumber} saved as a new copy.`)
+  }
+
   const savePdfQuotation = () => {
     const error = validateQuotation()
     if (error) {
@@ -178,6 +215,8 @@ export default function Quotation() {
   const resetQuotationForm = () => {
     const today = getTodayInputDate()
     setDocumentDate(today)
+    setDocumentNumber(createDocumentNumber('PP-Q', today))
+    setEditingDocumentId('')
     setClientName('')
     setPhone('')
     setAddress('')
@@ -384,8 +423,14 @@ export default function Quotation() {
           </div>
 
           <div className="document-action-grid mt-5">
+            <Button onClick={saveQuotation} type="button" variant="secondary">
+              {isBn ? 'কোটেশন সেভ' : 'Save Quotation'}
+            </Button>
             <Button onClick={savePdfQuotation} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={saveQuotationAsCopy} type="button" variant="secondary">
+              {isBn ? 'নতুন কপি সেভ' : 'Save as Copy'}
             </Button>
             <Button onClick={resetQuotationForm} type="button" variant="secondary">
               {isBn ? 'নতুন কোটেশন' : 'New Quotation'}

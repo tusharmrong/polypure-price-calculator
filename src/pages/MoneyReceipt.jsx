@@ -24,7 +24,12 @@ export default function MoneyReceipt() {
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
   const savedDraft = useMemo(() => loadFormDraft('moneyReceipt', null), [])
-  const [documentDate, setDocumentDate] = useState(prefill?.date || savedDraft?.documentDate || getTodayInputDate())
+  const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
+  const [documentDate, setDocumentDate] = useState(initialDate)
+  const [documentNumber, setDocumentNumber] = useState(
+    prefill?.number || savedDraft?.documentNumber || createDocumentNumber('PP-R', initialDate)
+  )
+  const [editingDocumentId, setEditingDocumentId] = useState(prefill?.id || savedDraft?.editingDocumentId || '')
   const [clientName, setClientName] = useState(prefill?.clientName || savedDraft?.clientName || '')
   const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
   const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
@@ -39,13 +44,14 @@ export default function MoneyReceipt() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
 
-  const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
 
   useEffect(() => {
     saveFormDraft('moneyReceipt', {
       documentDate,
+      documentNumber,
+      editingDocumentId,
       clientName,
       phone,
       address,
@@ -54,7 +60,13 @@ export default function MoneyReceipt() {
       workDetails,
       notes
     })
-  }, [address, clientName, documentDate, notes, paymentMethod, phone, receivedAmount, workDetails])
+  }, [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, workDetails])
+
+  useEffect(() => {
+    if (!editingDocumentId) {
+      setDocumentNumber(createDocumentNumber('PP-R', documentDate))
+    }
+  }, [documentDate, editingDocumentId])
 
   const saveReceipt = () => {
     const error = validateReceipt()
@@ -64,6 +76,7 @@ export default function MoneyReceipt() {
     }
     setFormError('')
     saveDocument({
+      id: editingDocumentId || undefined,
       type: 'Money Receipt',
       number: documentNumber,
       date: documentDate,
@@ -78,6 +91,33 @@ export default function MoneyReceipt() {
       notes
     })
     setSaveStatus(`${documentNumber} saved to History.`)
+  }
+
+  const saveReceiptAsCopy = () => {
+    const error = validateReceipt()
+    if (error) {
+      setFormError(error)
+      return
+    }
+    setFormError('')
+    const copyNumber = createDocumentNumber('PP-R', documentDate)
+    saveDocument({
+      type: 'Money Receipt',
+      number: copyNumber,
+      date: documentDate,
+      displayDate: readableDate,
+      clientName: clientName || 'Client Name',
+      phone,
+      address,
+      receivedAmount: Number(receivedAmount || 0),
+      totalAmount: Number(receivedAmount || 0),
+      paymentMethod,
+      workDetails,
+      notes
+    })
+    setDocumentNumber(copyNumber)
+    setEditingDocumentId('')
+    setSaveStatus(`${copyNumber} saved as a new copy.`)
   }
 
   const validateReceipt = () => {
@@ -105,6 +145,8 @@ export default function MoneyReceipt() {
   const resetReceiptForm = () => {
     const today = getTodayInputDate()
     setDocumentDate(today)
+    setDocumentNumber(createDocumentNumber('PP-R', today))
+    setEditingDocumentId('')
     setClientName('')
     setPhone('')
     setAddress('')
@@ -201,8 +243,14 @@ export default function MoneyReceipt() {
           </div>
 
           <div className="document-action-grid mt-5">
+            <Button onClick={saveReceipt} type="button" variant="secondary">
+              {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
+            </Button>
             <Button onClick={savePdfReceipt} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
+            </Button>
+            <Button onClick={saveReceiptAsCopy} type="button" variant="secondary">
+              {isBn ? 'নতুন কপি সেভ' : 'Save as Copy'}
             </Button>
             <Button onClick={resetReceiptForm} type="button" variant="secondary">
               {isBn ? 'নতুন রিসিপ্ট' : 'New Receipt'}

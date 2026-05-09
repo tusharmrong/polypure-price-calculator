@@ -39,7 +39,7 @@ export default function History() {
     if (!targetPath) {
       return
     }
-    const prefillDocument = duplicate ? { ...document, number: '' } : document
+    const prefillDocument = duplicate ? { ...document, id: '', number: '' } : document
     navigate(targetPath, { state: { prefillDocument } })
   }
 
