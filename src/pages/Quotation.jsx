@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
@@ -34,7 +34,6 @@ function itemAmount(item) {
 export default function Quotation() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
-  const navigate = useNavigate()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -173,30 +172,6 @@ export default function Quotation() {
       clientName: clientName || 'Client',
       documentNumber,
       type: 'Quotation'
-    })
-  }
-
-  const createInvoiceFromQuotation = () => {
-    const error = validateQuotation()
-    if (error) {
-      setFormError(error)
-      return
-    }
-    setFormError('')
-    navigate('/invoice', {
-      state: {
-        prefillDocument: {
-          type: 'Quotation',
-          date: documentDate,
-          clientName,
-          phone,
-          address,
-          items,
-          discount: Number(discount || 0),
-          notes,
-          terms
-        }
-      }
     })
   }
 
@@ -409,9 +384,6 @@ export default function Quotation() {
           </div>
 
           <div className="document-action-grid mt-5">
-            <Button onClick={createInvoiceFromQuotation} type="button" variant="secondary">
-              {isBn ? 'ইনভয়েস তৈরি' : 'Create Invoice'}
-            </Button>
             <Button onClick={savePdfQuotation} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>

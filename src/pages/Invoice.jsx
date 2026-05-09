@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
@@ -34,7 +34,6 @@ function itemAmount(item) {
 export default function Invoice() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
-  const navigate = useNavigate()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
@@ -157,33 +156,6 @@ export default function Invoice() {
       terms
     })
     setSaveStatus(`${documentNumber} saved to History.`)
-  }
-
-  const createReceiptFromInvoice = () => {
-    const error = validateInvoice()
-    if (error) {
-      setFormError(error)
-      return
-    }
-    setFormError('')
-    navigate('/money-receipt', {
-      state: {
-        prefillDocument: {
-          type: 'Invoice',
-          date: documentDate,
-          clientName,
-          phone,
-          address,
-          paymentMethod: 'Cash',
-          workDetails: items
-            .map((item) => normalizeThicknessText(item.description || ''))
-            .filter(Boolean)
-            .join(' | '),
-          receivedAmount: paidAmount,
-          notes
-        }
-      }
-    })
   }
 
   const savePdfInvoice = () => {
@@ -382,9 +354,6 @@ export default function Invoice() {
           </div>
 
           <div className="document-action-grid mt-5">
-            <Button onClick={createReceiptFromInvoice} type="button" variant="secondary">
-              {isBn ? 'মানি রিসিপ্ট তৈরি' : 'Create Money Receipt'}
-            </Button>
             <Button onClick={savePdfInvoice} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>

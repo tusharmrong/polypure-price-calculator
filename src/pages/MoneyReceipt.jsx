@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Printer } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -56,16 +55,6 @@ export default function MoneyReceipt() {
       notes
     })
   }, [address, clientName, documentDate, notes, paymentMethod, phone, receivedAmount, workDetails])
-
-  const printReceipt = () => {
-    const error = validateReceipt()
-    if (error) {
-      setFormError(error)
-      return
-    }
-    setFormError('')
-    window.print()
-  }
 
   const saveReceipt = () => {
     const error = validateReceipt()
@@ -212,13 +201,6 @@ export default function MoneyReceipt() {
           </div>
 
           <div className="document-action-grid mt-5">
-            <Button onClick={printReceipt} type="button">
-              <Printer size={18} aria-hidden="true" />
-              {isBn ? 'রিসিপ্ট প্রিন্ট' : 'Print Receipt'}
-            </Button>
-            <Button onClick={saveReceipt} type="button" variant="secondary">
-              {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
-            </Button>
             <Button onClick={savePdfReceipt} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>
