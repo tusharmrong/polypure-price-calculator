@@ -5,7 +5,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.jsx'
 import './index.css'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
-import { ToastProvider } from './utils/toast.js'
+import { ToastProvider } from './utils/toast.jsx'
 
 const updateSW = registerSW({
   immediate: true,

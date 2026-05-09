@@ -7,7 +7,7 @@ import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
 import { hardDeleteDocument, loadDocuments, restoreDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
-import { useToast } from '../utils/toast.js'
+import { useToast } from '../utils/toast.jsx'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function History() {

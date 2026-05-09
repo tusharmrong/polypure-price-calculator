@@ -16,7 +16,7 @@ import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { printWithFileName } from '../utils/pdf.js'
-import { useToast } from '../utils/toast.js'
+import { useToast } from '../utils/toast.jsx'
 import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
 
 function createItem(draft) {

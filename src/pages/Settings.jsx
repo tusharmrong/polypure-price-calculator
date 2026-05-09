@@ -8,7 +8,7 @@ import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
 import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
-import { useToast } from '../utils/toast.js'
+import { useToast } from '../utils/toast.jsx'
 
 export default function Settings() {
   const { t } = useUiLanguage()
