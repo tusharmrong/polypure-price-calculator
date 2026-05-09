@@ -21,7 +21,7 @@ function createItem(draft) {
   return {
     id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
     description: normalizeThicknessText(draft?.description || ''),
-    quantity: '2000',
+    quantity: String(draft?.quantity ?? '2000'),
     rate: draft?.rate ? formatDecimal(draft.rate) : ''
   }
 }
@@ -52,6 +52,9 @@ export default function Invoice() {
         quantity: String(item.quantity ?? '2000'),
         rate: formatDecimal(item.rate || 0)
       }))
+    }
+    if (draft?.description || draft?.rate) {
+      return [createItem(draft)]
     }
     if (savedDraft?.items?.length) {
       return savedDraft.items.map((item) => ({

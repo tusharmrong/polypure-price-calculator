@@ -30,11 +30,11 @@ export default function MoneyReceipt() {
   const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
   const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
   const [receivedAmount, setReceivedAmount] = useState(
-    prefill?.receivedAmount || savedDraft?.receivedAmount || (draft?.totalAmount ? formatDecimal(draft.totalAmount) : '')
+    prefill?.receivedAmount || (draft?.totalAmount ? formatDecimal(draft.totalAmount) : '') || savedDraft?.receivedAmount || ''
   )
   const [paymentMethod, setPaymentMethod] = useState(prefill?.paymentMethod || savedDraft?.paymentMethod || 'Cash')
   const [workDetails, setWorkDetails] = useState(
-    prefill?.workDetails || savedDraft?.workDetails || (draft?.description ? normalizeThicknessText(draft.description) : '')
+    prefill?.workDetails || (draft?.description ? normalizeThicknessText(draft.description) : '') || savedDraft?.workDetails || ''
   )
   const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
   const [saveStatus, setSaveStatus] = useState('')
