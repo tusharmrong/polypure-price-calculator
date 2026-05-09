@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Printer } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
@@ -14,6 +14,7 @@ import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 
 export default function MoneyReceipt() {
   const { language } = useUiLanguage()
@@ -22,24 +23,38 @@ export default function MoneyReceipt() {
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
-  const [documentDate, setDocumentDate] = useState(prefill?.date || getTodayInputDate())
-  const [clientName, setClientName] = useState(prefill?.clientName || '')
-  const [phone, setPhone] = useState(prefill?.phone || '')
-  const [address, setAddress] = useState(prefill?.address || '')
+  const savedDraft = useMemo(() => loadFormDraft('moneyReceipt', null), [])
+  const [documentDate, setDocumentDate] = useState(prefill?.date || savedDraft?.documentDate || getTodayInputDate())
+  const [clientName, setClientName] = useState(prefill?.clientName || savedDraft?.clientName || '')
+  const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
+  const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
   const [receivedAmount, setReceivedAmount] = useState(
-    prefill?.receivedAmount || (draft?.totalAmount ? formatDecimal(draft.totalAmount) : '')
+    prefill?.receivedAmount || savedDraft?.receivedAmount || (draft?.totalAmount ? formatDecimal(draft.totalAmount) : '')
   )
-  const [paymentMethod, setPaymentMethod] = useState(prefill?.paymentMethod || 'Cash')
+  const [paymentMethod, setPaymentMethod] = useState(prefill?.paymentMethod || savedDraft?.paymentMethod || 'Cash')
   const [workDetails, setWorkDetails] = useState(
-    prefill?.workDetails || (draft?.description ? normalizeThicknessText(draft.description) : '')
+    prefill?.workDetails || savedDraft?.workDetails || (draft?.description ? normalizeThicknessText(draft.description) : '')
   )
-  const [notes, setNotes] = useState(prefill?.notes || '')
+  const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
 
   const documentNumber = useMemo(() => createDocumentNumber('PP-R', documentDate), [documentDate])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
+
+  useEffect(() => {
+    saveFormDraft('moneyReceipt', {
+      documentDate,
+      clientName,
+      phone,
+      address,
+      receivedAmount,
+      paymentMethod,
+      workDetails,
+      notes
+    })
+  }, [address, clientName, documentDate, notes, paymentMethod, phone, receivedAmount, workDetails])
 
   const printReceipt = () => {
     const error = validateReceipt()

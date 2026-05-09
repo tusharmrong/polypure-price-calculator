@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, Printer, Trash2 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
@@ -14,6 +14,7 @@ import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 
 function createItem(draft) {
   return {
@@ -37,10 +38,11 @@ export default function Invoice() {
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
-  const [documentDate, setDocumentDate] = useState(prefill?.date || getTodayInputDate())
-  const [clientName, setClientName] = useState(prefill?.clientName || '')
-  const [phone, setPhone] = useState(prefill?.phone || '')
-  const [address, setAddress] = useState(prefill?.address || '')
+  const savedDraft = useMemo(() => loadFormDraft('invoice', null), [])
+  const [documentDate, setDocumentDate] = useState(prefill?.date || savedDraft?.documentDate || getTodayInputDate())
+  const [clientName, setClientName] = useState(prefill?.clientName || savedDraft?.clientName || '')
+  const [phone, setPhone] = useState(prefill?.phone || savedDraft?.phone || '')
+  const [address, setAddress] = useState(prefill?.address || savedDraft?.address || '')
   const [items, setItems] = useState(() => {
     if (prefill?.items?.length) {
       return prefill.items.map((item) => ({
@@ -50,12 +52,20 @@ export default function Invoice() {
         rate: formatDecimal(item.rate || 0)
       }))
     }
+    if (savedDraft?.items?.length) {
+      return savedDraft.items.map((item) => ({
+        id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+        description: normalizeThicknessText(item.description || ''),
+        quantity: String(item.quantity ?? '2000'),
+        rate: formatDecimal(item.rate || 0)
+      }))
+    }
     return [createItem(draft)]
   })
-  const [discount, setDiscount] = useState(formatDecimal(prefill?.discount || 0))
-  const [paidAmount, setPaidAmount] = useState(formatDecimal(prefill?.paidAmount || 0))
-  const [notes, setNotes] = useState(prefill?.notes || '')
-  const [terms, setTerms] = useState(prefill?.terms || companySettings.terms || defaultSettings.terms)
+  const [discount, setDiscount] = useState(formatDecimal(prefill?.discount ?? savedDraft?.discount ?? 0))
+  const [paidAmount, setPaidAmount] = useState(formatDecimal(prefill?.paidAmount ?? savedDraft?.paidAmount ?? 0))
+  const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
+  const [terms, setTerms] = useState(prefill?.terms || savedDraft?.terms || companySettings.terms || defaultSettings.terms)
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
 
@@ -71,6 +81,20 @@ export default function Invoice() {
   }, [paidAmount, totalAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
+
+  useEffect(() => {
+    saveFormDraft('invoice', {
+      documentDate,
+      clientName,
+      phone,
+      address,
+      items,
+      discount: Number(discount || 0),
+      paidAmount: Number(paidAmount || 0),
+      notes,
+      terms
+    })
+  }, [address, clientName, discount, documentDate, items, notes, paidAmount, phone, terms])
 
   const updateItem = (id, field, value) => {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
