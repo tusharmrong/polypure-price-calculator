@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Printer, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -382,13 +382,6 @@ export default function Invoice() {
           </div>
 
           <div className="document-action-grid mt-5">
-            <Button onClick={printInvoice} type="button">
-              <Printer size={18} aria-hidden="true" />
-              {isBn ? 'ইনভয়েস প্রিন্ট' : 'Print Invoice'}
-            </Button>
-            <Button onClick={saveInvoice} type="button" variant="secondary">
-              {isBn ? 'ইনভয়েস সেভ' : 'Save Invoice'}
-            </Button>
             <Button onClick={createReceiptFromInvoice} type="button" variant="secondary">
               {isBn ? 'মানি রিসিপ্ট তৈরি' : 'Create Money Receipt'}
             </Button>
