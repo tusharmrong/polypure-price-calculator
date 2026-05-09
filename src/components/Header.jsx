@@ -35,6 +35,22 @@ export default function Header() {
           <h1 className="text-xl font-bold text-slate-950">{title}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:inline-flex">
+            <button
+              className={`min-h-9 px-3 text-xs font-semibold ${language === 'bn' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+              onClick={() => setLanguage('bn')}
+              type="button"
+            >
+              {'\u09AC\u09BE\u0982\u09B2\u09BE'}
+            </button>
+            <button
+              className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+              onClick={() => setLanguage('en')}
+              type="button"
+            >
+              EN
+            </button>
+          </div>
           <button
             aria-label="Open menu"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 md:hidden"
