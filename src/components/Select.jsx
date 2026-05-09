@@ -1,6 +1,6 @@
 export default function Select({ label, id, children, className = '', selectClassName = '', ...props }) {
   return (
-    <label className={`grid min-w-0 gap-2 text-sm font-medium text-slate-700 ${className}`} htmlFor={id}>
+    <label className={`grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 ${className}`} htmlFor={id}>
       {label}
       <select
         id={id}

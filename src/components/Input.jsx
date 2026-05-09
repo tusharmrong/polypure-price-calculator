@@ -1,6 +1,6 @@
 export default function Input({ label, id, className = '', inputClassName = '', ...props }) {
   return (
-    <label className={`grid min-w-0 gap-2 text-sm font-medium text-slate-700 ${className}`} htmlFor={id}>
+    <label className={`grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 ${className}`} htmlFor={id}>
       {label}
       <input
         id={id}
