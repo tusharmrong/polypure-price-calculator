@@ -1,14 +1,9 @@
-import { unstable_usePrompt, useBeforeUnload } from 'react-router'
+import { useBeforeUnload } from 'react-router'
 
-export function useUnsavedChangesGuard(when, message = 'You have unsaved changes. Leave this page?') {
+export function useUnsavedChangesGuard(when) {
   useBeforeUnload((event) => {
     if (!when) return
     event.preventDefault()
     event.returnValue = ''
-  })
-
-  unstable_usePrompt({
-    when,
-    message
   })
 }

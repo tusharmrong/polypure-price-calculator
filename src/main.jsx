@@ -7,12 +7,46 @@ import './index.css'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
 import { ToastProvider } from './utils/toast.jsx'
 
+const APP_CACHE_VERSION = '2026-05-10-1'
+const APP_CACHE_VERSION_KEY = 'polypure:appCacheVersion'
+
+async function hardRefreshAppCaches() {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map((registration) => registration.unregister()))
+  } catch {}
+
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.map((key) => caches.delete(key)))
+    }
+  } catch {}
+}
+
+async function ensureLatestCacheVersion() {
+  const currentVersion = window.localStorage.getItem(APP_CACHE_VERSION_KEY)
+  if (currentVersion === APP_CACHE_VERSION) return
+  window.localStorage.setItem(APP_CACHE_VERSION_KEY, APP_CACHE_VERSION)
+  await hardRefreshAppCaches()
+  window.location.reload()
+}
+
+ensureLatestCacheVersion()
+
 const updateSW = registerSW({
   immediate: true,
   onNeedRefresh() {
     updateSW(true)
   },
-  onOfflineReady() {}
+  onOfflineReady() {},
+  onRegisteredSW(_swUrl, registration) {
+    if (!registration) return
+    window.setInterval(() => {
+      registration.update()
+    }, 60 * 60 * 1000)
+  },
+  onRegisterError() {}
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
