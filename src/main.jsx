@@ -7,7 +7,7 @@ import './index.css'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
 import { ToastProvider } from './utils/toast.jsx'
 
-const APP_CACHE_VERSION = '2026-05-10-1'
+const APP_CACHE_VERSION = '2026-05-10-2'
 const APP_CACHE_VERSION_KEY = 'polypure:appCacheVersion'
 
 async function hardRefreshAppCaches() {
