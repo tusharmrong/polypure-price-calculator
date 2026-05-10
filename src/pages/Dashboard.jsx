@@ -23,6 +23,17 @@ export default function Dashboard() {
     () => documents.filter((document) => !document.deletedAt),
     [documents]
   )
+  const uniqueActiveDocuments = useMemo(() => {
+    const seen = new Set()
+    return activeDocuments.filter((document) => {
+      const key = `${document.type}::${document.number}`
+      if (!document.number) return true
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [activeDocuments])
+
   const monthlySummary = useMemo(() => {
     const now = new Date()
     const month = now.getMonth()
@@ -31,22 +42,24 @@ export default function Dashboard() {
       quotationCount: 0,
       invoiceCount: 0,
       receiptCount: 0,
-      totalAmount: 0
+      totalReceivedAmount: 0
     }
 
-    activeDocuments.forEach((document) => {
+    uniqueActiveDocuments.forEach((document) => {
       const dateValue = document.date ? new Date(`${document.date}T00:00:00`) : null
       if (!dateValue || Number.isNaN(dateValue.getTime())) return
       if (dateValue.getMonth() !== month || dateValue.getFullYear() !== year) return
 
       if (document.type === 'Quotation') summary.quotationCount += 1
       if (document.type === 'Invoice') summary.invoiceCount += 1
-      if (document.type === 'Money Receipt') summary.receiptCount += 1
-      summary.totalAmount += Number(document.totalAmount ?? document.amount ?? 0)
+      if (document.type === 'Money Receipt') {
+        summary.receiptCount += 1
+        summary.totalReceivedAmount += Number(document.receivedAmount ?? document.totalAmount ?? document.amount ?? 0)
+      }
     })
 
     return summary
-  }, [activeDocuments])
+  }, [uniqueActiveDocuments])
 
   const actions = [
     { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
@@ -113,8 +126,8 @@ export default function Dashboard() {
             <p className="mt-1 text-xl font-bold text-slate-950">{monthlySummary.receiptCount}</p>
           </div>
           <div className="rounded-lg border border-brand-100 bg-brand-50 p-3">
-            <p className="text-sm text-brand-700">Total Amount</p>
-            <p className="mt-1 text-xl font-bold text-brand-700">{formatCurrency(monthlySummary.totalAmount)}</p>
+            <p className="text-sm text-brand-700">Real Received</p>
+            <p className="mt-1 text-xl font-bold text-brand-700">{formatCurrency(monthlySummary.totalReceivedAmount)}</p>
           </div>
         </div>
       </Card>
