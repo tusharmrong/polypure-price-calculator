@@ -210,7 +210,7 @@ export default function MoneyReceipt() {
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <Card className="no-print relative z-10 pointer-events-auto">
+        <Card className="no-print relative z-10">
           <div className="mb-5 flex items-center gap-3">
             <img
               alt="Poly Pure"
@@ -301,7 +301,7 @@ export default function MoneyReceipt() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area pointer-events-none bg-white p-0">
+        <Card className="print-area relative z-0 bg-white p-0">
           <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white">
             <div className="h-2 bg-brand-600" />
             <div className="px-5 pb-5 pt-4">
