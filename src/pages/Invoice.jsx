@@ -74,6 +74,7 @@ export default function Invoice() {
     return [createItem(draft)]
   })
   const [discount, setDiscount] = useState(formatDecimal(prefill?.discount ?? savedDraft?.discount ?? 0))
+  const [vatPercent, setVatPercent] = useState(formatDecimal(prefill?.vatPercent ?? savedDraft?.vatPercent ?? 0))
   const [paidAmount, setPaidAmount] = useState(formatDecimal(prefill?.paidAmount ?? savedDraft?.paidAmount ?? 0))
   const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
   const [terms, setTerms] = useState(prefill?.terms || savedDraft?.terms || companySettings.terms || defaultSettings.terms)
@@ -86,10 +87,15 @@ export default function Invoice() {
     const nextTotal = subtotal - Number(discount || 0)
     return Number.isFinite(nextTotal) ? Math.max(nextTotal, 0) : 0
   }, [discount, subtotal])
+  const vatAmount = useMemo(() => {
+    const nextVat = (totalAmount * Number(vatPercent || 0)) / 100
+    return Number.isFinite(nextVat) ? Math.max(nextVat, 0) : 0
+  }, [totalAmount, vatPercent])
+  const grandTotal = useMemo(() => totalAmount + vatAmount, [totalAmount, vatAmount])
   const dueAmount = useMemo(() => {
-    const nextDue = totalAmount - Number(paidAmount || 0)
+    const nextDue = grandTotal - Number(paidAmount || 0)
     return Number.isFinite(nextDue) ? Math.max(nextDue, 0) : 0
-  }, [paidAmount, totalAmount])
+  }, [grandTotal, paidAmount])
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
   const formFingerprint = useMemo(
@@ -103,11 +109,12 @@ export default function Invoice() {
         address,
         items: items.map((item) => ({ description: item.description, quantity: item.quantity, rate: item.rate })),
         discount,
+        vatPercent,
         paidAmount,
         notes,
         terms
       }),
-    [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms]
+    [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms, vatPercent]
   )
   const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
 
@@ -123,11 +130,12 @@ export default function Invoice() {
       address,
       items,
       discount: Number(discount || 0),
+      vatPercent: Number(vatPercent || 0),
       paidAmount: Number(paidAmount || 0),
       notes,
       terms
     })
-  }, [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms])
+  }, [address, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, paidAmount, phone, terms, vatPercent])
 
   useEffect(() => {
     if (!editingDocumentId) {
@@ -183,7 +191,10 @@ export default function Invoice() {
       })),
       subtotal,
       discount: Number(discount || 0),
-      totalAmount,
+      vatPercent: Number(vatPercent || 0),
+      vatAmount,
+      totalBeforeVat: totalAmount,
+      totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
       dueAmount,
       notes,
@@ -218,7 +229,10 @@ export default function Invoice() {
       })),
       subtotal,
       discount: Number(discount || 0),
-      totalAmount,
+      vatPercent: Number(vatPercent || 0),
+      vatAmount,
+      totalBeforeVat: totalAmount,
+      totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
       dueAmount,
       notes,
@@ -258,6 +272,7 @@ export default function Invoice() {
     setAddress('')
     setItems([createItem()])
     setDiscount(formatDecimal(0))
+    setVatPercent(formatDecimal(0))
     setPaidAmount(formatDecimal(0))
     setNotes('')
     setTerms(companySettings.terms || defaultSettings.terms)
@@ -276,7 +291,7 @@ export default function Invoice() {
       if (Number(item.quantity || 0) <= 0) return 'Item quantity must be greater than zero.'
       if (Number(item.rate || 0) <= 0) return 'Item rate must be greater than zero.'
     }
-    if (totalAmount <= 0) return 'Total amount must be greater than zero.'
+    if (grandTotal <= 0) return 'Total amount must be greater than zero.'
     if (Number(paidAmount || 0) < 0) return 'Paid amount cannot be negative.'
     return ''
   }
@@ -410,7 +425,24 @@ export default function Invoice() {
                   type="number"
                   value={discount}
                 />
-                <Input id="invoice-total" label={isBn ? 'মোট টাকা' : 'Total Amount'} readOnly type="number" value={formatDecimal(totalAmount)} />
+                <Input
+                  id="invoice-vat-percent"
+                  label={isBn ? 'ভ্যাট (%)' : 'VAT (%)'}
+                  min="0"
+                  onBlur={() => setVatPercent(formatDecimal(vatPercent))}
+                  onChange={(event) => setVatPercent(event.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={vatPercent}
+                />
+                <Input
+                  id="invoice-vat-amount"
+                  label={isBn ? 'ভ্যাটের পরিমাণ' : 'VAT Amount'}
+                  readOnly
+                  type="number"
+                  value={formatDecimal(vatAmount)}
+                />
+                <Input id="invoice-total" label={isBn ? 'মোট টাকা' : 'Grand Total'} readOnly type="number" value={formatDecimal(grandTotal)} />
                 <Input
                   id="invoice-paid"
                   label={isBn ? 'পরিশোধিত টাকা' : 'Paid Amount'}
@@ -539,9 +571,13 @@ export default function Invoice() {
                         <span className="text-slate-500">Discount</span>
                         <span className="font-semibold text-slate-950">{formatCurrency(discount)}</span>
                       </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500">VAT ({formatDecimal(vatPercent)}%)</span>
+                        <span className="font-semibold text-slate-950">{formatCurrency(vatAmount)}</span>
+                      </div>
                       <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm">
                         <span className="font-bold text-slate-950">Grand Total</span>
-                        <span className="font-bold text-brand-700">{formatCurrency(totalAmount)}</span>
+                        <span className="font-bold text-brand-700">{formatCurrency(grandTotal)}</span>
                       </div>
                       <div className="flex justify-between gap-4 rounded-md border border-brand-100 bg-brand-50 px-2 py-1">
                         <span className="font-semibold text-brand-700">Paid Amount</span>
