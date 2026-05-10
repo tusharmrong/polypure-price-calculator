@@ -42,9 +42,17 @@ const updateSW = registerSW({
   onOfflineReady() {},
   onRegisteredSW(_swUrl, registration) {
     if (!registration) return
-    window.setInterval(() => {
+    const runUpdateCheck = () => {
       registration.update()
-    }, 60 * 60 * 1000)
+    }
+
+    runUpdateCheck()
+    window.setInterval(runUpdateCheck, 15 * 60 * 1000)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        runUpdateCheck()
+      }
+    })
   },
   onRegisterError() {}
 })
