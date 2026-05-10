@@ -44,6 +44,7 @@ export default function Dashboard() {
       receiptCount: 0,
       totalReceivedAmount: 0
     }
+    const countedCollections = new Set()
 
     uniqueActiveDocuments.forEach((document) => {
       const dateValue = document.date ? new Date(`${document.date}T00:00:00`) : null
@@ -51,10 +52,30 @@ export default function Dashboard() {
       if (dateValue.getMonth() !== month || dateValue.getFullYear() !== year) return
 
       if (document.type === 'Quotation') summary.quotationCount += 1
-      if (document.type === 'Invoice') summary.invoiceCount += 1
+      if (document.type === 'Invoice') {
+        summary.invoiceCount += 1
+        const paidAmount = Number(document.paidAmount ?? 0)
+        if (paidAmount > 0) {
+          const invoiceCollectionKey = `invoice-paid::${document.number || document.id || ''}`
+          if (!countedCollections.has(invoiceCollectionKey)) {
+            countedCollections.add(invoiceCollectionKey)
+            summary.totalReceivedAmount += paidAmount
+          }
+        }
+      }
       if (document.type === 'Money Receipt') {
         summary.receiptCount += 1
-        summary.totalReceivedAmount += Number(document.receivedAmount ?? document.totalAmount ?? document.amount ?? 0)
+        const receiptAmount = Number(document.receivedAmount ?? document.totalAmount ?? document.amount ?? 0)
+        const receiptNumber = String(document.number || '')
+        const linkedInvoiceNumber = receiptNumber.startsWith('PP-R-') ? receiptNumber.replace('PP-R-', 'PP-I-') : ''
+        const possibleDuplicateInvoiceKey = linkedInvoiceNumber ? `invoice-paid::${linkedInvoiceNumber}` : ''
+        const standaloneReceiptKey = `receipt::${document.number || document.id || ''}`
+
+        // Prefer invoice paid amount as source of truth. Count receipt only if no matching invoice-paid key exists.
+        if (receiptAmount > 0 && !countedCollections.has(possibleDuplicateInvoiceKey) && !countedCollections.has(standaloneReceiptKey)) {
+          countedCollections.add(standaloneReceiptKey)
+          summary.totalReceivedAmount += receiptAmount
+        }
       }
     })
 
