@@ -284,15 +284,6 @@ export default function Quotation() {
 
   return (
     <div className="grid gap-5">
-      {draft ? (
-        <Card className="no-print border-brand-100 bg-brand-50">
-          <p className="text-sm font-semibold text-brand-700">Auto-filled from Calculator</p>
-          <p className="mt-1 text-sm text-slate-700">
-            {draft.description} | Rate {formatCurrency(draft.rate)}
-          </p>
-        </Card>
-      ) : null}
-
       <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
         <Card className="no-print relative z-10">
           <div className="mb-5 flex items-center gap-3">
