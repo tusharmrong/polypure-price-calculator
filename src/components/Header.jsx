@@ -1,6 +1,6 @@
-import { Search } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { loadDocuments } from '../utils/documents.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
@@ -10,7 +10,17 @@ export default function Header() {
   const location = useLocation()
   const [query, setQuery] = useState('')
   const [focusSearch, setFocusSearch] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const savedDocuments = useMemo(() => loadDocuments(), [])
+  const mobileNavItems = [
+    { label: language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard', path: '/' },
+    { label: language === 'bn' ? 'ক্যালকুলেটর' : 'Calculator', path: '/calculator' },
+    { label: language === 'bn' ? 'কোটেশন' : 'Quotation', path: '/quotation' },
+    { label: language === 'bn' ? 'ইনভয়েস' : 'Invoice', path: '/invoice' },
+    { label: language === 'bn' ? 'মানি রিসিপ্ট' : 'Money Receipt', path: '/money-receipt' },
+    { label: language === 'bn' ? 'হিস্ট্রি' : 'History', path: '/history' },
+    { label: language === 'bn' ? 'সেটিংস' : 'Settings', path: '/settings' }
+  ]
   const titles = {
     '/': 'Dashboard',
     '/calculator': 'Calculator',
@@ -43,6 +53,7 @@ export default function Header() {
     navigate(targetPath, { state: { prefillDocument: document } })
     setQuery('')
     setFocusSearch(false)
+    setMenuOpen(false)
   }
 
   return (
@@ -110,8 +121,52 @@ export default function Header() {
               EN
             </button>
           </div>
+          <button
+            aria-label="Open menu"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 md:hidden"
+            onClick={() => setMenuOpen((current) => !current)}
+            type="button"
+          >
+            {menuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+          </button>
         </div>
       </div>
+      {menuOpen ? (
+        <div className="border-t border-slate-200 bg-white md:hidden">
+          <div className="grid gap-1 px-4 py-3">
+            {mobileNavItems.map((item) => (
+              <NavLink
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-2 text-sm font-semibold ${
+                    isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700'
+                  }`
+                }
+                key={item.path}
+                onClick={() => setMenuOpen(false)}
+                to={item.path}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+            <div className="mt-2 inline-flex overflow-hidden rounded-lg border border-slate-200">
+              <button
+                className={`min-h-9 px-3 text-xs font-semibold ${language === 'bn' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+                onClick={() => setLanguage('bn')}
+                type="button"
+              >
+                {'\u09AC\u09BE\u0982\u09B2\u09BE'}
+              </button>
+              <button
+                className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
+                onClick={() => setLanguage('en')}
+                type="button"
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </header>
   )
 }

@@ -339,9 +339,9 @@ export default function Invoice() {
           </div>
 
           <div className="mt-5 grid gap-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ইনভয়েস আইটেম' : 'Invoice Items'}</h3>
-              <Button className="min-h-10 px-3 py-2" onClick={addItem} type="button" variant="secondary">
+              <Button className="min-h-10 w-full shrink-0 px-3 py-2 sm:w-auto" onClick={addItem} type="button" variant="secondary">
                 <Plus size={16} aria-hidden="true" />
                 {isBn ? 'আইটেম যোগ করুন' : 'Add Item'}
               </Button>
@@ -475,7 +475,7 @@ export default function Invoice() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area relative z-0 bg-white p-0">
+        <Card className="print-area relative z-0 hidden bg-white p-0 xl:block">
           <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white">
             <div className="h-2 bg-brand-600" />
             <div className="px-5 pb-5 pt-4">
