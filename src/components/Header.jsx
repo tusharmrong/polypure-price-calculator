@@ -1,6 +1,7 @@
 import { Menu, Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import LanguageToggle from './LanguageToggle.jsx'
 import { loadDocuments } from '../utils/documents.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
@@ -105,21 +106,8 @@ export default function Header() {
               </div>
             ) : null}
           </div>
-          <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:inline-flex">
-            <button
-              className={`min-h-9 px-3 text-xs font-semibold ${language === 'bn' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
-              onClick={() => setLanguage('bn')}
-              type="button"
-            >
-              {'\u09AC\u09BE\u0982\u09B2\u09BE'}
-            </button>
-            <button
-              className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
-              onClick={() => setLanguage('en')}
-              type="button"
-            >
-              EN
-            </button>
+          <div className="hidden md:block">
+            <LanguageToggle language={language} onChange={setLanguage} compact />
           </div>
           <button
             aria-label="Open menu"
@@ -148,21 +136,8 @@ export default function Header() {
                 {item.label}
               </NavLink>
             ))}
-            <div className="mt-2 inline-flex overflow-hidden rounded-lg border border-slate-200">
-              <button
-                className={`min-h-9 px-3 text-xs font-semibold ${language === 'bn' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
-                onClick={() => setLanguage('bn')}
-                type="button"
-              >
-                {'\u09AC\u09BE\u0982\u09B2\u09BE'}
-              </button>
-              <button
-                className={`min-h-9 px-3 text-xs font-semibold ${language === 'en' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700'}`}
-                onClick={() => setLanguage('en')}
-                type="button"
-              >
-                EN
-              </button>
+            <div className="mt-2">
+              <LanguageToggle language={language} onChange={setLanguage} />
             </div>
           </div>
         </div>
