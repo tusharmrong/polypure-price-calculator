@@ -47,7 +47,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="flex min-h-16 w-full items-center justify-between px-4 sm:px-6 md:mx-auto md:max-w-6xl lg:px-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Poly Pure</p>
           <h1 className="text-xl font-bold text-slate-950">{title}</h1>

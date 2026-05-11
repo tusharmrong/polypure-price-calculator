@@ -5,12 +5,12 @@ import Sidebar from './Sidebar.jsx'
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50">
       <div className="md:flex">
         <Sidebar />
         <div className="min-w-0 flex-1">
           <Header />
-          <main className="mx-auto max-w-6xl px-4 pb-24 pt-5 sm:px-6 md:pb-10 lg:px-8">
+          <main className="mx-auto w-full max-w-6xl px-4 pb-24 pt-5 sm:px-6 md:pb-10 lg:px-8">
             <Outlet />
           </main>
         </div>
