@@ -239,6 +239,7 @@ input[type='checkbox'] {
   }
 
   .print-area {
+    display: block !important;
     position: absolute;
     inset: 0;
     width: 100%;
