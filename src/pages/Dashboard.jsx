@@ -11,6 +11,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Card from '../components/Card.jsx'
 import { sampleDocuments } from '../data/sampleDocuments.js'
+import { APP_NAME } from '../utils/appMeta.js'
 import { loadDocuments } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
@@ -101,7 +102,7 @@ export default function Dashboard() {
             src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
           />
           <div>
-            <p className="text-sm font-semibold opacity-90">Poly Pure Price Calculator</p>
+            <p className="text-sm font-semibold opacity-90">{APP_NAME}</p>
             <h2 className="mt-2 text-2xl font-bold">{t('dashboard_tagline')}</h2>
           </div>
         </div>

@@ -1,22 +1,26 @@
 import {
   FileText,
+  Home,
   ReceiptText,
   SquarePen,
   WalletCards
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function BottomNav() {
+  const { t } = useUiLanguage()
   const items = [
-    { label: 'Calculator', path: '/calculator', icon: WalletCards },
-    { label: 'Quotation', path: '/quotation', icon: SquarePen },
-    { label: 'Invoice', path: '/invoice', icon: FileText },
-    { label: 'Money Receipt', path: '/money-receipt', icon: ReceiptText }
+    { label: t('nav_dashboard'), path: '/', icon: Home },
+    { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
+    { label: t('nav_quotation'), path: '/quotation', icon: SquarePen },
+    { label: t('nav_invoice'), path: '/invoice', icon: FileText },
+    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText }
   ]
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white md:hidden">
-      <div className="grid grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="grid grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
         {items.map((item) => {
           const Icon = item.icon
           return (
@@ -26,7 +30,7 @@ export default function BottomNav() {
                   isActive ? 'text-brand-700' : 'text-slate-500'
                 }`
               }
-              end
+              end={item.path === '/'}
               key={item.path}
               to={item.path}
             >

@@ -10,11 +10,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'poly-pure-logo.png'],
+      includeAssets: ['favicon-64.png', 'apple-touch-icon.png', 'app-icon-square-192.png', 'app-icon-square-512.png'],
       manifest: {
-        name: 'Poly Pure Price Calculator',
+        name: 'Poly Pure Business Suite',
         short_name: 'Poly Pure',
-        description: 'Calculator-first business app for Poly Pure bag pricing documents.',
+        description: 'Business app for Poly Pure pricing, quotations, invoices, and money receipts.',
         theme_color: '#c91f32',
         background_color: '#f8fafc',
         display: 'standalone',
@@ -23,13 +23,13 @@ export default defineConfig({
         scope: base,
         icons: [
           {
-            src: 'poly-pure-logo.png',
+            src: 'app-icon-square-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'poly-pure-logo.png',
+            src: 'app-icon-square-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

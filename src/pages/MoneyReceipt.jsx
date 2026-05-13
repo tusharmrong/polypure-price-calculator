@@ -29,6 +29,7 @@ export default function MoneyReceipt() {
   const savedDraft = useMemo(() => loadFormDraft('moneyReceipt', null), [])
   const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
   const [documentDate, setDocumentDate] = useState(initialDate)
+  const [receivedDate, setReceivedDate] = useState(prefill?.receivedDate || savedDraft?.receivedDate || initialDate)
   const [documentNumber, setDocumentNumber] = useState(
     prefill?.number || savedDraft?.documentNumber || createDocumentNumber('PP-R', initialDate)
   )
@@ -49,11 +50,13 @@ export default function MoneyReceipt() {
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
 
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
+  const readableReceivedDate = useMemo(() => formatDocumentDate(receivedDate), [receivedDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
   const formFingerprint = useMemo(
     () =>
       JSON.stringify({
         documentDate,
+        receivedDate,
         documentNumber,
         editingDocumentId,
         clientName,
@@ -64,7 +67,7 @@ export default function MoneyReceipt() {
         workDetails,
         notes
       }),
-    [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, workDetails]
+    [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, receivedDate, workDetails]
   )
   const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
 
@@ -73,6 +76,7 @@ export default function MoneyReceipt() {
   useEffect(() => {
     saveFormDraft('moneyReceipt', {
       documentDate,
+      receivedDate,
       documentNumber,
       editingDocumentId,
       clientName,
@@ -83,7 +87,7 @@ export default function MoneyReceipt() {
       workDetails,
       notes
     })
-  }, [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, workDetails])
+  }, [address, clientName, documentDate, documentNumber, editingDocumentId, notes, paymentMethod, phone, receivedAmount, receivedDate, workDetails])
 
   useEffect(() => {
     if (!editingDocumentId) {
@@ -111,6 +115,8 @@ export default function MoneyReceipt() {
       number: documentNumber,
       date: documentDate,
       displayDate: readableDate,
+      receivedDate,
+      displayReceivedDate: readableReceivedDate,
       clientName: clientName || 'Client Name',
       phone,
       address,
@@ -139,6 +145,8 @@ export default function MoneyReceipt() {
       number: copyNumber,
       date: documentDate,
       displayDate: readableDate,
+      receivedDate,
+      displayReceivedDate: readableReceivedDate,
       clientName: clientName || 'Client Name',
       phone,
       address,
@@ -182,6 +190,7 @@ export default function MoneyReceipt() {
   const resetReceiptForm = () => {
     const today = getTodayInputDate()
     setDocumentDate(today)
+    setReceivedDate(today)
     setDocumentNumber(createDocumentNumber('PP-R', today))
     setEditingDocumentId('')
     setClientName('')
@@ -199,18 +208,9 @@ export default function MoneyReceipt() {
   }
 
   return (
-    <div className="grid gap-5">
-      {draft ? (
-        <Card className="no-print border-brand-100 bg-brand-50">
-          <p className="text-sm font-semibold text-brand-700">Auto-filled from Calculator</p>
-          <p className="mt-1 text-sm text-slate-700">
-            {normalizeThicknessText(draft.description)} | Amount {formatCurrency(draft.totalAmount)}
-          </p>
-        </Card>
-      ) : null}
-
-      <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <Card className="no-print relative z-10">
+    <div className="grid gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:overflow-hidden">
+      <div className="grid gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.98fr)] xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)]">
+        <Card className="no-print relative z-10 lg:h-full lg:min-h-0 lg:overflow-y-auto">
           <div className="mb-5 flex items-center gap-3">
             <img
               alt="Poly Pure"
@@ -218,7 +218,6 @@ export default function MoneyReceipt() {
               src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
             />
             <div>
-              <p className="text-sm font-semibold text-brand-700">Phase 6</p>
               <h2 className="text-lg font-bold text-slate-950">{isBn ? 'মানি রিসিপ্ট ফর্ম' : 'Money Receipt Form'}</h2>
             </div>
           </div>
@@ -226,58 +225,73 @@ export default function MoneyReceipt() {
           <div className="grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'রিসিপ্ট বিস্তারিত' : 'Receipt Details'}</h3>
-              <Input id="receipt-number" label={isBn ? 'রিসিপ্ট নম্বর' : 'Receipt Number'} readOnly value={documentNumber} />
-              <Input
-                id="receipt-date"
-                label={isBn ? 'তারিখ' : 'Date'}
-                onChange={(event) => setDocumentDate(event.target.value)}
-                type="date"
-                value={documentDate}
-              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input id="receipt-number" label={isBn ? '????????????????????? ???????????????' : 'Receipt Number'} readOnly value={documentNumber} />
+                <Input
+                  id="receipt-document-date"
+                  label={isBn ? '??????????????? ??????????????? ?????????' : 'Money Receipt Date'}
+                  onChange={(event) => setDocumentDate(event.target.value)}
+                  type="date"
+                  value={documentDate}
+                />
+                <Input
+                  className="md:col-span-2"
+                  id="receipt-received-date"
+                  label={isBn ? '??????????????? ?????????' : 'Received Date'}
+                  onChange={(event) => setReceivedDate(event.target.value)}
+                  type="date"
+                  value={receivedDate}
+                />
+              </div>
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ক্লায়েন্ট বিস্তারিত' : 'Client Details'}</h3>
-              <Input
-                id="receipt-client"
-                label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
-                onChange={(event) => setClientName(event.target.value)}
-                value={clientName}
-              />
-              <Input id="receipt-phone" label={isBn ? 'ফোন নম্বর' : 'Phone Number'} onChange={(event) => setPhone(event.target.value)} value={phone} />
-              <TextArea id="receipt-address" label={isBn ? 'ঠিকানা' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  id="receipt-client"
+                  label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
+                  onChange={(event) => setClientName(event.target.value)}
+                  value={clientName}
+                />
+                <Input id="receipt-phone" label={isBn ? '????????? ???????????????' : 'Phone Number'} onChange={(event) => setPhone(event.target.value)} value={phone} />
+                <TextArea className="md:col-span-2" id="receipt-address" label={isBn ? '??????????????????' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
+              </div>
             </section>
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'পেমেন্ট বিস্তারিত' : 'Payment Details'}</h3>
-              <Input
-                id="receipt-amount"
-                label={isBn ? 'গৃহীত টাকা' : 'Received Amount'}
-                min="0"
-                onBlur={() => setReceivedAmount(formatDecimal(receivedAmount))}
-                onChange={(event) => setReceivedAmount(event.target.value)}
-                step="0.01"
-                type="number"
-                value={receivedAmount}
-              />
-              <Select
-                id="receipt-payment-method"
-                label={isBn ? 'পেমেন্ট মাধ্যম' : 'Payment Method'}
-                onChange={(event) => setPaymentMethod(event.target.value)}
-                value={paymentMethod}
-              >
-                <option>{isBn ? 'ক্যাশ' : 'Cash'}</option>
-                <option>{isBn ? 'ব্যাংক ট্রান্সফার' : 'Bank Transfer'}</option>
-                <option>{isBn ? 'মোবাইল ব্যাংকিং' : 'Mobile Banking'}</option>
-                <option>{isBn ? 'চেক' : 'Cheque'}</option>
-              </Select>
-              <Input
-                id="receipt-work"
-                label={isBn ? 'ইনভয়েস / কাজের বিবরণ' : 'For Invoice / Work Details'}
-                onChange={(event) => setWorkDetails(event.target.value)}
-                value={workDetails}
-              />
-              <TextArea id="receipt-notes" label={isBn ? 'নোট' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  id="receipt-amount"
+                  label={isBn ? '??????????????? ????????????' : 'Received Amount'}
+                  min="0"
+                  onBlur={() => setReceivedAmount(formatDecimal(receivedAmount))}
+                  onChange={(event) => setReceivedAmount(event.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={receivedAmount}
+                />
+                <Select
+                  id="receipt-payment-method"
+                  label={isBn ? '????????????????????? ??????????????????' : 'Payment Method'}
+                  onChange={(event) => setPaymentMethod(event.target.value)}
+                  value={paymentMethod}
+                >
+                  <option>{isBn ? '???????????????' : 'Cash'}</option>
+                  <option>{isBn ? '?????????????????? ??????????????????????????????' : 'Bank Transfer'}</option>
+                  <option>{isBn ? '?????????????????? ????????????????????????' : 'Mobile Banking'}</option>
+                  <option>{isBn ? '?????????' : 'Cheque'}</option>
+                </Select>
+                <Input
+                  className="md:col-span-2"
+                  id="receipt-work"
+                  label={isBn ? '?????????????????? / ??????????????? ???????????????' : 'For Invoice / Work Details'}
+                  onChange={(event) => setWorkDetails(event.target.value)}
+                  value={workDetails}
+                />
+                <TextArea className="md:col-span-2" id="receipt-notes" label={isBn ? '?????????' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
+              </div>
             </section>
           </div>
 
@@ -301,8 +315,8 @@ export default function MoneyReceipt() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area relative z-0 hidden bg-white p-0 xl:block">
-          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <Card className="print-area relative z-0 hidden bg-white p-0 lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto">
+          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
             <div className="h-2 bg-brand-600" />
             <div className="px-5 pb-5 pt-4">
               <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
@@ -369,8 +383,12 @@ export default function MoneyReceipt() {
                         <span className="font-semibold text-slate-950">{documentNumber}</span>
                       </div>
                       <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Date</span>
+                        <span className="text-slate-500">Money Receipt Date</span>
                         <span className="font-semibold text-slate-950">{readableDate}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500">Received Date</span>
+                        <span className="font-semibold text-slate-950">{readableReceivedDate}</span>
                       </div>
                       <div className="flex justify-between gap-4 rounded-md border border-brand-100 bg-brand-50 px-2 py-1">
                         <span className="font-semibold text-brand-700">Received</span>
@@ -416,3 +434,4 @@ export default function MoneyReceipt() {
     </div>
   )
 }
+

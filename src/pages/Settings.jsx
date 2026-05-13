@@ -4,6 +4,7 @@ import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
+import { APP_BUILD, APP_RELEASE_DATE, APP_RELEASE_NOTES, APP_VERSION_LABEL } from '../utils/appMeta.js'
 import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
 import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
@@ -11,7 +12,7 @@ import { useUiLanguage } from '../utils/uiLanguage.js'
 import { useToast } from '../utils/toast.jsx'
 
 export default function Settings() {
-  const { t } = useUiLanguage()
+  const { language, t } = useUiLanguage()
   const { showToast } = useToast()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
@@ -155,6 +156,8 @@ export default function Settings() {
   const buildBackupData = () => {
     return {
       version: 1,
+      appVersion: APP_VERSION_LABEL,
+      appBuild: APP_BUILD,
       exportedAt: new Date().toISOString(),
       data: {
         companySettings,
@@ -253,6 +256,43 @@ export default function Settings() {
 
   return (
     <div className="grid gap-5">
+      <Card>
+        <h2 className="mb-4 text-lg font-bold text-slate-950">{language === 'bn' ? 'অ্যাপ ভার্সন' : 'App Version'}</h2>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {language === 'bn' ? 'বর্তমান ভার্সন' : 'Current Version'}
+              </p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{APP_VERSION_LABEL}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {language === 'bn' ? 'বিল্ড' : 'Build'}
+              </p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{APP_BUILD}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {language === 'bn' ? 'রিলিজ তারিখ' : 'Release Date'}
+              </p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{APP_RELEASE_DATE}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-sm font-bold text-slate-950">
+              {language === 'bn' ? 'এই ভার্সনে যা আছে' : "What's in this version"}
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+              {APP_RELEASE_NOTES.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Card>
+
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-950">{t('install_app')}</h2>
         <div className="rounded-lg border border-brand-100 bg-brand-50 p-4">

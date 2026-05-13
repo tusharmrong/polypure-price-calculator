@@ -8,6 +8,7 @@ import {
   WalletCards
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { APP_NAME } from '../utils/appMeta.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Sidebar() {
@@ -34,7 +35,7 @@ export default function Sidebar() {
             />
             <div>
               <p className="text-sm font-semibold opacity-90">Poly Pure</p>
-              <p className="mt-1 text-xl font-bold">Price Calculator</p>
+              <p className="mt-1 text-xl font-bold">{APP_NAME.replace('Poly Pure ', '')}</p>
             </div>
           </div>
         </div>

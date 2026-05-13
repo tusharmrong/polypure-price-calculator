@@ -4,10 +4,11 @@ import { HashRouter } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.jsx'
 import './index.css'
+import { APP_BUILD } from './utils/appMeta.js'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
 import { ToastProvider } from './utils/toast.jsx'
 
-const APP_CACHE_VERSION = '2026-05-11-3'
+const APP_CACHE_VERSION = APP_BUILD
 const APP_CACHE_VERSION_KEY = 'polypure:appCacheVersion'
 
 async function hardRefreshAppCaches() {

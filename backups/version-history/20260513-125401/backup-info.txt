@@ -1,0 +1,8 @@
+Previous Version: 0.2.0
+Previous Build: 2026-05-13-5
+Previous Release Date: 2026-05-13
+Update Type: patch
+New Version: 0.2.1
+New Build: 2026-05-13-125401
+New Release Date: 2026-05-13
+Backed Up At: 2026-05-13 12:54:01

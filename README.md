@@ -1,4 +1,8 @@
-# Poly Pure Price Calculator
+# Poly Pure Business Suite
+
+Recommended project folder name:
+
+`poly-pure-business-suite`
 
 Phase 1 foundation for a calculator-first PWA for Poly Pure.
 
@@ -8,6 +12,29 @@ Phase 1 foundation for a calculator-first PWA for Poly Pure.
 npm install
 npm run dev
 ```
+
+## Manual Version Update (Windows)
+
+Use one of these files from the project folder:
+
+- `Update-Major-Version.bat`
+- `Update-Minor-Version.bat`
+- `Update-Patch-Version.bat`
+
+What they do automatically:
+
+- update the app version
+- update the build number using current date and time
+- update the release date
+- add a fresh top release note
+- save the previous version file into:
+  `backups/version-history/`
+
+Version behavior:
+
+- `Major` -> `1.0.0` style jump
+- `Minor` -> `0.3.0` style feature update
+- `Patch` -> `0.2.1` style fix update
 
 ## Build
 

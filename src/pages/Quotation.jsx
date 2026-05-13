@@ -283,9 +283,9 @@ export default function Quotation() {
   }
 
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <Card className="no-print relative z-10">
+    <div className="grid gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:overflow-hidden">
+      <div className="grid gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.98fr)] xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)]">
+        <Card className="no-print relative z-10 lg:h-full lg:min-h-0 lg:overflow-y-auto">
           <div className="mb-5 flex items-center gap-3">
             <img
               alt="Poly Pure"
@@ -293,7 +293,6 @@ export default function Quotation() {
               src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
             />
             <div>
-              <p className="text-sm font-semibold text-brand-700">Phase 4</p>
               <h2 className="text-lg font-bold text-slate-950">{isBn ? 'কোটেশন ফর্ম' : 'Quotation Form'}</h2>
             </div>
           </div>
@@ -301,7 +300,7 @@ export default function Quotation() {
           <div className="grid gap-5">
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ডকুমেন্ট বিস্তারিত' : 'Document Details'}</h3>
-              <div className="grid gap-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 <Input id="quotation-number" label={isBn ? 'কোটেশন নম্বর' : 'Quotation Number'} readOnly value={documentNumber} />
                 <Input
                   id="quotation-date"
@@ -315,24 +314,27 @@ export default function Quotation() {
 
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ক্লায়েন্ট বিস্তারিত' : 'Client Details'}</h3>
-              <Input
-                id="quotation-client"
-                label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
-                onChange={(event) => setClientName(event.target.value)}
-                value={clientName}
-              />
-              <Input
-                id="quotation-phone"
-                label={isBn ? 'ফোন নম্বর' : 'Phone Number'}
-                onChange={(event) => setPhone(event.target.value)}
-                value={phone}
-              />
-              <TextArea
-                id="quotation-address"
-                label={isBn ? 'ঠিকানা' : 'Address'}
-                onChange={(event) => setAddress(event.target.value)}
-                value={address}
-              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  id="quotation-client"
+                  label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
+                  onChange={(event) => setClientName(event.target.value)}
+                  value={clientName}
+                />
+                <Input
+                  id="quotation-phone"
+                  label={isBn ? '????????? ???????????????' : 'Phone Number'}
+                  onChange={(event) => setPhone(event.target.value)}
+                  value={phone}
+                />
+                <TextArea
+                  className="md:col-span-2"
+                  id="quotation-address"
+                  label={isBn ? '??????????????????' : 'Address'}
+                  onChange={(event) => setAddress(event.target.value)}
+                  value={address}
+                />
+              </div>
             </section>
           </div>
 
@@ -473,8 +475,8 @@ export default function Quotation() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area relative z-0 hidden bg-white p-0 xl:block">
-          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <Card className="print-area relative z-0 hidden bg-white p-0 lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto">
+          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
             <div className="h-2 bg-brand-600" />
             <div className="px-5 pb-5 pt-4">
               <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
@@ -611,3 +613,4 @@ export default function Quotation() {
     </div>
   )
 }
+
