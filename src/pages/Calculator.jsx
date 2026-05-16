@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Calculator as CalculatorIcon, Copy, RotateCcw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import { createDocumentDraft, saveCalculatorDraft } from '../utils/calculatorDraft.js'
+import { loadValue, saveValue } from '../utils/storage.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const bagModes = {
@@ -40,6 +41,24 @@ const initialValues = {
   discount: ''
 }
 
+const calculatorMemoryKey = 'calculatorMemory'
+
+function loadCalculatorMemory() {
+  const saved = loadValue(calculatorMemoryKey, null)
+  const safeMode = saved?.mode && bagModes[saved.mode] ? saved.mode : 'shopping'
+
+  return {
+    mode: safeMode,
+    values: {
+      ...initialValues,
+      ...(saved?.values || {}),
+      thickness: String(saved?.values?.thickness || bagModes[safeMode].thickness)
+    },
+    handleEnabled: Boolean(saved?.handleEnabled),
+    submitted: Boolean(saved?.submitted)
+  }
+}
+
 function numberValue(value) {
   if (value === '') return 0
   return Number(value)
@@ -47,6 +66,17 @@ function numberValue(value) {
 
 function money(value) {
   return `Tk ${Number(value || 0).toFixed(2)}`
+}
+
+function thicknessAsSheetText(value) {
+  const numericValue = Number(value || 0)
+  return `0.${String(Math.round(numericValue)).padStart(2, '0')}mm`
+}
+
+function calculateAdhesiveCost(width) {
+  const numericWidth = Number(width || 0)
+  if (!Number.isFinite(numericWidth) || numericWidth <= 0) return ''
+  return (numericWidth * 0.06).toFixed(2)
 }
 
 function ResultLine({ label, value, strong = false }) {
@@ -64,10 +94,11 @@ export default function Calculator() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
   const navigate = useNavigate()
-  const [mode, setMode] = useState('shopping')
-  const [values, setValues] = useState(initialValues)
-  const [handleEnabled, setHandleEnabled] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const savedMemory = useMemo(() => loadCalculatorMemory(), [])
+  const [mode, setMode] = useState(savedMemory.mode)
+  const [values, setValues] = useState(savedMemory.values)
+  const [handleEnabled, setHandleEnabled] = useState(savedMemory.handleEnabled)
+  const [submitted, setSubmitted] = useState(savedMemory.submitted)
 
   const activeMode = bagModes[mode]
   const ui = {
@@ -156,6 +187,27 @@ export default function Calculator() {
     }
   }, [activeMode.extraLabel, handleEnabled, mode, submitted, values])
 
+  useEffect(() => {
+    saveValue(calculatorMemoryKey, {
+      mode,
+      values,
+      handleEnabled,
+      submitted
+    })
+  }, [handleEnabled, mode, submitted, values])
+
+  useEffect(() => {
+    if (mode !== 'courier') return
+
+    const nextAdhesiveCost = calculateAdhesiveCost(values.width)
+    if (values.adhesiveCost === nextAdhesiveCost) return
+
+    setValues((current) => ({
+      ...current,
+      adhesiveCost: nextAdhesiveCost
+    }))
+  }, [mode, values.width, values.adhesiveCost])
+
   const updateValue = (field, value) => {
     setValues((current) => ({ ...current, [field]: value }))
   }
@@ -176,26 +228,30 @@ export default function Calculator() {
     setSubmitted(false)
     setHandleEnabled(false)
     setValues({ ...initialValues, thickness: String(activeMode.thickness) })
+    saveValue(calculatorMemoryKey, {
+      mode,
+      values: { ...initialValues, thickness: String(activeMode.thickness) },
+      handleEnabled: false,
+      submitted: false
+    })
   }
 
   const copyResult = async () => {
     if (result.status !== 'ready') return
 
+    const sizeLine =
+      mode === 'shopping'
+        ? `Width-${values.width || 0}, Length-${values.height || 0}, Folding-${values.extraMeasure || 0}`
+        : `Width-${values.width || 0}, Length-${values.height || 0}, Flap-${values.extraMeasure || 0}`
+
     const summary = [
-      `${activeMode.title} Result`,
-      `Size: ${result.sizeDescription}`,
-      `Pieces Result: ${result.pieces.toFixed(2)}`,
-      `Base Price (${values.quantity} pound rate): ${money(result.basePrice)}`,
-      `Block Charge: ${money(result.blockCharge)}`,
-      `Printing Charge: ${money(result.printingCharge)}`,
-      mode === 'courier' ? `Adhesive Cost: ${money(result.adhesiveCost)}` : null,
-      mode === 'shopping' && handleEnabled ? `Handle Cost: ${money(result.handleCost)}` : null,
-      `Profit: ${money(result.profit)}`,
-      `Discount: ${money(result.discount)}`,
-      `Final Price: ${money(result.finalPrice)}`
-    ]
-      .filter(Boolean)
-      .join('\n')
+      mode === 'shopping' ? 'Shopping Bag' : 'Courier Bag',
+      sizeLine,
+      `Thickness: ${thicknessAsSheetText(values.thickness)}`,
+      Number(values.printingCharge || 0) > 0 ? '1 Color print' : 'No print',
+      `${mode === 'shopping' && handleEnabled ? 'With handle' : 'Without handle'} price: ${Number(result.finalPrice || 0).toFixed(2)}/-`,
+      'Minimum Order Quantity 2000 pieces'
+    ].join('\n')
 
     await navigator.clipboard?.writeText(summary)
   }
