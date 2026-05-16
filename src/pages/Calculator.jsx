@@ -43,17 +43,25 @@ const initialValues = {
 
 const calculatorMemoryKey = 'calculatorMemory'
 
+function getDefaultPrintingCharge(mode, printColorMode) {
+  const baseCharge = mode === 'shopping' ? 0.4 : 0.3
+  return (printColorMode === '2' ? baseCharge * 2 : baseCharge).toFixed(2)
+}
+
 function loadCalculatorMemory() {
   const saved = loadValue(calculatorMemoryKey, null)
   const safeMode = saved?.mode && bagModes[saved.mode] ? saved.mode : 'shopping'
+  const safePrintColorMode = saved?.printColorMode === '2' ? '2' : '1'
 
   return {
     mode: safeMode,
     values: {
       ...initialValues,
       ...(saved?.values || {}),
-      thickness: String(saved?.values?.thickness || bagModes[safeMode].thickness)
+      thickness: String(saved?.values?.thickness || bagModes[safeMode].thickness),
+      printingCharge: String(saved?.values?.printingCharge || getDefaultPrintingCharge(safeMode, safePrintColorMode))
     },
+    printColorMode: safePrintColorMode,
     handleEnabled: Boolean(saved?.handleEnabled),
     submitted: Boolean(saved?.submitted)
   }
@@ -97,6 +105,7 @@ export default function Calculator() {
   const savedMemory = useMemo(() => loadCalculatorMemory(), [])
   const [mode, setMode] = useState(savedMemory.mode)
   const [values, setValues] = useState(savedMemory.values)
+  const [printColorMode, setPrintColorMode] = useState(savedMemory.printColorMode)
   const [handleEnabled, setHandleEnabled] = useState(savedMemory.handleEnabled)
   const [submitted, setSubmitted] = useState(savedMemory.submitted)
 
@@ -191,10 +200,11 @@ export default function Calculator() {
     saveValue(calculatorMemoryKey, {
       mode,
       values,
+      printColorMode,
       handleEnabled,
       submitted
     })
-  }, [handleEnabled, mode, submitted, values])
+  }, [handleEnabled, mode, printColorMode, submitted, values])
 
   useEffect(() => {
     if (mode !== 'courier') return
@@ -208,6 +218,14 @@ export default function Calculator() {
     }))
   }, [mode, values.width, values.adhesiveCost])
 
+  const updatePrintColorMode = (nextMode) => {
+    const safeNextMode = nextMode === '2' ? '2' : '1'
+    setPrintColorMode(safeNextMode)
+    setValues((current) => ({
+      ...current,
+      printingCharge: getDefaultPrintingCharge(mode, safeNextMode)
+    }))
+  }
   const updateValue = (field, value) => {
     setValues((current) => ({ ...current, [field]: value }))
   }
@@ -219,6 +237,7 @@ export default function Calculator() {
     setValues((current) => ({
       ...current,
       thickness: String(bagModes[nextMode].thickness),
+      printingCharge: getDefaultPrintingCharge(nextMode, printColorMode),
       adhesiveCost: '',
       handleCost: '2'
     }))
@@ -227,10 +246,20 @@ export default function Calculator() {
   const reset = () => {
     setSubmitted(false)
     setHandleEnabled(false)
-    setValues({ ...initialValues, thickness: String(activeMode.thickness) })
+    setPrintColorMode('1')
+    setValues({
+      ...initialValues,
+      thickness: String(activeMode.thickness),
+      printingCharge: getDefaultPrintingCharge(mode, '1')
+    })
     saveValue(calculatorMemoryKey, {
       mode,
-      values: { ...initialValues, thickness: String(activeMode.thickness) },
+      values: {
+        ...initialValues,
+        thickness: String(activeMode.thickness),
+        printingCharge: getDefaultPrintingCharge(mode, '1')
+      },
+      printColorMode: '1',
       handleEnabled: false,
       submitted: false
     })
@@ -248,7 +277,7 @@ export default function Calculator() {
       mode === 'shopping' ? 'Shopping Bag' : 'Courier Bag',
       sizeLine,
       `Thickness: ${thicknessAsSheetText(values.thickness)}`,
-      Number(values.printingCharge || 0) > 0 ? '1 Color print' : 'No print',
+      `${printColorMode} Color print`,
       `${mode === 'shopping' && handleEnabled ? 'With handle' : 'Without handle'} price: ${Number(result.finalPrice || 0).toFixed(2)}/-`,
       'Minimum Order Quantity 2000 pieces'
     ].join('\n')
@@ -371,16 +400,43 @@ export default function Calculator() {
               type="number"
               value={values.blockCharge}
             />
-            <Input
-              id="printing-charge"
-              label={ui.printingCharge}
-              min="0"
-              onChange={(event) => updateValue('printingCharge', event.target.value)}
-              placeholder="0"
-              step="0.01"
-              type="number"
-              value={values.printingCharge}
-            />
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium text-slate-700" htmlFor="printing-charge">
+                  {ui.printingCharge}
+                </label>
+                <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+                  <button
+                    className={`min-h-9 rounded-md px-3 text-xs font-bold transition ${
+                      printColorMode === '1' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600'
+                    }`}
+                    onClick={() => updatePrintColorMode('1')}
+                    type="button"
+                  >
+                    {isBn ? '১ কালার' : '1 Color'}
+                  </button>
+                  <button
+                    className={`min-h-9 rounded-md px-3 text-xs font-bold transition ${
+                      printColorMode === '2' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600'
+                    }`}
+                    onClick={() => updatePrintColorMode('2')}
+                    type="button"
+                  >
+                    {isBn ? '২ কালার' : '2 Color'}
+                  </button>
+                </div>
+              </div>
+              <input
+                id="printing-charge"
+                className="w-full min-w-0 min-h-12 rounded-lg border border-slate-200 bg-white px-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                min="0"
+                onChange={(event) => updateValue('printingCharge', event.target.value)}
+                placeholder="0"
+                step="0.01"
+                type="number"
+                value={values.printingCharge}
+              />
+            </div>
             {mode === 'courier' ? (
               <Input
                 id="adhesive-cost"
@@ -511,3 +567,4 @@ export default function Calculator() {
     </div>
   )
 }
+
