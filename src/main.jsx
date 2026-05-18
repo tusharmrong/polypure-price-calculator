@@ -5,11 +5,47 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.jsx'
 import './index.css'
 import { APP_BUILD } from './utils/appMeta.js'
+import { AuthProvider } from './utils/authContext.jsx'
 import { UiLanguageProvider } from './utils/uiLanguage.js'
 import { ToastProvider } from './utils/toast.jsx'
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error) {
+    console.error('The app hit a runtime error.', error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+          <div className="mx-auto max-w-xl rounded-lg border border-rose-200 bg-white p-6 shadow-soft">
+            <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">App Recovery</p>
+            <h1 className="mt-2 text-2xl font-bold text-slate-950">We hit a startup problem</h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              The app stayed visible instead of going blank. Please refresh once. If it still happens,
+              the latest cloud-login change needs one more fix.
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 const APP_CACHE_VERSION = APP_BUILD
 const APP_CACHE_VERSION_KEY = 'polypure:appCacheVersion'
+const IS_LOCALHOST = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
 
 async function hardRefreshAppCaches() {
   try {
@@ -33,39 +69,59 @@ async function ensureLatestCacheVersion() {
   window.location.reload()
 }
 
-ensureLatestCacheVersion()
+function renderApp() {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <AppErrorBoundary>
+        <AuthProvider>
+          <UiLanguageProvider>
+            <ToastProvider>
+              <HashRouter>
+                <App />
+              </HashRouter>
+            </ToastProvider>
+          </UiLanguageProvider>
+        </AuthProvider>
+      </AppErrorBoundary>
+    </React.StrictMode>
+  )
+}
 
-const updateSW = registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    updateSW(true)
-  },
-  onOfflineReady() {},
-  onRegisteredSW(_swUrl, registration) {
-    if (!registration) return
-    const runUpdateCheck = () => {
-      registration.update()
-    }
+async function startApp() {
+  if (IS_LOCALHOST) {
+    renderApp()
+    return
+  }
 
-    runUpdateCheck()
-    window.setInterval(runUpdateCheck, 15 * 60 * 1000)
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        runUpdateCheck()
+  await ensureLatestCacheVersion()
+
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      updateSW(true)
+    },
+    onOfflineReady() {},
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return
+      const runUpdateCheck = () => {
+        registration.update()
       }
-    })
-  },
-  onRegisterError() {}
-})
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <UiLanguageProvider>
-      <ToastProvider>
-        <HashRouter>
-          <App />
-        </HashRouter>
-      </ToastProvider>
-    </UiLanguageProvider>
-  </React.StrictMode>
-)
+      runUpdateCheck()
+      window.setInterval(runUpdateCheck, 15 * 60 * 1000)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          runUpdateCheck()
+        }
+      })
+    },
+    onRegisterError() {}
+  })
+
+  renderApp()
+}
+
+startApp().catch((error) => {
+  console.error('Unable to start the app cleanly. Falling back to direct render.', error)
+  renderApp()
+})

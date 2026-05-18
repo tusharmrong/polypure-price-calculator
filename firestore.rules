@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasUserProfile() {
+      return signedIn() && exists(currentUserPath());
+    }
+
+    function currentUser() {
+      return get(currentUserPath()).data;
+    }
+
+    function isActiveUser() {
+      return hasUserProfile() && currentUser().status == 'active';
+    }
+
+    function isAdmin() {
+      return isActiveUser() && currentUser().role == 'admin';
+    }
+
+    function isStaff() {
+      return isActiveUser() && currentUser().role == 'staff';
+    }
+
+    function isAdminOrStaff() {
+      return isAdmin() || isStaff();
+    }
+
+    function bootstrapPath() {
+      return /databases/$(database)/documents/meta/bootstrap;
+    }
+
+    function bootstrapComplete() {
+      return exists(bootstrapPath()) && get(bootstrapPath()).data.firstAdminSetupComplete == true;
+    }
+
+    function isFirstAdminCreate(userId) {
+      return !bootstrapComplete()
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'admin'
+        && request.resource.data.status == 'active'
+        && request.resource.data.username is string
+        && request.resource.data.name is string;
+    }
+
+    function isOwnLoginTimestampUpdate(userId) {
+      return signedIn()
+        && request.auth.uid == userId
+        && resource.data.status == 'active'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt', 'updatedAt']);
+    }
+
+    match /meta/bootstrap {
+      allow read: if true;
+      allow create, update: if isAdmin() || !bootstrapComplete();
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() || isFirstAdminCreate(userId);
+      allow update: if isAdmin() || isOwnLoginTimestampUpdate(userId);
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdminOrStaff() || !bootstrapComplete();
+      allow update, delete: if false;
+    }
+
+    match /documents/{documentId} {
+      allow read, create, update: if isAdminOrStaff();
+      allow delete: if isAdmin();
+    }
+
+    match /companySettings/{settingId} {
+      allow read: if isAdminOrStaff();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
+import ClientSuggestions from '../components/ClientSuggestions.jsx'
 import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { defaultSettings } from '../data/defaultSettings.js'
@@ -18,6 +19,8 @@ import { useUiLanguage } from '../utils/uiLanguage.js'
 import { printWithFileName } from '../utils/pdf.js'
 import { useToast } from '../utils/toast.jsx'
 import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
+import { useAuth } from '../utils/authContext.jsx'
+import { matchClientSuggestion, useClientSuggestions } from '../utils/clientSuggestions.js'
 
 function createItem(draft) {
   return {
@@ -37,11 +40,12 @@ export default function Quotation() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
   const { showToast } = useToast()
+  const { currentUser } = useAuth()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
-  const savedDraft = useMemo(() => loadFormDraft('quotation', null), [])
+  const savedDraft = useMemo(() => (prefill ? null : loadFormDraft('quotation', null)), [prefill])
   const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
   const [documentDate, setDocumentDate] = useState(initialDate)
   const [documentNumber, setDocumentNumber] = useState(
@@ -82,6 +86,7 @@ export default function Quotation() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
+  const clientSuggestions = useClientSuggestions()
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
@@ -147,6 +152,27 @@ export default function Quotation() {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
   }
 
+  const applyClientSuggestion = (client) => {
+    setClientName(client.clientName || '')
+    setPhone(client.phone || '')
+    setAddress(client.address || '')
+    showToast('Client details filled from previous document.', 'success')
+  }
+
+  const handleClientNameChange = (event) => {
+    const value = event.target.value
+    setClientName(value)
+    const matchedClient = matchClientSuggestion(clientSuggestions, value)
+    if (matchedClient) applyClientSuggestion(matchedClient)
+  }
+
+  const handlePhoneChange = (event) => {
+    const value = event.target.value
+    setPhone(value)
+    const matchedClient = matchClientSuggestion(clientSuggestions, value)
+    if (matchedClient) applyClientSuggestion(matchedClient)
+  }
+
   const formatItemRate = (id) => {
     setItems((current) =>
       current.map((item) => (item.id === id ? { ...item, rate: formatDecimal(item.rate) } : item))
@@ -161,7 +187,7 @@ export default function Quotation() {
     setItems((current) => (current.length > 1 ? current.filter((item) => item.id !== id) : current))
   }
 
-  const saveQuotation = () => {
+  const saveQuotation = async () => {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
@@ -169,7 +195,7 @@ export default function Quotation() {
       return
     }
     setFormError('')
-    saveDocument({
+    const savedDocument = await saveDocument({
       id: editingDocumentId || undefined,
       type: 'Quotation',
       number: documentNumber,
@@ -190,13 +216,14 @@ export default function Quotation() {
       advanceAmount,
       notes,
       terms
-    })
+    }, currentUser)
+    setEditingDocumentId(savedDocument.id)
     setSaveStatus(`${documentNumber} saved to History.`)
-    setBaselineFingerprint(formFingerprint)
+    setBaselineFingerprint('')
     showToast('Quotation saved successfully.', 'success')
   }
 
-  const saveQuotationAsCopy = () => {
+  const saveQuotationAsCopy = async () => {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
@@ -205,7 +232,7 @@ export default function Quotation() {
     }
     setFormError('')
     const copyNumber = createDocumentNumber('PP-Q', documentDate)
-    saveDocument({
+    const savedDocument = await saveDocument({
       type: 'Quotation',
       number: copyNumber,
       date: documentDate,
@@ -225,15 +252,15 @@ export default function Quotation() {
       advanceAmount,
       notes,
       terms
-    })
+    }, currentUser)
     setDocumentNumber(copyNumber)
-    setEditingDocumentId('')
+    setEditingDocumentId(savedDocument.id)
     setSaveStatus(`${copyNumber} saved as a new copy.`)
     setBaselineFingerprint('')
     showToast('Quotation copy saved.', 'success')
   }
 
-  const savePdfQuotation = () => {
+  const savePdfQuotation = async () => {
     const error = validateQuotation()
     if (error) {
       setFormError(error)
@@ -241,7 +268,7 @@ export default function Quotation() {
       return
     }
     setFormError('')
-    saveQuotation()
+    await saveQuotation()
     printWithFileName({
       clientName: clientName || 'Client',
       documentNumber,
@@ -318,21 +345,44 @@ export default function Quotation() {
                 <Input
                   id="quotation-client"
                   label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
-                  onChange={(event) => setClientName(event.target.value)}
+                  list="quotation-client-suggestions"
+                  onChange={handleClientNameChange}
                   value={clientName}
                 />
+                <datalist id="quotation-client-suggestions">
+                  {clientSuggestions.map((client) => (
+                    <option key={client.id} value={client.clientName}>
+                      {client.phone || client.address || client.lastDocumentNumber}
+                    </option>
+                  ))}
+                </datalist>
                 <Input
                   id="quotation-phone"
                   label={isBn ? '????????? ???????????????' : 'Phone Number'}
-                  onChange={(event) => setPhone(event.target.value)}
+                  list="quotation-phone-suggestions"
+                  onChange={handlePhoneChange}
                   value={phone}
                 />
+                <datalist id="quotation-phone-suggestions">
+                  {clientSuggestions
+                    .filter((client) => client.phone)
+                    .map((client) => (
+                      <option key={client.id} value={client.phone}>
+                        {client.clientName}
+                      </option>
+                    ))}
+                </datalist>
                 <TextArea
                   className="md:col-span-2"
                   id="quotation-address"
                   label={isBn ? '??????????????????' : 'Address'}
                   onChange={(event) => setAddress(event.target.value)}
                   value={address}
+                />
+                <ClientSuggestions
+                  onSelect={applyClientSuggestion}
+                  query={`${clientName} ${phone}`}
+                  suggestions={clientSuggestions}
                 />
               </div>
             </section>

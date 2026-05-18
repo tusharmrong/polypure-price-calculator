@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
+import ClientSuggestions from '../components/ClientSuggestions.jsx'
 import Input from '../components/Input.jsx'
 import Select from '../components/Select.jsx'
 import TextArea from '../components/TextArea.jsx'
@@ -17,16 +18,19 @@ import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDraft
 import { printWithFileName } from '../utils/pdf.js'
 import { useToast } from '../utils/toast.jsx'
 import { useUnsavedChangesGuard } from '../utils/useUnsavedChangesGuard.js'
+import { useAuth } from '../utils/authContext.jsx'
+import { matchClientSuggestion, useClientSuggestions } from '../utils/clientSuggestions.js'
 
 export default function MoneyReceipt() {
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
   const { showToast } = useToast()
+  const { currentUser } = useAuth()
   const location = useLocation()
   const draft = location.state?.calculatorDraft || loadCalculatorDraft()
   const companySettings = useMemo(() => loadCompanySettings(), [])
   const prefill = location.state?.prefillDocument
-  const savedDraft = useMemo(() => loadFormDraft('moneyReceipt', null), [])
+  const savedDraft = useMemo(() => (prefill ? null : loadFormDraft('moneyReceipt', null)), [prefill])
   const initialDate = prefill?.date || savedDraft?.documentDate || getTodayInputDate()
   const [documentDate, setDocumentDate] = useState(initialDate)
   const [receivedDate, setReceivedDate] = useState(prefill?.receivedDate || savedDraft?.receivedDate || initialDate)
@@ -48,6 +52,7 @@ export default function MoneyReceipt() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
+  const clientSuggestions = useClientSuggestions()
 
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const readableReceivedDate = useMemo(() => formatDocumentDate(receivedDate), [receivedDate])
@@ -101,7 +106,28 @@ export default function MoneyReceipt() {
     }
   }, [baselineFingerprint, formFingerprint])
 
-  const saveReceipt = () => {
+  const applyClientSuggestion = (client) => {
+    setClientName(client.clientName || '')
+    setPhone(client.phone || '')
+    setAddress(client.address || '')
+    showToast('Client details filled from previous document.', 'success')
+  }
+
+  const handleClientNameChange = (event) => {
+    const value = event.target.value
+    setClientName(value)
+    const matchedClient = matchClientSuggestion(clientSuggestions, value)
+    if (matchedClient) applyClientSuggestion(matchedClient)
+  }
+
+  const handlePhoneChange = (event) => {
+    const value = event.target.value
+    setPhone(value)
+    const matchedClient = matchClientSuggestion(clientSuggestions, value)
+    if (matchedClient) applyClientSuggestion(matchedClient)
+  }
+
+  const saveReceipt = async () => {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
@@ -109,7 +135,7 @@ export default function MoneyReceipt() {
       return
     }
     setFormError('')
-    saveDocument({
+    const savedDocument = await saveDocument({
       id: editingDocumentId || undefined,
       type: 'Money Receipt',
       number: documentNumber,
@@ -125,13 +151,14 @@ export default function MoneyReceipt() {
       paymentMethod,
       workDetails,
       notes
-    })
+    }, currentUser)
+    setEditingDocumentId(savedDocument.id)
     setSaveStatus(`${documentNumber} saved to History.`)
-    setBaselineFingerprint(formFingerprint)
+    setBaselineFingerprint('')
     showToast('Money receipt saved successfully.', 'success')
   }
 
-  const saveReceiptAsCopy = () => {
+  const saveReceiptAsCopy = async () => {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
@@ -140,7 +167,7 @@ export default function MoneyReceipt() {
     }
     setFormError('')
     const copyNumber = createDocumentNumber('PP-R', documentDate)
-    saveDocument({
+    const savedDocument = await saveDocument({
       type: 'Money Receipt',
       number: copyNumber,
       date: documentDate,
@@ -155,9 +182,9 @@ export default function MoneyReceipt() {
       paymentMethod,
       workDetails,
       notes
-    })
+    }, currentUser)
     setDocumentNumber(copyNumber)
-    setEditingDocumentId('')
+    setEditingDocumentId(savedDocument.id)
     setSaveStatus(`${copyNumber} saved as a new copy.`)
     setBaselineFingerprint('')
     showToast('Money receipt copy saved.', 'success')
@@ -170,7 +197,7 @@ export default function MoneyReceipt() {
     return ''
   }
 
-  const savePdfReceipt = () => {
+  const savePdfReceipt = async () => {
     const error = validateReceipt()
     if (error) {
       setFormError(error)
@@ -178,7 +205,7 @@ export default function MoneyReceipt() {
       return
     }
     setFormError('')
-    saveReceipt()
+    await saveReceipt()
     printWithFileName({
       clientName: clientName || 'Client',
       documentNumber,
@@ -251,11 +278,39 @@ export default function MoneyReceipt() {
                 <Input
                   id="receipt-client"
                   label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
-                  onChange={(event) => setClientName(event.target.value)}
+                  list="receipt-client-suggestions"
+                  onChange={handleClientNameChange}
                   value={clientName}
                 />
-                <Input id="receipt-phone" label={isBn ? '????????? ???????????????' : 'Phone Number'} onChange={(event) => setPhone(event.target.value)} value={phone} />
+                <datalist id="receipt-client-suggestions">
+                  {clientSuggestions.map((client) => (
+                    <option key={client.id} value={client.clientName}>
+                      {client.phone || client.address || client.lastDocumentNumber}
+                    </option>
+                  ))}
+                </datalist>
+                <Input
+                  id="receipt-phone"
+                  label={isBn ? '????????? ???????????????' : 'Phone Number'}
+                  list="receipt-phone-suggestions"
+                  onChange={handlePhoneChange}
+                  value={phone}
+                />
+                <datalist id="receipt-phone-suggestions">
+                  {clientSuggestions
+                    .filter((client) => client.phone)
+                    .map((client) => (
+                      <option key={client.id} value={client.phone}>
+                        {client.clientName}
+                      </option>
+                    ))}
+                </datalist>
                 <TextArea className="md:col-span-2" id="receipt-address" label={isBn ? '??????????????????' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
+                <ClientSuggestions
+                  onSelect={applyClientSuggestion}
+                  query={`${clientName} ${phone}`}
+                  suggestions={clientSuggestions}
+                />
               </div>
             </section>
 

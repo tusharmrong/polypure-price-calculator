@@ -1,0 +1,8 @@
+Previous Version: 1.2.0
+Previous Build: 2026-05-17-203500
+Previous Release Date: 2026-05-17
+Update Type: major
+New Version: 2.0.0
+New Build: 2026-05-18-194302
+New Release Date: 2026-05-18
+Backed Up At: 2026-05-18 19:43:02

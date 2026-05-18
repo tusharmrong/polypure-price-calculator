@@ -2,26 +2,44 @@ import {
   FileClock,
   FileText,
   Home,
+  IdCard,
   ReceiptText,
   Settings,
   SquarePen,
+  Users,
   WalletCards
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { APP_NAME } from '../utils/appMeta.js'
+import { useAuth } from '../utils/authContext.jsx'
+import { PERMISSIONS } from '../utils/permissions.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Sidebar() {
   const { t } = useUiLanguage()
-  const items = [
+  const { hasPermission } = useAuth()
+  const coreItems = [
     { label: t('nav_dashboard'), path: '/', icon: Home },
     { label: t('nav_calculator'), path: '/calculator', icon: WalletCards },
     { label: t('nav_quotation'), path: '/quotation', icon: SquarePen },
     { label: t('nav_invoice'), path: '/invoice', icon: FileText },
-    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText },
-    { label: t('nav_history'), path: '/history', icon: FileClock },
-    { label: t('nav_settings'), path: '/settings', icon: Settings }
+    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText }
   ]
+  const adminItems = [
+    hasPermission(PERMISSIONS.VIEW_CLIENTS)
+      ? { label: t('nav_clients'), path: '/clients', icon: IdCard }
+      : null,
+    hasPermission(PERMISSIONS.VIEW_USERS)
+      ? { label: t('nav_users'), path: '/users', icon: Users }
+      : null,
+    hasPermission(PERMISSIONS.VIEW_HISTORY)
+      ? { label: t('nav_history'), path: '/history', icon: FileClock }
+      : null,
+    hasPermission(PERMISSIONS.MANAGE_SETTINGS)
+      ? { label: t('nav_settings'), path: '/settings', icon: Settings }
+      : null
+  ].filter(Boolean)
+  const items = [...coreItems, ...adminItems]
 
   return (
     <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white md:block">
