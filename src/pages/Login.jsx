@@ -1,4 +1,4 @@
-import { Eye, EyeOff, LockKeyhole, ShieldCheck, UserRoundPlus } from 'lucide-react'
+import { Download, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRoundPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
@@ -24,6 +24,9 @@ export default function Login() {
   const [showSetupConfirmPassword, setShowSetupConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState({ type: '', message: '' })
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [installStatus, setInstallStatus] = useState('')
 
   useEffect(() => {
     if (location.state?.from) {
@@ -33,6 +36,32 @@ export default function Login() {
       })
     }
   }, [location.state])
+
+  useEffect(() => {
+    const installed =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    setIsInstalled(installed)
+
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault()
+      setDeferredPrompt(event)
+    }
+
+    const handleInstalled = () => {
+      setInstallStatus('App installed successfully.')
+      setDeferredPrompt(null)
+      setIsInstalled(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleInstalled)
+    }
+  }, [])
 
   if (currentUser) {
     return <Navigate replace to={getDefaultRoute()} />
@@ -65,6 +94,23 @@ export default function Login() {
 
     setStatus({ type: '', message: '' })
     navigate(result.user.role === 'admin' ? '/' : '/calculator', { replace: true })
+  }
+
+  const handleInstallApp = async () => {
+    if (isInstalled) {
+      setInstallStatus('App is already installed on this device.')
+      return
+    }
+
+    if (!deferredPrompt) {
+      setInstallStatus('Install option is not ready in this browser yet. On iPhone, open Safari share menu and choose Add to Home Screen.')
+      return
+    }
+
+    deferredPrompt.prompt()
+    const choice = await deferredPrompt.userChoice
+    setInstallStatus(choice?.outcome === 'accepted' ? 'Install request accepted.' : 'Install cancelled.')
+    setDeferredPrompt(null)
   }
 
   const updateFirstAdminField = (key, value) => {
@@ -281,6 +327,32 @@ export default function Login() {
             >
               {status.message}
             </div>
+          ) : null}
+        </Card>
+
+        <Card className="w-full">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Install App</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Install on phone or PC for quick access and full-screen use.
+              </p>
+            </div>
+            <Button
+              className="w-full sm:w-auto"
+              disabled={isInstalled}
+              onClick={handleInstallApp}
+              type="button"
+              variant={isInstalled ? 'muted' : 'secondary'}
+            >
+              <Download size={18} aria-hidden="true" />
+              {isInstalled ? 'Already Installed' : 'Install App'}
+            </Button>
+          </div>
+          {installStatus ? (
+            <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">
+              {installStatus}
+            </p>
           ) : null}
         </Card>
       </div>
