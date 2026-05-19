@@ -63,6 +63,7 @@ function loadCalculatorMemory() {
     },
     printColorMode: safePrintColorMode,
     handleEnabled: Boolean(saved?.handleEnabled),
+    adhesiveCostTouched: Boolean(saved?.adhesiveCostTouched),
     submitted: Boolean(saved?.submitted)
   }
 }
@@ -107,6 +108,7 @@ export default function Calculator() {
   const [values, setValues] = useState(savedMemory.values)
   const [printColorMode, setPrintColorMode] = useState(savedMemory.printColorMode)
   const [handleEnabled, setHandleEnabled] = useState(savedMemory.handleEnabled)
+  const [adhesiveCostTouched, setAdhesiveCostTouched] = useState(savedMemory.adhesiveCostTouched)
   const [submitted, setSubmitted] = useState(savedMemory.submitted)
 
   const activeMode = bagModes[mode]
@@ -202,12 +204,14 @@ export default function Calculator() {
       values,
       printColorMode,
       handleEnabled,
+      adhesiveCostTouched,
       submitted
     })
-  }, [handleEnabled, mode, printColorMode, submitted, values])
+  }, [adhesiveCostTouched, handleEnabled, mode, printColorMode, submitted, values])
 
   useEffect(() => {
     if (mode !== 'courier') return
+    if (adhesiveCostTouched) return
 
     const nextAdhesiveCost = calculateAdhesiveCost(values.width)
     if (values.adhesiveCost === nextAdhesiveCost) return
@@ -216,7 +220,7 @@ export default function Calculator() {
       ...current,
       adhesiveCost: nextAdhesiveCost
     }))
-  }, [mode, values.width, values.adhesiveCost])
+  }, [adhesiveCostTouched, mode, values.width, values.adhesiveCost])
 
   const updatePrintColorMode = (nextMode) => {
     const safeNextMode = nextMode === '2' ? '2' : '1'
@@ -227,6 +231,9 @@ export default function Calculator() {
     }))
   }
   const updateValue = (field, value) => {
+    if (field === 'adhesiveCost') {
+      setAdhesiveCostTouched(true)
+    }
     setValues((current) => ({ ...current, [field]: value }))
   }
 
@@ -234,6 +241,7 @@ export default function Calculator() {
     setMode(nextMode)
     setSubmitted(false)
     setHandleEnabled(false)
+    setAdhesiveCostTouched(false)
     setValues((current) => ({
       ...current,
       thickness: String(bagModes[nextMode].thickness),
@@ -246,6 +254,7 @@ export default function Calculator() {
   const reset = () => {
     setSubmitted(false)
     setHandleEnabled(false)
+    setAdhesiveCostTouched(false)
     setPrintColorMode('1')
     setValues({
       ...initialValues,
@@ -261,6 +270,7 @@ export default function Calculator() {
       },
       printColorMode: '1',
       handleEnabled: false,
+      adhesiveCostTouched: false,
       submitted: false
     })
   }
