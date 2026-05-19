@@ -170,11 +170,11 @@ export default function Login() {
             <h2 className="mt-2 text-2xl font-bold text-slate-950">
               {needsFirstAdminSetup ? 'Create first admin' : 'Sign in'}
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              {needsFirstAdminSetup
-                ? 'This is the first-time cloud setup. Create the main admin account once, then we can sign in normally.'
-                : 'Sign in with your cloud account. Admin and staff access now comes from the shared user system.'}
-            </p>
+            {needsFirstAdminSetup ? (
+              <p className="mt-2 text-sm text-slate-500">
+                This is the first-time cloud setup. Create the main admin account once, then we can sign in normally.
+              </p>
+            ) : null}
           </div>
 
           {needsFirstAdminSetup ? (
