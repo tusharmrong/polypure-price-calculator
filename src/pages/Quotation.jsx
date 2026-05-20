@@ -78,6 +78,13 @@ export default function Quotation() {
     return [createItem(draft)]
   })
   const [discount, setDiscount] = useState(formatDecimal(prefill?.discount ?? savedDraft?.discount ?? 0))
+  const [vatPercent, setVatPercent] = useState(formatDecimal(prefill?.vatPercent ?? savedDraft?.vatPercent ?? 0))
+  const [otherChargeName, setOtherChargeName] = useState(
+    prefill?.otherChargeName || savedDraft?.otherChargeName || 'Other Charge'
+  )
+  const [otherChargeAmount, setOtherChargeAmount] = useState(
+    formatDecimal(prefill?.otherChargeAmount ?? savedDraft?.otherChargeAmount ?? 0)
+  )
   const [advancePercent, setAdvancePercent] = useState(
     formatDecimal(prefill?.advancePercent ?? savedDraft?.advancePercent ?? 40, 0)
   )
@@ -89,10 +96,18 @@ export default function Quotation() {
   const clientSuggestions = useClientSuggestions()
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
-  const totalAmount = useMemo(() => {
+  const totalBeforeVat = useMemo(() => {
     const nextTotal = subtotal - Number(discount || 0)
     return Number.isFinite(nextTotal) ? Math.max(nextTotal, 0) : 0
   }, [discount, subtotal])
+  const vatAmount = useMemo(() => {
+    const nextVat = (totalBeforeVat * Number(vatPercent || 0)) / 100
+    return Number.isFinite(nextVat) ? Math.max(nextVat, 0) : 0
+  }, [totalBeforeVat, vatPercent])
+  const totalAmount = useMemo(
+    () => totalBeforeVat + vatAmount + Number(otherChargeAmount || 0),
+    [otherChargeAmount, totalBeforeVat, vatAmount]
+  )
   const advanceAmount = useMemo(() => {
     const nextAmount = totalAmount * (Number(advancePercent || 0) / 100)
     return Number.isFinite(nextAmount) ? nextAmount : 0
@@ -110,11 +125,29 @@ export default function Quotation() {
         address,
         items: items.map((item) => ({ description: item.description, quantity: item.quantity, rate: item.rate })),
         discount,
+        vatPercent,
+        otherChargeName,
+        otherChargeAmount,
         advancePercent,
         notes,
         terms
       }),
-    [address, advancePercent, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, phone, terms]
+    [
+      address,
+      advancePercent,
+      clientName,
+      discount,
+      documentDate,
+      documentNumber,
+      editingDocumentId,
+      items,
+      notes,
+      otherChargeAmount,
+      otherChargeName,
+      phone,
+      terms,
+      vatPercent
+    ]
   )
   const isDirty = baselineFingerprint !== '' && baselineFingerprint !== formFingerprint
 
@@ -130,11 +163,33 @@ export default function Quotation() {
       address,
       items,
       discount: Number(discount || 0),
+      vatPercent: Number(vatPercent || 0),
+      vatAmount,
+      otherChargeName,
+      otherChargeAmount: Number(otherChargeAmount || 0),
+      totalBeforeVat,
       advancePercent: Number(advancePercent || 0),
       notes,
       terms
     })
-  }, [address, advancePercent, clientName, discount, documentDate, documentNumber, editingDocumentId, items, notes, phone, terms])
+  }, [
+    address,
+    advancePercent,
+    clientName,
+    discount,
+    documentDate,
+    documentNumber,
+    editingDocumentId,
+    items,
+    notes,
+    otherChargeAmount,
+    otherChargeName,
+    phone,
+    terms,
+    totalBeforeVat,
+    vatAmount,
+    vatPercent
+  ])
 
   useEffect(() => {
     if (!editingDocumentId) {
@@ -211,6 +266,11 @@ export default function Quotation() {
       })),
       subtotal,
       discount: Number(discount || 0),
+      vatPercent: Number(vatPercent || 0),
+      vatAmount,
+      otherChargeName,
+      otherChargeAmount: Number(otherChargeAmount || 0),
+      totalBeforeVat,
       totalAmount,
       advancePercent: Number(advancePercent || 0),
       advanceAmount,
@@ -247,6 +307,11 @@ export default function Quotation() {
       })),
       subtotal,
       discount: Number(discount || 0),
+      vatPercent: Number(vatPercent || 0),
+      vatAmount,
+      otherChargeName,
+      otherChargeAmount: Number(otherChargeAmount || 0),
+      totalBeforeVat,
       totalAmount,
       advancePercent: Number(advancePercent || 0),
       advanceAmount,
@@ -287,6 +352,9 @@ export default function Quotation() {
     setAddress('')
     setItems([createItem()])
     setDiscount(formatDecimal(0))
+    setVatPercent(formatDecimal(0))
+    setOtherChargeName('Other Charge')
+    setOtherChargeAmount(formatDecimal(0))
     setAdvancePercent(formatDecimal(40, 0))
     setNotes('')
     setTerms(companySettings.terms || defaultSettings.terms)
@@ -466,7 +534,40 @@ export default function Quotation() {
                   type="number"
                   value={discount}
                 />
-                <Input id="quotation-total" label={isBn ? 'মোট টাকা' : 'Total Amount'} readOnly type="number" value={formatDecimal(totalAmount)} />
+                <Input
+                  id="quotation-vat-percent"
+                  label={isBn ? 'ভ্যাট (%)' : 'VAT (%)'}
+                  min="0"
+                  onBlur={() => setVatPercent(formatDecimal(vatPercent))}
+                  onChange={(event) => setVatPercent(event.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={vatPercent}
+                />
+                <Input
+                  id="quotation-vat-amount"
+                  label={isBn ? 'ভ্যাটের পরিমাণ' : 'VAT Amount'}
+                  readOnly
+                  type="number"
+                  value={formatDecimal(vatAmount)}
+                />
+                <Input
+                  id="quotation-other-charge-name"
+                  label={isBn ? 'অন্য চার্জের নাম' : 'Other Charge Name'}
+                  onChange={(event) => setOtherChargeName(event.target.value)}
+                  value={otherChargeName}
+                />
+                <Input
+                  id="quotation-other-charge-amount"
+                  label={isBn ? 'অন্য চার্জের পরিমাণ' : 'Other Charge Amount'}
+                  min="0"
+                  onBlur={() => setOtherChargeAmount(formatDecimal(otherChargeAmount))}
+                  onChange={(event) => setOtherChargeAmount(event.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={otherChargeAmount}
+                />
+                <Input id="quotation-total" label={isBn ? 'গ্র্যান্ড টোটাল' : 'Grand Total'} readOnly type="number" value={formatDecimal(totalAmount)} />
                 <Input
                   id="quotation-advance-percent"
                   label={isBn ? 'অ্যাডভান্স (%)' : 'Advance Payment (%)'}
@@ -613,6 +714,14 @@ export default function Quotation() {
                       <div className="flex justify-between gap-4">
                         <span className="text-slate-500">Discount</span>
                         <span className="font-semibold text-slate-950">{formatCurrency(discount)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500">VAT ({Number(vatPercent || 0).toFixed(2)}%)</span>
+                        <span className="font-semibold text-slate-950">{formatCurrency(vatAmount)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500">{otherChargeName?.trim() || 'Other Charge'}</span>
+                        <span className="font-semibold text-slate-950">{formatCurrency(otherChargeAmount)}</span>
                       </div>
                       <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm">
                         <span className="font-bold text-slate-950">Grand Total</span>
