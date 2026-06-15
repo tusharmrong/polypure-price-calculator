@@ -50,9 +50,20 @@ export function AuthProvider({ children }) {
   }
 
   const refreshSetupState = async () => {
-    const nextSetupState = await getAuthSetupState()
-    setNeedsFirstAdminSetup(nextSetupState.needsFirstAdminSetup)
-    return nextSetupState
+    try {
+      const nextSetupState = await getAuthSetupState()
+      setNeedsFirstAdminSetup(nextSetupState.needsFirstAdminSetup)
+      return nextSetupState
+    } catch (error) {
+      console.warn('Unable to check cloud auth setup state.', error)
+      const fallbackSetupState = {
+        hasUsers: true,
+        hasAdmin: true,
+        needsFirstAdminSetup: false
+      }
+      setNeedsFirstAdminSetup(false)
+      return fallbackSetupState
+    }
   }
 
   const refreshAll = async (userOverride = currentUser) => {

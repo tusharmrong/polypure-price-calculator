@@ -191,20 +191,32 @@ async function ensureAuthBootstrapState(actorUser = null) {
 function mapAuthError(code) {
   switch (code) {
     case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'INVALID_LOGIN_CREDENTIALS':
     case 'EMAIL_NOT_FOUND':
     case 'INVALID_PASSWORD':
       return 'Invalid username or password.'
+    case 'auth/invalid-email':
+      return 'Please enter a valid username or email.'
+    case 'auth/user-disabled':
+      return 'This login account is disabled in Firebase.'
     case 'auth/too-many-requests':
       return 'Too many failed attempts. Please wait a moment and try again.'
     case 'auth/network-request-failed':
       return 'Unable to reach the cloud login service right now. Please check your connection.'
+    case 'auth/operation-not-allowed':
+      return 'Email/password login is not enabled in Firebase Authentication.'
+    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+    case 'auth/invalid-api-key':
+      return 'Firebase API key is not valid. Please check the Firebase config.'
+    case 'auth/unauthorized-domain':
+      return 'This website domain is not allowed in Firebase Authentication.'
     case 'EMAIL_EXISTS':
       return 'This username is already in use.'
     default:
-      return 'Something went wrong while talking to the login service.'
+      return `Something went wrong while talking to the login service. (${code || 'UNKNOWN'})`
   }
 }
 
