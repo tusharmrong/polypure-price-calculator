@@ -206,6 +206,10 @@ function mapAuthError(code) {
       return 'Too many failed attempts. Please wait a moment and try again.'
     case 'auth/network-request-failed':
       return 'Unable to reach the cloud login service right now. Please check your connection.'
+    case 'permission-denied':
+    case 'firestore/permission-denied':
+    case 'auth/permission-denied':
+      return 'Firebase Firestore rules are blocking this login. Please update Firestore rules.'
     case 'auth/operation-not-allowed':
       return 'Email/password login is not enabled in Firebase Authentication.'
     case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
