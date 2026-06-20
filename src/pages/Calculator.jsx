@@ -278,18 +278,25 @@ export default function Calculator() {
   const copyResult = async () => {
     if (result.status !== 'ready') return
 
+    const bagTitle =
+      mode === 'shopping'
+        ? handleEnabled
+          ? 'Handled Shopping Bag'
+          : 'D-cut Shopping Bag'
+        : 'Courier Bag'
+    const minimumOrderQuantity = printColorMode === '2' ? 3000 : 2000
     const sizeLine =
       mode === 'shopping'
         ? `Width-${values.width || 0}, Length-${values.height || 0}, Folding-${values.extraMeasure || 0}`
         : `Width-${values.width || 0}, Length-${values.height || 0}, Flap-${values.extraMeasure || 0}`
 
     const summary = [
-      mode === 'shopping' ? 'Shopping Bag' : 'Courier Bag',
+      bagTitle,
       sizeLine,
       `Thickness: ${thicknessAsSheetText(values.thickness)}`,
       `${printColorMode} Color print`,
-      `${mode === 'shopping' && handleEnabled ? 'With handle' : 'Without handle'} price: ${Number(result.finalPrice || 0).toFixed(2)}/-`,
-      'Minimum Order Quantity 2000 pieces'
+      `Price Per Piece: ${Number(result.finalPrice || 0).toFixed(2)}/-`,
+      `Minimum Order Quantity ${minimumOrderQuantity} pieces`
     ].join('\n')
 
     await navigator.clipboard?.writeText(summary)
