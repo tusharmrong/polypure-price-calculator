@@ -85,6 +85,9 @@ export default function Invoice() {
   const [otherChargeAmount, setOtherChargeAmount] = useState(
     formatDecimal(prefill?.otherChargeAmount ?? savedDraft?.otherChargeAmount ?? 0)
   )
+  const [deliveryCharge, setDeliveryCharge] = useState(
+    formatDecimal(prefill?.deliveryCharge ?? savedDraft?.deliveryCharge ?? 0)
+  )
   const [paidAmount, setPaidAmount] = useState(formatDecimal(prefill?.paidAmount ?? savedDraft?.paidAmount ?? 0))
   const [notes, setNotes] = useState(prefill?.notes || savedDraft?.notes || '')
   const [terms, setTerms] = useState(prefill?.terms || savedDraft?.terms || companySettings.terms || defaultSettings.terms)
@@ -103,8 +106,8 @@ export default function Invoice() {
     return Number.isFinite(nextVat) ? Math.max(nextVat, 0) : 0
   }, [totalAmount, vatPercent])
   const grandTotal = useMemo(
-    () => totalAmount + vatAmount + Number(otherChargeAmount || 0),
-    [otherChargeAmount, totalAmount, vatAmount]
+    () => totalAmount + vatAmount + Number(otherChargeAmount || 0) + Number(deliveryCharge || 0),
+    [deliveryCharge, otherChargeAmount, totalAmount, vatAmount]
   )
   const dueAmount = useMemo(() => {
     const nextDue = grandTotal - Number(paidAmount || 0)
@@ -126,6 +129,7 @@ export default function Invoice() {
         vatPercent,
         otherChargeName,
         otherChargeAmount,
+        deliveryCharge,
         paidAmount,
         notes,
         terms
@@ -133,6 +137,7 @@ export default function Invoice() {
     [
       address,
       clientName,
+      deliveryCharge,
       discount,
       documentDate,
       documentNumber,
@@ -164,6 +169,7 @@ export default function Invoice() {
       vatPercent: Number(vatPercent || 0),
       otherChargeName,
       otherChargeAmount: Number(otherChargeAmount || 0),
+      deliveryCharge: Number(deliveryCharge || 0),
       paidAmount: Number(paidAmount || 0),
       notes,
       terms
@@ -171,6 +177,7 @@ export default function Invoice() {
   }, [
     address,
     clientName,
+    deliveryCharge,
     discount,
     documentDate,
     documentNumber,
@@ -264,6 +271,7 @@ export default function Invoice() {
       vatAmount,
       otherChargeName,
       otherChargeAmount: Number(otherChargeAmount || 0),
+      deliveryCharge: Number(deliveryCharge || 0),
       totalBeforeVat: totalAmount,
       totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
@@ -305,6 +313,7 @@ export default function Invoice() {
       vatAmount,
       otherChargeName,
       otherChargeAmount: Number(otherChargeAmount || 0),
+      deliveryCharge: Number(deliveryCharge || 0),
       totalBeforeVat: totalAmount,
       totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
@@ -349,6 +358,7 @@ export default function Invoice() {
     setVatPercent(formatDecimal(0))
     setOtherChargeName('Other Charge')
     setOtherChargeAmount(formatDecimal(0))
+    setDeliveryCharge(formatDecimal(0))
     setPaidAmount(formatDecimal(0))
     setNotes('')
     setTerms(companySettings.terms || defaultSettings.terms)
@@ -556,6 +566,16 @@ export default function Invoice() {
                   type="number"
                   value={otherChargeAmount}
                 />
+                <Input
+                  id="invoice-delivery-charge"
+                  label={isBn ? 'Delivery Charge' : 'Delivery Charge'}
+                  min="0"
+                  onBlur={() => setDeliveryCharge(formatDecimal(deliveryCharge))}
+                  onChange={(event) => setDeliveryCharge(event.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={deliveryCharge}
+                />
                 <Input id="invoice-total" label={isBn ? 'মোট টাকা' : 'Grand Total'} readOnly type="number" value={formatDecimal(grandTotal)} />
                 <Input
                   id="invoice-paid"
@@ -692,6 +712,10 @@ export default function Invoice() {
                       <div className="flex justify-between gap-4">
                         <span className="text-slate-500">{otherChargeName?.trim() || 'Other Charge'}</span>
                         <span className="font-semibold text-slate-950">{formatCurrency(otherChargeAmount)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500">Delivery Charge</span>
+                        <span className="font-semibold text-slate-950">{formatCurrency(deliveryCharge)}</span>
                       </div>
                       <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm">
                         <span className="font-bold text-slate-950">Grand Total</span>
