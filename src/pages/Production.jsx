@@ -42,7 +42,7 @@ import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
 import Select from '../components/Select.jsx'
 import { useAuth } from '../utils/authContext.jsx'
-import { loadDocuments, saveDocument } from '../utils/documents.js'
+import { loadDocuments, saveDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { PERMISSIONS } from '../utils/permissions.js'
 import {
@@ -253,6 +253,20 @@ export default function Production() {
     })
     return columns
   }, [ordersList, searchQuery])
+
+  // Delete / Trash Production Order
+  const handleDeleteProductionOrder = async (order) => {
+    if (!window.confirm(`Delete "${order.number}" (${order.clientName})? This will move it to Trash and remove it from Production.`)) return
+
+    try {
+      await softDeleteDocument(order.id)
+      showToast(`Order ${order.number} moved to Trash.`, 'success')
+      await reloadData()
+    } catch (err) {
+      console.error('Failed to delete order:', err)
+      showToast('Failed to delete order.', 'error')
+    }
+  }
 
   // WhatsApp Message Generator Helper
   const handleOpenWhatsApp = (doc) => {
@@ -528,9 +542,21 @@ export default function Production() {
                           </span>
                           <span className="text-[10px] text-slate-400 block mt-0.5">{order.date}</span>
                         </div>
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
-                          {order.items.length} {order.items.length === 1 ? 'type' : 'types'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                            {order.items.length} {order.items.length === 1 ? 'type' : 'types'}
+                          </span>
+                          {hasPermission(PERMISSIONS.MANAGE_PRODUCTION) && (
+                            <button
+                              className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 transition"
+                              onClick={() => handleDeleteProductionOrder(order)}
+                              title="Move to Trash / Delete"
+                              type="button"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Client Badge */}
@@ -711,6 +737,16 @@ export default function Production() {
                         >
                           <MessageSquare size={13} />
                         </button>
+                        {hasPermission(PERMISSIONS.MANAGE_PRODUCTION) && (
+                          <button
+                            className="rounded-lg border border-rose-200 bg-rose-50 p-1.5 text-rose-700 hover:bg-rose-100 transition"
+                            onClick={() => handleDeleteProductionOrder(order)}
+                            title="Delete / Move to Trash"
+                            type="button"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
