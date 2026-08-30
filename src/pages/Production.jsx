@@ -353,9 +353,9 @@ export default function Production() {
       </div>
 
       {/* 4 Factory KPI Metrics Cards */}
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4 no-print">
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 no-print">
         {/* 1. Bags in Production Queue */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {isBn ? 'কারখানায় মোট ব্যাগ' : 'Bags in Pipeline'}
@@ -364,7 +364,7 @@ export default function Production() {
               <Package size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-slate-900">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-slate-900 truncate tracking-tight">
             {metrics.totalBagsInPipeline.toLocaleString()} <span className="text-xs font-bold text-slate-500">pcs</span>
           </p>
           <div className="mt-1 text-xs text-slate-500">
@@ -373,7 +373,7 @@ export default function Production() {
         </div>
 
         {/* 2. Film Extrusion & Printing */}
-        <div className="rounded-2xl border border-purple-200/90 bg-purple-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-purple-200/90 bg-purple-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-800">
               {isBn ? 'ফিল্ম ও প্রিন্টিংয়ে' : 'In Film & Printing'}
@@ -382,14 +382,14 @@ export default function Production() {
               <Layers size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-purple-900">{metrics.inExtrusionPrinting} Jobs</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-purple-900 truncate tracking-tight">{metrics.inExtrusionPrinting} Jobs</p>
           <div className="mt-1 text-xs text-purple-700">
             <span>{isBn ? 'মেশিনে রানিং' : 'Running on production line'}</span>
           </div>
         </div>
 
         {/* 3. Cutting, Handle & Packaging */}
-        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
               {isBn ? 'কাটিং ও প্যাকিংয়ে' : 'Cutting & Packing'}
@@ -398,14 +398,14 @@ export default function Production() {
               <Scissors size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-amber-800">{metrics.inCuttingPacking} Jobs</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-amber-800 truncate tracking-tight">{metrics.inCuttingPacking} Jobs</p>
           <div className="mt-1 text-xs text-amber-700">
             <span>{isBn ? 'সিলিং ও ফিনিশিং' : 'Sealing & master sacking'}</span>
           </div>
         </div>
 
         {/* 4. Ready for Delivery */}
-        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               {isBn ? 'ডেলিভারির জন্য প্রস্তুত' : 'Ready for Dispatch'}
@@ -414,7 +414,7 @@ export default function Production() {
               <Truck size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-emerald-800">{metrics.readyForDelivery} Jobs</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-emerald-800 truncate tracking-tight">{metrics.readyForDelivery} Jobs</p>
           <div className="mt-1 text-xs text-emerald-700">
             <span>{isBn ? 'চালান রেডি' : 'Delivery challan ready'}</span>
           </div>

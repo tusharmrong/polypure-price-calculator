@@ -501,9 +501,9 @@ export default function Expenses() {
       </div>
 
       {/* 2. SUMMARY KPI PILLARS */}
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {/* Today */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {isBn ? 'আজকের খরচ' : "Today's Spent"}
@@ -512,14 +512,14 @@ export default function Expenses() {
               <Calendar size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-slate-900">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-slate-900 truncate tracking-tight">
             {formatCurrency(summaryKpis.todayTotal)}
           </p>
           <p className="mt-1 text-xs text-slate-500">{summaryKpis.todayCount} entries today</p>
         </div>
 
         {/* This Month */}
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-rose-800">
               {isBn ? 'চলতি মাসের মোট' : 'This Month Total'}
@@ -528,14 +528,14 @@ export default function Expenses() {
               <TrendingDown size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-rose-800">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-rose-800 truncate tracking-tight">
             {formatCurrency(summaryKpis.monthTotal)}
           </p>
           <p className="mt-1 text-xs text-rose-700">{summaryKpis.monthCount} entries this month</p>
         </div>
 
         {/* Top Category Spent */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
               {isBn ? 'সর্বোচ্চ খরচ খাত' : 'Top Cost Sector'}
@@ -544,14 +544,14 @@ export default function Expenses() {
               <Tag size={16} />
             </div>
           </div>
-          <p className="mt-2 text-base font-extrabold text-amber-900 truncate">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-amber-900 truncate tracking-tight">
             {summaryKpis.topCatName}
           </p>
           <p className="mt-1 text-xs font-bold text-amber-700">{formatCurrency(summaryKpis.topCatAmt)}</p>
         </div>
 
         {/* All Time Total */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-soft">
+        <div className="rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               {isBn ? 'সর্বমোট রেকর্ড' : 'All Time Records'}
@@ -560,7 +560,7 @@ export default function Expenses() {
               <Receipt size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-white">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-white truncate tracking-tight">
             {formatCurrency(summaryKpis.allTimeTotal)}
           </p>
           <p className="mt-1 text-xs text-slate-400">{expenses.length} total entries</p>

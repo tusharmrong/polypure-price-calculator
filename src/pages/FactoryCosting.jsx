@@ -616,9 +616,9 @@ export default function FactoryCosting() {
       </div>
 
       {/* 4 Executive KPI Cards */}
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {/* 1. Total Invoiced Revenue */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {isBn ? 'মোট ইনভয়েস বিক্রয়' : 'Total Invoiced Sales'}
@@ -627,14 +627,14 @@ export default function FactoryCosting() {
               <FileText size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-slate-900">{formatCurrency(kpis.totalSales)}</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-slate-900 truncate tracking-tight">{formatCurrency(kpis.totalSales)}</p>
           <div className="mt-1 text-xs text-slate-500">
             <span>{kpis.totalCount} {isBn ? 'টি অর্ডার ইনভয়েস' : 'total order invoices'}</span>
           </div>
         </div>
 
         {/* 2. Total Factory Cost (COGS) */}
-        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/30 p-4 shadow-soft">
+        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/30 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-rose-800">
               {isBn ? 'মোট কারখানা খরচ' : 'Total Production Cost'}
@@ -643,14 +643,14 @@ export default function FactoryCosting() {
               <Factory size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-rose-800">{formatCurrency(kpis.totalCost)}</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-rose-800 truncate tracking-tight">{formatCurrency(kpis.totalCost)}</p>
           <div className="mt-1 text-xs text-rose-700">
             <span>{kpis.costedCount} {isBn ? 'টি অর্ডারের কস্টিং যুক্ত' : 'orders costed'}</span>
           </div>
         </div>
 
         {/* 3. Net Production Profit */}
-        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               {isBn ? 'নিট গ্রস প্রফিট' : 'Net Gross Profit'}
@@ -659,7 +659,7 @@ export default function FactoryCosting() {
               <TrendingUp size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-emerald-800">{formatCurrency(kpis.totalProfit)}</p>
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-emerald-800 truncate tracking-tight">{formatCurrency(kpis.totalProfit)}</p>
           <div className="mt-1 text-xs text-emerald-700">
             <span>{isBn ? 'বিক্রয় মূল্য − কারখানা উৎপাদন খরচ' : 'Invoiced Sales − Total COGS'}</span>
           </div>

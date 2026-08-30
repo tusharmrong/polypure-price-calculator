@@ -558,9 +558,9 @@ export default function Reports() {
       </div>
 
       {/* 4 Responsive Financial Pillar Cards */}
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {/* 1. Total Invoiced Revenue */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {isBn ? 'মোট ইনভয়েস রেভিনিউ' : 'Total Revenue'}
@@ -569,7 +569,7 @@ export default function Reports() {
               <FileText size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-slate-900">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-slate-900 truncate tracking-tight">
             {formatCurrency(financialSummary.totalInvoicedRevenue)}
           </p>
           <div className="mt-1 text-xs text-slate-500">
@@ -578,7 +578,7 @@ export default function Reports() {
         </div>
 
         {/* 2. Real Cash Collections */}
-        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               {isBn ? 'আদায়কৃত ক্যাশ' : 'Cash Collected'}
@@ -587,7 +587,7 @@ export default function Reports() {
               <Wallet size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-emerald-800">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-emerald-800 truncate tracking-tight">
             {formatCurrency(financialSummary.totalCollectedAmount)}
           </p>
           <div className="mt-1 text-xs text-emerald-700">
@@ -596,7 +596,7 @@ export default function Reports() {
         </div>
 
         {/* 3. Total Expenses */}
-        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/40 p-4 shadow-soft">
+        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-rose-800">
               {isBn ? 'মোট ব্যবসায়িক খরচ' : 'Total Expenses'}
@@ -605,7 +605,7 @@ export default function Reports() {
               <TrendingDown size={16} />
             </div>
           </div>
-          <p className="mt-2 text-xl font-extrabold text-rose-800">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-rose-800 truncate tracking-tight">
             {formatCurrency(financialSummary.totalExpensesAmount)}
           </p>
           <div className="mt-1 text-xs text-rose-700">
@@ -615,7 +615,7 @@ export default function Reports() {
 
         {/* 4. Net Profit & Margin */}
         <div
-          className={`rounded-2xl border p-4 shadow-soft ${
+          className={`rounded-2xl border p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between ${
             financialSummary.netProfit >= 0
               ? 'border-emerald-300 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white'
               : 'border-rose-300 bg-gradient-to-br from-rose-600 via-rose-700 to-rose-800 text-white'
@@ -631,7 +631,7 @@ export default function Reports() {
               {financialSummary.netProfit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
             </div>
           </div>
-          <p className="mt-2 text-xl font-black">
+          <p className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black truncate tracking-tight">
             {financialSummary.netProfit >= 0 ? '+' : '-'} {formatCurrency(Math.abs(financialSummary.netProfit))}
           </p>
           <div className="mt-1 flex items-center justify-between text-xs text-white/85">

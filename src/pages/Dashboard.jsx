@@ -331,7 +331,7 @@ export default function Dashboard() {
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
         {quickActions.map((act) => {
           const Icon = act.icon
           return (
@@ -347,80 +347,104 @@ export default function Dashboard() {
         })}
       </div>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-              {isBn ? 'নগদ আদায় (চলতি মাস)' : 'Real Cash Received'}
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-              <CheckCircle2 size={16} />
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        {/* 1. Real Cash Received */}
+        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-800 truncate">
+                {isBn ? 'নগদ আদায় (চলতি মাস)' : 'Real Cash Received'}
+              </span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <CheckCircle2 size={16} />
+              </div>
             </div>
+            <p
+              className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-emerald-900 truncate tracking-tight"
+              title={formatCurrency(monthlySummary.totalReceivedAmount)}
+            >
+              {formatCurrency(monthlySummary.totalReceivedAmount)}
+            </p>
           </div>
-          <p className="mt-2 text-2xl font-black text-emerald-900">
-            {formatCurrency(monthlySummary.totalReceivedAmount)}
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-emerald-700">
-            <span>From Invoices & Receipts</span>
-            <span className="font-bold">{monthlySummary.receiptCount + monthlySummary.invoiceCount} entries</span>
+          <div className="mt-2.5 pt-2 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-1 text-[11px] text-emerald-700">
+            <span className="truncate">Inflows & Receipts</span>
+            <span className="font-bold shrink-0">{monthlySummary.receiptCount + monthlySummary.invoiceCount} entries</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/40 p-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-800">
-              {isBn ? 'মোট বকেয়া পাওনা' : 'Total Outstanding Due'}
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
-              <Clock size={16} />
+        {/* 2. Total Outstanding Due */}
+        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-800 truncate">
+                {isBn ? 'মোট বকেয়া পাওনা' : 'Total Outstanding Due'}
+              </span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                <Clock size={16} />
+              </div>
             </div>
+            <p
+              className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-rose-900 truncate tracking-tight"
+              title={formatCurrency(monthlySummary.dueAmount)}
+            >
+              {formatCurrency(monthlySummary.dueAmount)}
+            </p>
           </div>
-          <p className="mt-2 text-2xl font-black text-rose-900">
-            {formatCurrency(monthlySummary.dueAmount)}
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-rose-700">
-            <span>{monthlySummary.dueInvoices.length} clients with open dues</span>
-            <Link className="font-bold hover:underline" to="/reports">
+          <div className="mt-2.5 pt-2 border-t border-rose-200/60 flex flex-wrap items-center justify-between gap-1 text-[11px] text-rose-700">
+            <span className="truncate">{monthlySummary.dueInvoices.length} clients with open dues</span>
+            <Link className="font-bold hover:underline shrink-0" to="/reports">
               View List →
             </Link>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
-              {isBn ? 'অপারেটিং খরচ (চলতি মাস)' : 'Operating Expenses'}
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-              <TrendingDown size={16} />
+        {/* 3. Operating Expenses */}
+        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-800 truncate">
+                {isBn ? 'অপারেটিং খরচ (চলতি মাস)' : 'Operating Expenses'}
+              </span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <TrendingDown size={16} />
+              </div>
             </div>
+            <p
+              className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-amber-900 truncate tracking-tight"
+              title={formatCurrency(totalMonthlyExpenses)}
+            >
+              {formatCurrency(totalMonthlyExpenses)}
+            </p>
           </div>
-          <p className="mt-2 text-2xl font-black text-amber-900">
-            {formatCurrency(totalMonthlyExpenses)}
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-amber-700">
-            <span>Factory & Admin costs</span>
-            <Link className="font-bold hover:underline" to="/expenses">
+          <div className="mt-2.5 pt-2 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-1 text-[11px] text-amber-700">
+            <span className="truncate">Factory & Admin costs</span>
+            <Link className="font-bold hover:underline shrink-0" to="/expenses">
               Expenses →
             </Link>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-indigo-200/90 bg-indigo-50/40 p-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-800">
-              {isBn ? 'আনুমানিক নিট লাভ' : 'Estimated Net Profit'}
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-              <TrendingUp size={16} />
+        {/* 4. Estimated Net Profit */}
+        <div className="rounded-2xl border border-indigo-200/90 bg-indigo-50/40 p-4 shadow-soft min-w-0 overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-indigo-800 truncate">
+                {isBn ? 'আনুমানিক নিট লাভ' : 'Estimated Net Profit'}
+              </span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                <TrendingUp size={16} />
+              </div>
             </div>
+            <p
+              className="mt-2 text-lg sm:text-xl 2xl:text-2xl font-black text-indigo-900 truncate tracking-tight"
+              title={formatCurrency(estimatedNetProfit)}
+            >
+              {formatCurrency(estimatedNetProfit)}
+            </p>
           </div>
-          <p className="mt-2 text-2xl font-black text-indigo-900">
-            {formatCurrency(estimatedNetProfit)}
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-indigo-700">
-            <span>Sales - (COGS + Expenses)</span>
-            <Link className="font-bold hover:underline" to="/reports">
+          <div className="mt-2.5 pt-2 border-t border-indigo-200/60 flex flex-wrap items-center justify-between gap-1 text-[11px] text-indigo-700">
+            <span className="truncate">Sales - (COGS + Costs)</span>
+            <Link className="font-bold hover:underline shrink-0" to="/reports">
               P&L Statement →
             </Link>
           </div>
