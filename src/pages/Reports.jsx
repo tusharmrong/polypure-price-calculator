@@ -12,6 +12,7 @@ import {
   Download,
   Factory,
   FileDown,
+  FileEdit,
   FileSpreadsheet,
   FileText,
   Filter,
@@ -92,6 +93,11 @@ export default function Reports() {
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('')
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all')
+
+  // Expense Modal State
+  // Multi-invoice selection modal for client due collection
+  const [clientInvoicesModalOpen, setClientInvoicesModalOpen] = useState(false)
+  const [selectedClientForDue, setSelectedClientForDue] = useState(null)
 
   // Expense Modal State
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
@@ -291,6 +297,7 @@ export default function Reports() {
           totalPaid: 0,
           totalDue: 0,
           invoiceCount: 0,
+          invoices: [],
           lastInvoiceNumber: inv.number,
           lastInvoiceDate: inv.displayDate || inv.date
         }
@@ -299,6 +306,7 @@ export default function Reports() {
         existing.totalPaid += paid
         existing.totalDue += due
         existing.invoiceCount += 1
+        existing.invoices.push(inv)
         if (!existing.phone && inv.phone) existing.phone = inv.phone
         if (!existing.address && inv.address) existing.address = inv.address
 
@@ -445,17 +453,19 @@ export default function Reports() {
   }
 
   const handleCollectDue = (client) => {
-    navigate('/money-receipt', {
-      state: {
-        prefillClient: {
-          clientName: client.clientName,
-          phone: client.phone,
-          address: client.address,
-          amount: client.totalDue,
-          workDetails: `Payment collection for outstanding dues (Total Due: BDT ${formatDecimal(client.totalDue)})`
-        }
-      }
-    })
+    if (client.invoices && client.invoices.length === 1) {
+      navigate('/invoice', { state: { prefillDocument: client.invoices[0] } })
+    } else if (client.invoices && client.invoices.length > 1) {
+      setSelectedClientForDue(client)
+      setClientInvoicesModalOpen(true)
+    } else if (client.rawDoc) {
+      navigate('/invoice', { state: { prefillDocument: client.rawDoc } })
+    }
+  }
+
+  const handleEditDueInvoice = (invoiceDoc) => {
+    setClientInvoicesModalOpen(false)
+    navigate('/invoice', { state: { prefillDocument: invoiceDoc } })
   }
 
   const handlePrint = () => {
@@ -1026,151 +1036,334 @@ export default function Reports() {
 
           {/* View Mode 1: Client-Wise Aggregated Dues */}
           {dueViewMode === 'clients' && (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] border-collapse text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/90 font-bold uppercase tracking-wider text-slate-600">
-                      <th className="p-3.5">Client & Contact</th>
-                      <th className="p-3.5 text-center">Unpaid Invoices</th>
-                      <th className="p-3.5 text-right">Total Invoiced</th>
-                      <th className="p-3.5 text-right">Total Paid</th>
-                      <th className="p-3.5 text-right">Outstanding Due</th>
-                      <th className="p-3.5 text-right no-print">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredClientDues.map((client) => (
-                      <tr className="transition hover:bg-slate-50/80" key={client.clientName + client.phone}>
-                        <td className="p-3.5">
-                          <p className="font-bold text-slate-900">{client.clientName}</p>
-                          <p className="text-[11px] text-slate-500">
-                            {client.phone || 'No phone'} {client.address ? `• ${client.address}` : ''}
-                          </p>
-                        </td>
-                        <td className="p-3.5 text-center font-semibold text-slate-700">
-                          <span className="rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-800 font-bold">
-                            {client.invoiceCount}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-right font-medium text-slate-700">
-                          {formatCurrency(client.totalInvoiced)}
-                        </td>
-                        <td className="p-3.5 text-right font-medium text-emerald-700">
-                          {formatCurrency(client.totalPaid)}
-                        </td>
-                        <td className="p-3.5 text-right font-extrabold text-rose-700 text-sm">
-                          {formatCurrency(client.totalDue)}
-                        </td>
-                        <td className="p-3.5 text-right no-print">
-                          <Button
-                            className="text-xs px-2.5 py-1"
-                            onClick={() => handleCollectDue(client)}
-                            type="button"
-                            variant="primary"
-                          >
-                            <Receipt size={13} />
-                            <span>{isBn ? 'টাকা গ্রহণ' : 'Collect Due'}</span>
-                          </Button>
-                        </td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[700px] border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50/90 font-bold uppercase tracking-wider text-slate-600">
+                        <th className="p-3.5">Client & Contact</th>
+                        <th className="p-3.5 text-center">Unpaid Invoices</th>
+                        <th className="p-3.5 text-right">Total Invoiced</th>
+                        <th className="p-3.5 text-right">Total Paid</th>
+                        <th className="p-3.5 text-right">Outstanding Due</th>
+                        <th className="p-3.5 text-right no-print">Actions</th>
                       </tr>
-                    ))}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredClientDues.map((client) => (
+                        <tr className="transition hover:bg-slate-50/80" key={client.clientName + client.phone}>
+                          <td className="p-3.5">
+                            <p className="font-bold text-slate-900">{client.clientName}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {client.phone || 'No phone'} {client.address ? `• ${client.address}` : ''}
+                            </p>
+                          </td>
+                          <td className="p-3.5 text-center font-semibold text-slate-700">
+                            <span className="rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-800 font-bold">
+                              {client.invoiceCount} {isBn ? 'টি' : 'inv'}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right font-medium text-slate-700">
+                            {formatCurrency(client.totalInvoiced)}
+                          </td>
+                          <td className="p-3.5 text-right font-medium text-emerald-700">
+                            {formatCurrency(client.totalPaid)}
+                          </td>
+                          <td className="p-3.5 text-right font-extrabold text-rose-700 text-sm">
+                            {formatCurrency(client.totalDue)}
+                          </td>
+                          <td className="p-3.5 text-right no-print">
+                            <Button
+                              className="text-xs px-3 py-1.5 font-bold shadow-xs"
+                              onClick={() => handleCollectDue(client)}
+                              type="button"
+                              variant="primary"
+                            >
+                              <FileEdit size={13} />
+                              <span>{isBn ? 'ইনভয়েস এডিট' : 'Edit Invoice'}</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
 
-                    {filteredClientDues.length === 0 && (
-                      <tr>
-                        <td className="p-8 text-center text-slate-500" colSpan={6}>
-                          No outstanding client dues found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      {filteredClientDues.length === 0 && (
+                        <tr>
+                          <td className="p-8 text-center text-slate-500" colSpan={6}>
+                            No outstanding client dues found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+
+              {/* Mobile Phone Card View */}
+              <div className="grid gap-3.5 md:hidden">
+                {filteredClientDues.map((client) => (
+                  <div
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft space-y-3"
+                    key={client.clientName + client.phone}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-slate-950 truncate">{client.clientName}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">{client.phone || 'No phone'}</p>
+                        {client.address && <p className="text-[11px] text-slate-400 truncate">{client.address}</p>}
+                      </div>
+                      <span className="rounded-lg bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-bold text-amber-800 shrink-0">
+                        {client.invoiceCount} {isBn ? 'টি বকেয়া' : 'due inv'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Invoiced</span>
+                        <span className="font-bold text-slate-800 text-[11px]">{formatCurrency(client.totalInvoiced)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Paid</span>
+                        <span className="font-bold text-emerald-700 text-[11px]">{formatCurrency(client.totalPaid)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-rose-500 block uppercase font-bold">Due</span>
+                        <span className="font-black text-rose-700 text-xs">{formatCurrency(client.totalDue)}</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full justify-center text-xs py-2 font-bold shadow-xs"
+                      onClick={() => handleCollectDue(client)}
+                      type="button"
+                      variant="primary"
+                    >
+                      <FileEdit size={14} />
+                      <span>
+                        {client.invoiceCount > 1
+                          ? (isBn ? 'বকেয়া ইনভয়েস নির্বাচন করুন' : 'Select Invoice to Edit')
+                          : (isBn ? 'ইনভয়েস এডিট ও পেমেন্ট গ্রহণ' : 'Edit Invoice & Settle Due')}
+                      </span>
+                    </Button>
+                  </div>
+                ))}
+
+                {filteredClientDues.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+                    No outstanding client dues found.
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {/* View Mode 2: Invoice-Wise Detailed Dues Sheet */}
           {dueViewMode === 'invoices' && (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] border-collapse text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/90 font-bold uppercase tracking-wider text-slate-600">
-                      <th className="p-3.5">Invoice # & Date</th>
-                      <th className="p-3.5">Client & Phone</th>
-                      <th className="p-3.5 text-right">Invoiced Amount</th>
-                      <th className="p-3.5 text-right">Paid Amount</th>
-                      <th className="p-3.5 text-right">Pending Due</th>
-                      <th className="p-3.5 text-center">Aging</th>
-                      <th className="p-3.5 text-right no-print">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredInvoiceDues.map((inv) => (
-                      <tr className="transition hover:bg-slate-50/80" key={inv.id}>
-                        <td className="p-3.5 font-bold text-slate-900">
-                          {inv.number}
-                          <span className="block text-[11px] font-normal text-slate-500">{inv.displayDate}</span>
-                        </td>
-                        <td className="p-3.5">
-                          <p className="font-semibold text-slate-800">{inv.clientName}</p>
-                          <p className="text-[11px] text-slate-500">{inv.phone}</p>
-                        </td>
-                        <td className="p-3.5 text-right font-medium text-slate-700">
-                          {formatCurrency(inv.totalAmount)}
-                        </td>
-                        <td className="p-3.5 text-right font-medium text-emerald-700">
-                          {formatCurrency(inv.paidAmount)}
-                        </td>
-                        <td className="p-3.5 text-right font-extrabold text-rose-700 text-sm">
-                          {formatCurrency(inv.dueAmount)}
-                        </td>
-                        <td className="p-3.5 text-center">
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[700px] border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50/90 font-bold uppercase tracking-wider text-slate-600">
+                        <th className="p-3.5">Invoice # & Date</th>
+                        <th className="p-3.5">Client & Phone</th>
+                        <th className="p-3.5 text-right">Invoiced Amount</th>
+                        <th className="p-3.5 text-right">Paid Amount</th>
+                        <th className="p-3.5 text-right">Pending Due</th>
+                        <th className="p-3.5 text-center">Aging</th>
+                        <th className="p-3.5 text-right no-print">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredInvoiceDues.map((inv) => (
+                        <tr className="transition hover:bg-slate-50/80" key={inv.id}>
+                          <td className="p-3.5 font-bold text-slate-900">
+                            {inv.number}
+                            <span className="block text-[11px] font-normal text-slate-500">{inv.displayDate}</span>
+                          </td>
+                          <td className="p-3.5">
+                            <p className="font-semibold text-slate-800">{inv.clientName}</p>
+                            <p className="text-[11px] text-slate-500">{inv.phone}</p>
+                          </td>
+                          <td className="p-3.5 text-right font-medium text-slate-700">
+                            {formatCurrency(inv.totalAmount)}
+                          </td>
+                          <td className="p-3.5 text-right font-medium text-emerald-700">
+                            {formatCurrency(inv.paidAmount)}
+                          </td>
+                          <td className="p-3.5 text-right font-extrabold text-rose-700 text-sm">
+                            {formatCurrency(inv.dueAmount)}
+                          </td>
+                          <td className="p-3.5 text-center">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                inv.ageDays > 30
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : inv.ageDays > 15
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {inv.ageDays} days
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right no-print">
+                            <Button
+                              className="text-xs px-3 py-1.5 font-bold shadow-xs"
+                              onClick={() => navigate('/invoice', { state: { prefillDocument: inv.rawDoc } })}
+                              type="button"
+                              variant="primary"
+                            >
+                              <FileEdit size={13} />
+                              <span>{isBn ? 'ইনভয়েস এডিট' : 'Edit Invoice'}</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {filteredInvoiceDues.length === 0 && (
+                        <tr>
+                          <td className="p-8 text-center text-slate-500" colSpan={7}>
+                            No overdue invoices found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Phone Card View */}
+              <div className="grid gap-3.5 md:hidden">
+                {filteredInvoiceDues.map((inv) => (
+                  <div
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft space-y-3"
+                    key={inv.id}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs font-bold text-slate-900">{inv.number}</span>
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            className={`rounded-full px-2 py-0.2 text-[10px] font-bold ${
                               inv.ageDays > 30
                                 ? 'bg-rose-100 text-rose-800'
-                                : inv.ageDays > 15
-                                ? 'bg-amber-100 text-amber-800'
                                 : 'bg-slate-100 text-slate-700'
                             }`}
                           >
-                            {inv.ageDays} days
+                            {inv.ageDays}d
                           </span>
-                        </td>
-                        <td className="p-3.5 text-right no-print">
-                          <Button
-                            className="text-xs px-2.5 py-1"
-                            onClick={() =>
-                              handleCollectDue({
-                                clientName: inv.clientName,
-                                phone: inv.phone,
-                                address: inv.address,
-                                totalDue: inv.dueAmount
-                              })
-                            }
-                            type="button"
-                            variant="primary"
-                          >
-                            <Receipt size={13} />
-                            <span>Collect</span>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                        </div>
+                        <p className="font-bold text-sm text-slate-900 mt-1">{inv.clientName}</p>
+                        <p className="text-xs text-slate-500">{inv.phone || 'No phone'} • {inv.displayDate}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-rose-500 font-bold block uppercase">Pending Due</span>
+                        <span className="text-sm font-black text-rose-700">{formatCurrency(inv.dueAmount)}</span>
+                      </div>
+                    </div>
 
-                    {filteredInvoiceDues.length === 0 && (
-                      <tr>
-                        <td className="p-8 text-center text-slate-500" colSpan={7}>
-                          No overdue invoices found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-2 text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Total Invoiced</span>
+                        <span className="font-bold text-slate-800">{formatCurrency(inv.totalAmount)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Already Paid</span>
+                        <span className="font-bold text-emerald-700">{formatCurrency(inv.paidAmount)}</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full justify-center text-xs py-2 font-bold shadow-xs"
+                      onClick={() => navigate('/invoice', { state: { prefillDocument: inv.rawDoc } })}
+                      type="button"
+                      variant="primary"
+                    >
+                      <FileEdit size={14} />
+                      <span>{isBn ? 'ইনভয়েস এডিট ও পেমেন্ট গ্রহণ' : 'Edit Invoice & Settle Due'}</span>
+                    </Button>
+                  </div>
+                ))}
+
+                {filteredInvoiceDues.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+                    No overdue invoices found.
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Multi-Invoice Selection Modal for Clients with Multiple Dues */}
+          <Modal
+            isOpen={clientInvoicesModalOpen}
+            onClose={() => setClientInvoicesModalOpen(false)}
+            title={isBn ? `${selectedClientForDue?.clientName} - বকেয়া ইনভয়েস নির্বাচন` : `Select Invoice for ${selectedClientForDue?.clientName}`}
+          >
+            <div className="space-y-3 text-xs">
+              <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-900">{selectedClientForDue?.clientName}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {selectedClientForDue?.phone} {selectedClientForDue?.address ? `• ${selectedClientForDue.address}` : ''}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-rose-600 font-bold uppercase block">Total Due</span>
+                  <span className="text-sm font-black text-rose-700">{formatCurrency(selectedClientForDue?.totalDue)}</span>
+                </div>
+              </div>
+
+              <p className="font-semibold text-slate-700 pt-1">
+                {isBn
+                  ? 'যে ইনভয়েসটি এডিট বা পেমেন্ট আপডেট করতে চান সেটি নির্বাচন করুন:'
+                  : 'Choose which invoice you want to edit or record payment for:'}
+              </p>
+
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                {selectedClientForDue?.invoices?.map((inv) => {
+                  const total = toNumber(inv.totalAmount)
+                  const paid = toNumber(inv.paidAmount)
+                  const due = toNumber(inv.dueAmount || Math.max(total - paid, 0))
+                  return (
+                    <div
+                      key={inv.id || inv.number}
+                      className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-brand-300 transition space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="font-mono font-bold text-xs text-slate-950">{inv.number}</span>
+                          <p className="text-[11px] text-slate-500 mt-0.5">{inv.displayDate || inv.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-rose-500 font-bold uppercase block">Due Amount</span>
+                          <span className="text-sm font-black text-rose-700">{formatCurrency(due)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-600 border-t border-slate-100 pt-2">
+                        <span>Invoiced: <strong>{formatCurrency(total)}</strong></span>
+                        <span>Paid: <strong className="text-emerald-700">{formatCurrency(paid)}</strong></span>
+                      </div>
+
+                      <Button
+                        className="w-full justify-center text-xs py-2 font-bold shadow-xs"
+                        onClick={() => handleEditDueInvoice(inv)}
+                        type="button"
+                        variant="primary"
+                      >
+                        <FileEdit size={14} />
+                        <span>{isBn ? 'এই ইনভয়েসটি এডিট করুন →' : 'Edit This Invoice →'}</span>
+                      </Button>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )}
+          </Modal>
         </div>
       )}
 

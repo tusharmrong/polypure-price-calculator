@@ -939,16 +939,32 @@ export default function Invoice() {
                   value={deliveryCharge}
                 />
                 <Input id="invoice-total" label={isBn ? 'মোট টাকা' : 'Grand Total'} readOnly type="number" value={formatDecimal(grandTotal)} />
-                <Input
-                  id="invoice-paid"
-                  label={isBn ? 'পরিশোধিত টাকা' : 'Paid Amount'}
-                  min="0"
-                  onBlur={() => setPaidAmount(formatDecimal(paidAmount))}
-                  onChange={(event) => setPaidAmount(event.target.value)}
-                  step="0.01"
-                  type="number"
-                  value={paidAmount}
-                />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800" htmlFor="invoice-paid">
+                      {isBn ? 'পরিশোধিত টাকা' : 'Paid Amount'}
+                    </label>
+                    {grandTotal > 0 && (
+                      <button
+                        className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 transition border border-emerald-200 shadow-2xs active:scale-95"
+                        onClick={() => setPaidAmount(formatDecimal(grandTotal))}
+                        title={isBn ? 'পুরো টাকা পরিশোধ করুন' : 'Mark as 100% Fully Paid'}
+                        type="button"
+                      >
+                        <span>⚡ {isBn ? 'সম্পূর্ণ পরিশোধ (Full Paid)' : 'Full Paid'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <Input
+                    id="invoice-paid"
+                    min="0"
+                    onBlur={() => setPaidAmount(formatDecimal(paidAmount))}
+                    onChange={(event) => setPaidAmount(event.target.value)}
+                    step="0.01"
+                    type="number"
+                    value={paidAmount}
+                  />
+                </div>
                 <Input className="sm:col-span-2" id="invoice-due" label={isBn ? 'বকেয়া টাকা' : 'Due Amount'} readOnly type="number" value={formatDecimal(dueAmount)} />
               </div>
             </section>
