@@ -30,6 +30,7 @@ import {
   Send,
   Share2,
   Table as TableIcon,
+  Trash2,
   Truck,
   User,
   X
