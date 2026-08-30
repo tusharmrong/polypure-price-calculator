@@ -1,9 +1,29 @@
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Copy,
+  Eye,
+  Factory,
+  FileDown,
+  FileEdit,
+  Percent,
+  Plus,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Trash2,
+  Truck
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import ClientSuggestions from '../components/ClientSuggestions.jsx'
+import DeliveryChallanModal from '../components/DeliveryChallanModal.jsx'
+import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
 import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { defaultSettings } from '../data/defaultSettings.js'
@@ -13,6 +33,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
+import { numberToWords } from '../utils/numberToWords.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
@@ -94,7 +115,48 @@ export default function Invoice() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
+  const [challanModalOpen, setChallanModalOpen] = useState(false)
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const clientSuggestions = useClientSuggestions()
+
+  // Factory Cost Breakdown State
+  const [factoryCostOpen, setFactoryCostOpen] = useState(true)
+  const [factoryCost, setFactoryCost] = useState(() => {
+    const defaultCost = {
+      rawMaterialPounds: draft?.factoryCost?.rawMaterialPounds ? String(draft.factoryCost.rawMaterialPounds) : '',
+      poundRate: draft?.factoryCost?.poundRate ? String(draft.factoryCost.poundRate) : (draft?.poundRate ? String(draft.poundRate) : '140'),
+      printCostPerUnit: draft?.factoryCost?.printCostPerUnit ? String(draft.factoryCost.printCostPerUnit) : (draft?.charges?.printingCharge ? String(draft.charges.printingCharge) : '0.40'),
+      hasHandle: draft?.factoryCost?.hasHandle ?? (draft?.charges?.handleCost > 0),
+      handleCostPerUnit: draft?.factoryCost?.handleCostPerUnit ? String(draft.factoryCost.handleCostPerUnit) : '2.00',
+      hasAdhesive: draft?.factoryCost?.hasAdhesive ?? (draft?.charges?.adhesiveCost > 0),
+      adhesiveCostPerUnit: draft?.factoryCost?.adhesiveCostPerUnit ? String(draft.factoryCost.adhesiveCostPerUnit) : '0.50',
+      blockCharge: draft?.factoryCost?.blockCharge ? String(draft.factoryCost.blockCharge) : (draft?.charges?.blockCharge ? String(draft.charges.blockCharge) : ''),
+      extraFinishingCost: draft?.factoryCost?.extraFinishingCost ? String(draft.factoryCost.extraFinishingCost) : '',
+      wastagePercent: draft?.factoryCost?.wastagePercent ? String(draft.factoryCost.wastagePercent) : '3'
+    }
+
+    if (prefill?.factoryCost) {
+      return {
+        ...defaultCost,
+        ...prefill.factoryCost,
+        rawMaterialPounds: String(prefill.factoryCost.rawMaterialPounds || ''),
+        poundRate: String(prefill.factoryCost.poundRate || '140'),
+        printCostPerUnit: String(prefill.factoryCost.printCostPerUnit || '0.40'),
+        handleCostPerUnit: String(prefill.factoryCost.handleCostPerUnit || '2.00'),
+        adhesiveCostPerUnit: String(prefill.factoryCost.adhesiveCostPerUnit || '0.50'),
+        blockCharge: String(prefill.factoryCost.blockCharge || ''),
+        extraFinishingCost: String(prefill.factoryCost.extraFinishingCost || ''),
+        wastagePercent: String(prefill.factoryCost.wastagePercent || '3')
+      }
+    }
+    if (savedDraft?.factoryCost) {
+      return {
+        ...defaultCost,
+        ...savedDraft.factoryCost
+      }
+    }
+    return defaultCost
+  })
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + itemAmount(item), 0), [items])
   const totalAmount = useMemo(() => {
@@ -113,6 +175,89 @@ export default function Invoice() {
     const nextDue = grandTotal - Number(paidAmount || 0)
     return Number.isFinite(nextDue) ? Math.max(nextDue, 0) : 0
   }, [grandTotal, paidAmount])
+
+  // Real-Time Payment Status Badge
+  const paymentStatus = useMemo(() => {
+    if (grandTotal <= 0) {
+      return {
+        label: isBn ? 'ড্রাফট' : 'DRAFT',
+        color: 'bg-slate-100 text-slate-700 border-slate-200',
+        badgeClass: 'bg-slate-500 text-white',
+        statusType: 'DRAFT',
+        Icon: Clock
+      }
+    }
+    if (dueAmount <= 0) {
+      return {
+        label: isBn ? 'সম্পূর্ণ পরিশোধিত (PAID)' : 'PAID IN FULL',
+        color: 'bg-emerald-50 text-emerald-700 border-emerald-300',
+        badgeClass: 'bg-emerald-600 text-white',
+        statusType: 'PAID',
+        Icon: CheckCircle2
+      }
+    }
+    if (Number(paidAmount || 0) > 0) {
+      return {
+        label: isBn ? `আংশিক বকেয়া (${formatCurrency(dueAmount)})` : `PARTIAL DUE (${formatCurrency(dueAmount)})`,
+        color: 'bg-amber-50 text-amber-700 border-amber-300',
+        badgeClass: 'bg-amber-500 text-white',
+        statusType: 'PARTIAL',
+        Icon: Clock
+      }
+    }
+    return {
+      label: isBn ? `বকেয়া (${formatCurrency(dueAmount)})` : `UNPAID DUE (${formatCurrency(dueAmount)})`,
+      color: 'bg-rose-50 text-rose-700 border-rose-300',
+      badgeClass: 'bg-rose-600 text-white',
+      statusType: 'DUE',
+      Icon: AlertCircle
+    }
+  }, [dueAmount, grandTotal, isBn, paidAmount])
+
+  // Total order bag quantity across all line items
+  const totalOrderQuantity = useMemo(() => {
+    return items.reduce((sum, it) => sum + Number(it.quantity || 0), 0)
+  }, [items])
+
+  // Factory Production Cost Calculations
+  const factoryCostCalculation = useMemo(() => {
+    const pounds = Number(factoryCost.rawMaterialPounds || 0)
+    const poundRate = Number(factoryCost.poundRate || 0)
+    const rawMaterialTotal = pounds * poundRate
+
+    const printUnit = Number(factoryCost.printCostPerUnit || 0)
+    const printTotal = printUnit * totalOrderQuantity
+
+    const handleUnit = factoryCost.hasHandle ? Number(factoryCost.handleCostPerUnit || 0) : 0
+    const handleTotal = handleUnit * totalOrderQuantity
+
+    const adhesiveUnit = factoryCost.hasAdhesive ? Number(factoryCost.adhesiveCostPerUnit || 0) : 0
+    const adhesiveTotal = adhesiveUnit * totalOrderQuantity
+
+    const blockCharge = Number(factoryCost.blockCharge || 0)
+    const extraFinishing = Number(factoryCost.extraFinishingCost || 0)
+
+    const subCost = rawMaterialTotal + printTotal + handleTotal + adhesiveTotal + blockCharge + extraFinishing
+    const wastage = (subCost * Number(factoryCost.wastagePercent || 0)) / 100
+    const totalProductionCost = subCost + wastage
+
+    const netOrderProfit = grandTotal - totalProductionCost
+    const marginPercent = grandTotal > 0 ? (netOrderProfit / grandTotal) * 100 : 0
+
+    return {
+      rawMaterialTotal,
+      printTotal,
+      handleTotal,
+      adhesiveTotal,
+      blockCharge,
+      extraFinishing,
+      wastage,
+      totalProductionCost,
+      netOrderProfit,
+      marginPercent
+    }
+  }, [factoryCost, totalOrderQuantity, grandTotal])
+
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
   const signatureImage = useMemo(() => loadSignatureImage(), [])
   const formFingerprint = useMemo(
@@ -132,7 +277,8 @@ export default function Invoice() {
         deliveryCharge,
         paidAmount,
         notes,
-        terms
+        terms,
+        factoryCost
       }),
     [
       address,
@@ -142,6 +288,7 @@ export default function Invoice() {
       documentDate,
       documentNumber,
       editingDocumentId,
+      factoryCost,
       items,
       notes,
       otherChargeAmount,
@@ -276,6 +423,25 @@ export default function Invoice() {
       totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
       dueAmount,
+      factoryCost: {
+        rawMaterialPounds: Number(factoryCost.rawMaterialPounds || 0),
+        poundRate: Number(factoryCost.poundRate || 0),
+        rawMaterialCost: factoryCostCalculation.rawMaterialTotal,
+        printCostPerUnit: Number(factoryCost.printCostPerUnit || 0),
+        totalPrintCost: factoryCostCalculation.printTotal,
+        hasHandle: Boolean(factoryCost.hasHandle),
+        handleCostPerUnit: Number(factoryCost.handleCostPerUnit || 0),
+        totalHandleCost: factoryCostCalculation.handleTotal,
+        hasAdhesive: Boolean(factoryCost.hasAdhesive),
+        adhesiveCostPerUnit: Number(factoryCost.adhesiveCostPerUnit || 0),
+        totalAdhesiveCost: factoryCostCalculation.adhesiveTotal,
+        blockCharge: Number(factoryCost.blockCharge || 0),
+        extraFinishingCost: Number(factoryCost.extraFinishingCost || 0),
+        wastagePercent: Number(factoryCost.wastagePercent || 0),
+        totalFactoryCost: factoryCostCalculation.totalProductionCost,
+        netOrderProfit: factoryCostCalculation.netOrderProfit,
+        marginPercent: factoryCostCalculation.marginPercent
+      },
       notes,
       terms
     }, currentUser)
@@ -318,6 +484,25 @@ export default function Invoice() {
       totalAmount: grandTotal,
       paidAmount: Number(paidAmount || 0),
       dueAmount,
+      factoryCost: {
+        rawMaterialPounds: Number(factoryCost.rawMaterialPounds || 0),
+        poundRate: Number(factoryCost.poundRate || 0),
+        rawMaterialCost: factoryCostCalculation.rawMaterialTotal,
+        printCostPerUnit: Number(factoryCost.printCostPerUnit || 0),
+        totalPrintCost: factoryCostCalculation.printTotal,
+        hasHandle: Boolean(factoryCost.hasHandle),
+        handleCostPerUnit: Number(factoryCost.handleCostPerUnit || 0),
+        totalHandleCost: factoryCostCalculation.handleTotal,
+        hasAdhesive: Boolean(factoryCost.hasAdhesive),
+        adhesiveCostPerUnit: Number(factoryCost.adhesiveCostPerUnit || 0),
+        totalAdhesiveCost: factoryCostCalculation.adhesiveTotal,
+        blockCharge: Number(factoryCost.blockCharge || 0),
+        extraFinishingCost: Number(factoryCost.extraFinishingCost || 0),
+        wastagePercent: Number(factoryCost.wastagePercent || 0),
+        totalFactoryCost: factoryCostCalculation.totalProductionCost,
+        netOrderProfit: factoryCostCalculation.netOrderProfit,
+        marginPercent: factoryCostCalculation.marginPercent
+      },
       notes,
       terms
     }, currentUser)
@@ -363,6 +548,9 @@ export default function Invoice() {
     setNotes('')
     setTerms(companySettings.terms || defaultSettings.terms)
     setSaveStatus('')
+    setNotes('')
+    setTerms(companySettings.terms || defaultSettings.terms)
+    setSaveStatus('')
     setFormError('')
     setBaselineFingerprint('')
     clearFormDraft('invoice')
@@ -382,18 +570,192 @@ export default function Invoice() {
     return ''
   }
 
+  const renderInvoiceSheetContent = () => (
+    <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
+      <div className="h-2 bg-brand-600" />
+      <div className="px-5 pb-5 pt-4">
+        <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              alt="Poly Pure"
+              className="h-14 w-14 rounded-full border border-brand-100 bg-white object-contain shadow-sm"
+              src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
+            />
+            <div>
+              <p className="text-xl font-bold text-slate-950">{companySettings.companyName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Printing and Packaging</p>
+              <div className="mt-1 grid gap-0.5 text-[10px] leading-4 text-slate-500">
+                <span>Phone: {companySettings.phone}</span>
+                <span>Email: {companySettings.email} | Website: {companySettings.website}</span>
+                <span>{companySettings.address}</span>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-left sm:text-right">
+            <div className="flex items-center justify-between sm:justify-end gap-2">
+              <p className="text-2xl font-bold uppercase text-brand-700">Invoice</p>
+              <span className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${paymentStatus.badgeClass}`}>
+                {paymentStatus.statusType}
+              </span>
+            </div>
+            <p className="mt-1 text-xs font-bold text-slate-900">{documentNumber}</p>
+            <p className="text-xs text-slate-600">{readableDate}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 py-3">
+          <div className="rounded-lg border border-slate-200 p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">Bill To</p>
+            <p className="mt-1.5 text-base font-bold text-slate-950">{clientName || 'Client Name'}</p>
+            <p className="text-xs text-slate-600">{phone || 'Phone Number'}</p>
+            <p className="whitespace-pre-line text-xs leading-4 text-slate-600">{address || 'Client Address'}</p>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="grid grid-cols-[30px_minmax(0,1fr)_65px_90px_105px] bg-brand-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span>No</span>
+            <span>Description</span>
+            <span className="text-right">Qty</span>
+            <span className="text-right">Rate</span>
+            <span className="text-right">Amount</span>
+          </div>
+          {items.map((item, index) => (
+            <div
+              className="grid min-h-12 grid-cols-[30px_minmax(0,1fr)_65px_90px_105px] items-start border-t border-slate-100 px-3 py-2 text-xs text-slate-800"
+              key={item.id}
+            >
+              <span>{index + 1}</span>
+              <span className="pr-3 font-semibold leading-5">
+                {normalizeThicknessText(item.description) || 'Item description'}
+              </span>
+              <span className="text-right font-semibold">{item.quantity || '0'}</span>
+              <span className="text-right">{formatCurrency(item.rate)}</span>
+              <span className="text-right font-bold">{formatCurrency(itemAmount(item))}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 grid gap-3">
+          {notes ? (
+            <div className="rounded-lg bg-slate-50 p-3 text-xs">
+              <p className="font-bold text-slate-950">Notes</p>
+              <p className="mt-1 whitespace-pre-line text-slate-600">{notes}</p>
+            </div>
+          ) : null}
+
+          <div className="quotation-payment-total-grid grid gap-3">
+            <div className="rounded-lg border border-brand-100 bg-brand-50 p-3 text-xs">
+              <p className="font-bold text-slate-950">Payment Method</p>
+              <p className="mt-1 whitespace-pre-line text-[10px] leading-4 text-slate-700">
+                {companySettings.paymentMethod}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 p-3">
+              <div className="grid gap-2 text-xs">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Subtotal</span>
+                  <span className="font-semibold text-slate-950">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Discount</span>
+                  <span className="font-semibold text-slate-950">{formatCurrency(discount)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">VAT ({formatDecimal(vatPercent)}%)</span>
+                  <span className="font-semibold text-slate-950">{formatCurrency(vatAmount)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">{otherChargeName?.trim() || 'Other Charge'}</span>
+                  <span className="font-semibold text-slate-950">{formatCurrency(otherChargeAmount)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Delivery Charge</span>
+                  <span className="font-semibold text-slate-950">{formatCurrency(deliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm">
+                  <span className="font-bold text-slate-950">Grand Total</span>
+                  <span className="font-bold text-brand-700">{formatCurrency(grandTotal)}</span>
+                </div>
+                <div className="flex justify-between gap-4 rounded-md border border-brand-100 bg-brand-50 px-2 py-1">
+                  <span className="font-semibold text-brand-700">Paid Amount</span>
+                  <span className="font-bold text-brand-700">{formatCurrency(paidAmount)}</span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="font-bold text-slate-950">Due Amount</span>
+                  <span className="font-bold text-slate-950">{formatCurrency(dueAmount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Amount in Words (কথায়) */}
+          {grandTotal > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50/90 px-3.5 py-2 text-xs text-slate-800">
+              <span className="font-bold text-slate-900">{isBn ? 'কথায়: ' : 'In Words: '}</span>
+              <span className="italic font-semibold text-brand-900">{numberToWords(grandTotal, isBn ? 'bn' : 'en')}</span>
+            </div>
+          )}
+
+          <div className="rounded-lg bg-slate-50 p-3 text-xs">
+            <p className="font-bold text-slate-950">Terms and Conditions</p>
+            <p className="quotation-terms mt-1 whitespace-pre-line text-[9px] leading-[1.45] text-slate-600">
+              {terms}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <div className="text-[10px] text-slate-500">
+            <p className="font-semibold text-slate-700">Thank you for your business.</p>
+            <p className="mt-1">This invoice records payment and due status for this order.</p>
+          </div>
+          <div className="flex justify-end">
+            {signatureImage ? (
+              <div className="w-44 text-center">
+                <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
+                  <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
+                </div>
+                <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
+              </div>
+            ) : (
+              <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
+                Authorized Signature
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="grid gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:overflow-hidden">
       <div className="grid gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.98fr)] xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)]">
         <Card className="no-print relative z-10 lg:h-full lg:min-h-0 lg:overflow-y-auto">
-          <div className="mb-5 flex items-center gap-3">
-            <img
-              alt="Poly Pure"
-              className="h-12 w-12 rounded-full border border-brand-100 bg-white object-contain"
-              src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
-            />
-            <div>
-              <h2 className="text-lg font-bold text-slate-950">{isBn ? 'ইনভয়েস ফর্ম' : 'Invoice Form'}</h2>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <img
+                alt="Poly Pure"
+                className="h-12 w-12 rounded-full border border-brand-100 bg-white object-contain"
+                src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
+              />
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">{isBn ? 'ইনভয়েস ফর্ম' : 'Invoice Form'}</h2>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold ${paymentStatus.color}`}
+              >
+                <paymentStatus.Icon size={14} />
+                <span>{paymentStatus.label}</span>
+              </div>
+              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+                Total: {formatCurrency(grandTotal)}
+              </span>
             </div>
           </div>
 
@@ -401,10 +763,10 @@ export default function Invoice() {
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ডকুমেন্ট বিস্তারিত' : 'Document Details'}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Input id="invoice-number" label={isBn ? '?????????????????? ???????????????' : 'Invoice Number'} readOnly value={documentNumber} />
+                <Input id="invoice-number" label={isBn ? 'ইনভয়েস নম্বর' : 'Invoice Number'} readOnly value={documentNumber} />
                 <Input
                   id="invoice-date"
-                  label={isBn ? '???????????????' : 'Date'}
+                  label={isBn ? 'তারিখ' : 'Date'}
                   onChange={(event) => setDocumentDate(event.target.value)}
                   type="date"
                   value={documentDate}
@@ -417,7 +779,7 @@ export default function Invoice() {
               <div className="grid gap-3 md:grid-cols-2">
                 <Input
                   id="invoice-client"
-                  label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
+                  label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
                   list="invoice-client-suggestions"
                   onChange={handleClientNameChange}
                   value={clientName}
@@ -431,7 +793,7 @@ export default function Invoice() {
                 </datalist>
                 <Input
                   id="invoice-phone"
-                  label={isBn ? '????????? ???????????????' : 'Phone Number'}
+                  label={isBn ? 'ফোন নম্বর' : 'Phone Number'}
                   list="invoice-phone-suggestions"
                   onChange={handlePhoneChange}
                   value={phone}
@@ -445,7 +807,7 @@ export default function Invoice() {
                       </option>
                     ))}
                 </datalist>
-                <TextArea className="md:col-span-2" id="invoice-address" label={isBn ? '??????????????????' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
+                <TextArea className="md:col-span-2" id="invoice-address" label={isBn ? 'ঠিকানা' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
                 <ClientSuggestions
                   onSelect={applyClientSuggestion}
                   query={`${clientName} ${phone}`}
@@ -545,7 +907,7 @@ export default function Invoice() {
                 />
                 <Input
                   id="invoice-vat-amount"
-                  label={isBn ? 'ভ্যাটের পরিমাণ' : 'VAT Amount'}
+                  label={isBn ? 'ভ্যাট পরিমাণ' : 'VAT Amount'}
                   readOnly
                   type="number"
                   value={formatDecimal(vatAmount)}
@@ -602,6 +964,14 @@ export default function Invoice() {
             <Button onClick={saveInvoice} type="button" variant="secondary">
               {isBn ? 'ইনভয়েস সেভ' : 'Save Invoice'}
             </Button>
+            <Button onClick={() => setChallanModalOpen(true)} type="button" variant="secondary">
+              <Truck size={16} />
+              <span>{isBn ? 'ডেলিভারি চালান' : 'Delivery Challan'}</span>
+            </Button>
+            <Button className="lg:hidden" onClick={() => setMobilePreviewOpen(true)} type="button" variant="secondary">
+              <Eye size={16} />
+              <span>{isBn ? 'প্রিভিউ দেখুন' : 'View Sheet'}</span>
+            </Button>
             <Button onClick={savePdfInvoice} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
             </Button>
@@ -619,152 +989,32 @@ export default function Invoice() {
         </Card>
 
         <Card className="print-area relative z-0 hidden bg-white p-0 lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto">
-          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
-            <div className="h-2 bg-brand-600" />
-            <div className="px-5 pb-5 pt-4">
-              <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <img
-                    alt="Poly Pure"
-                    className="h-14 w-14 rounded-full border border-brand-100 bg-white object-contain shadow-sm"
-                    src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
-                  />
-                  <div>
-                    <p className="text-xl font-bold text-slate-950">{companySettings.companyName}</p>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Printing and Packaging</p>
-                    <div className="mt-1 grid gap-0.5 text-[10px] leading-4 text-slate-500">
-                      <span>Phone: {companySettings.phone}</span>
-                      <span>Email: {companySettings.email} | Website: {companySettings.website}</span>
-                      <span>{companySettings.address}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-left sm:text-right">
-                  <p className="text-2xl font-bold uppercase text-brand-700">Invoice</p>
-                  <p className="mt-1 text-xs font-bold text-slate-900">{documentNumber}</p>
-                  <p className="text-xs text-slate-600">{readableDate}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 py-3">
-                <div className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">Bill To</p>
-                  <p className="mt-1.5 text-base font-bold text-slate-950">{clientName || 'Client Name'}</p>
-                  <p className="text-xs text-slate-600">{phone || 'Phone Number'}</p>
-                  <p className="whitespace-pre-line text-xs leading-4 text-slate-600">{address || 'Client Address'}</p>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-slate-200">
-                <div className="grid grid-cols-[30px_minmax(0,1fr)_65px_90px_105px] bg-brand-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white">
-                  <span>No</span>
-                  <span>Description</span>
-                  <span className="text-right">Qty</span>
-                  <span className="text-right">Rate</span>
-                  <span className="text-right">Amount</span>
-                </div>
-                {items.map((item, index) => (
-                  <div
-                    className="grid min-h-12 grid-cols-[30px_minmax(0,1fr)_65px_90px_105px] items-start border-t border-slate-100 px-3 py-2 text-xs text-slate-800"
-                    key={item.id}
-                  >
-                    <span>{index + 1}</span>
-                    <span className="pr-3 font-semibold leading-5">
-                      {normalizeThicknessText(item.description) || 'Item description'}
-                    </span>
-                    <span className="text-right font-semibold">{item.quantity || '0'}</span>
-                    <span className="text-right">{formatCurrency(item.rate)}</span>
-                    <span className="text-right font-bold">{formatCurrency(itemAmount(item))}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 grid gap-3">
-                {notes ? (
-                  <div className="rounded-lg bg-slate-50 p-3 text-xs">
-                    <p className="font-bold text-slate-950">Notes</p>
-                    <p className="mt-1 whitespace-pre-line text-slate-600">{notes}</p>
-                  </div>
-                ) : null}
-
-                <div className="quotation-payment-total-grid grid gap-3">
-                  <div className="rounded-lg border border-brand-100 bg-brand-50 p-3 text-xs">
-                    <p className="font-bold text-slate-950">Payment Method</p>
-                    <p className="mt-1 whitespace-pre-line text-[10px] leading-4 text-slate-700">
-                      {companySettings.paymentMethod}
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-200 p-3">
-                    <div className="grid gap-2 text-xs">
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Subtotal</span>
-                        <span className="font-semibold text-slate-950">{formatCurrency(subtotal)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Discount</span>
-                        <span className="font-semibold text-slate-950">{formatCurrency(discount)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">VAT ({formatDecimal(vatPercent)}%)</span>
-                        <span className="font-semibold text-slate-950">{formatCurrency(vatAmount)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">{otherChargeName?.trim() || 'Other Charge'}</span>
-                        <span className="font-semibold text-slate-950">{formatCurrency(otherChargeAmount)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Delivery Charge</span>
-                        <span className="font-semibold text-slate-950">{formatCurrency(deliveryCharge)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm">
-                        <span className="font-bold text-slate-950">Grand Total</span>
-                        <span className="font-bold text-brand-700">{formatCurrency(grandTotal)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 rounded-md border border-brand-100 bg-brand-50 px-2 py-1">
-                        <span className="font-semibold text-brand-700">Paid Amount</span>
-                        <span className="font-bold text-brand-700">{formatCurrency(paidAmount)}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="font-bold text-slate-950">Due Amount</span>
-                        <span className="font-bold text-slate-950">{formatCurrency(dueAmount)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-slate-50 p-3 text-xs">
-                  <p className="font-bold text-slate-950">Terms and Conditions</p>
-                  <p className="quotation-terms mt-1 whitespace-pre-line text-[9px] leading-[1.45] text-slate-600">
-                    {terms}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                <div className="text-[10px] text-slate-500">
-                  <p className="font-semibold text-slate-700">Thank you for your business.</p>
-                  <p className="mt-1">This invoice records payment and due status for this order.</p>
-                </div>
-                <div className="flex justify-end">
-                  {signatureImage ? (
-                    <div className="w-44 text-center">
-                      <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
-                        <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
-                      </div>
-                      <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
-                    </div>
-                  ) : (
-                    <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
-                      Authorized Signature
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderInvoiceSheetContent()}
         </Card>
       </div>
+
+      {/* Mobile Document Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={mobilePreviewOpen}
+        onClose={() => setMobilePreviewOpen(false)}
+        onPrintPdf={savePdfInvoice}
+        title={isBn ? `ইনভয়েস #${documentNumber}` : `Invoice #${documentNumber}`}
+      >
+        {renderInvoiceSheetContent()}
+      </DocumentPreviewModal>
+
+      {/* Delivery Challan Modal */}
+      <DeliveryChallanModal
+        address={address}
+        clientName={clientName}
+        documentDate={documentDate}
+        invoiceNumber={documentNumber}
+        isOpen={challanModalOpen}
+        items={items}
+        notes={notes}
+        onClose={() => setChallanModalOpen(false)}
+        phone={phone}
+      />
     </div>
   )
 }

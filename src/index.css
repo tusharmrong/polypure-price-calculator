@@ -246,10 +246,6 @@ input[type='checkbox'] {
     grid-template-columns: 1fr;
   }
 
-  .document-action-grid {
-    grid-template-columns: 1fr;
-  }
-
   .toast-viewport {
     right: 10px;
     left: 10px;
@@ -258,7 +254,19 @@ input[type='checkbox'] {
   }
 }
 
-@media (min-width: 1024px) {
+.document-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .document-action-grid {
+    gap: 10px;
+  }
+}
+
+@media (min-width: 1536px) {
   .document-action-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

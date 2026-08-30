@@ -10,7 +10,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon-64.png', 'apple-touch-icon.png', 'app-icon-square-192.png', 'app-icon-square-512.png'],
+      includeAssets: [
+        'poly-pure-logo.png',
+        'favicon-64.png',
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'apple-touch-icon.svg',
+        'app-icon-square-192.png',
+        'app-icon-square-512.png'
+      ],
       manifest: {
         name: 'Poly Pure Business Suite',
         short_name: 'Poly Pure',
@@ -37,7 +45,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
@@ -81,7 +89,8 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: false
+        enabled: true,
+        type: 'module'
       }
     })
   ]

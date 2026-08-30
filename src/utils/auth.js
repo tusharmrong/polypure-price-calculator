@@ -10,7 +10,13 @@ import {
   updateDoc,
   where
 } from 'firebase/firestore'
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import {
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword
+} from 'firebase/auth'
 import { firebaseAuth, firebaseDb, firebaseInitError } from './firebase.js'
 import { firebaseConfig } from './firebaseConfig.js'
 
@@ -544,6 +550,11 @@ export async function createAuthUser({
   password,
   confirmPassword,
   role = 'staff',
+  phone = '',
+  email = '',
+  designation = '',
+  customPermissions = null,
+  maxDiscountPercent = 0,
   notes = '',
   actorUserId = null,
   allowWithoutExistingUsers = false
@@ -559,6 +570,10 @@ export async function createAuthUser({
   const cleanConfirmPassword = String(confirmPassword || '')
   const safeRole = getSafeRole(role)
   const cleanNotes = trimUserInput(notes)
+  const cleanPhone = trimUserInput(phone)
+  const cleanEmail = trimUserInput(email).toLowerCase()
+  const cleanDesignation = trimUserInput(designation)
+  const parsedDiscount = Math.max(0, Math.min(100, Number(maxDiscountPercent) || 0))
 
   if (!cleanName || !cleanUsername || !cleanPassword) {
     return { ok: false, error: 'Name, username, and password are required.' }
@@ -582,8 +597,12 @@ export async function createAuthUser({
     return { ok: false, error: 'This username is already in use.' }
   }
 
+  const authEmail = cleanEmail && cleanEmail.includes('@')
+    ? cleanEmail
+    : createSyntheticEmail(cleanUsername)
+
   const authResult = await createFirebaseAuthAccount({
-    email: createSyntheticEmail(cleanUsername),
+    email: authEmail,
     password: cleanPassword
   })
 
@@ -597,9 +616,14 @@ export async function createAuthUser({
     uid: authResult.uid,
     name: cleanName,
     username: cleanUsername,
-    email: createSyntheticEmail(cleanUsername),
+    email: authEmail,
+    contactEmail: cleanEmail,
+    phone: cleanPhone,
+    designation: cleanDesignation,
     role: safeRole,
     status: 'active',
+    customPermissions: Array.isArray(customPermissions) ? customPermissions : null,
+    maxDiscountPercent: parsedDiscount,
     notes: cleanNotes,
     createdBy: actorUser?.name || 'system',
     createdAt: timestamp,
@@ -614,7 +638,7 @@ export async function createAuthUser({
     actorName: actorUser?.name || 'System',
     targetUserId: authResult.uid,
     targetName: nextUser.name,
-    description: `${nextUser.name} was created as ${nextUser.role}.`
+    description: `${nextUser.name} was created as ${nextUser.role}${cleanDesignation ? ` (${cleanDesignation})` : ''}.`
   })
 
   return {
@@ -739,6 +763,15 @@ export async function updateAuthUserProfile(userId, updates, actorUserId = null)
   const nextUsername = normalizeUsername(updates.username || targetUser.username)
   const nextRole = getSafeRole(updates.role || targetUser.role)
   const nextNotes = trimUserInput(updates.notes ?? targetUser.notes ?? '')
+  const nextPhone = trimUserInput(updates.phone ?? targetUser.phone ?? '')
+  const nextContactEmail = trimUserInput(updates.contactEmail ?? updates.email ?? targetUser.contactEmail ?? '').toLowerCase()
+  const nextDesignation = trimUserInput(updates.designation ?? targetUser.designation ?? '')
+  const nextCustomPermissions = updates.customPermissions !== undefined
+    ? (Array.isArray(updates.customPermissions) ? updates.customPermissions : null)
+    : (targetUser.customPermissions || null)
+  const nextMaxDiscount = updates.maxDiscountPercent !== undefined
+    ? Math.max(0, Math.min(100, Number(updates.maxDiscountPercent) || 0))
+    : (targetUser.maxDiscountPercent || 0)
 
   if (!nextName || !nextUsername) {
     return { ok: false, error: 'Name and username are required.' }
@@ -756,12 +789,19 @@ export async function updateAuthUserProfile(userId, updates, actorUserId = null)
   }
 
   const timestamp = new Date().toISOString()
-  await updateDoc(doc(firebaseDb, 'users', userId), {
+  const payload = {
     name: nextName,
     role: nextRole,
+    phone: nextPhone,
+    contactEmail: nextContactEmail,
+    designation: nextDesignation,
+    customPermissions: nextRole === 'admin' ? null : nextCustomPermissions,
+    maxDiscountPercent: nextMaxDiscount,
     notes: nextNotes,
     updatedAt: timestamp
-  })
+  }
+
+  await updateDoc(doc(firebaseDb, 'users', userId), payload)
 
   await recordAuthActivity({
     action: 'user-updated',
@@ -776,10 +816,7 @@ export async function updateAuthUserProfile(userId, updates, actorUserId = null)
     ok: true,
     user: {
       ...targetUser,
-      name: nextName,
-      role: nextRole,
-      notes: nextNotes,
-      updatedAt: timestamp
+      ...payload
     }
   }
 }
@@ -822,9 +859,86 @@ export async function deleteAuthUserProfile(userId, actorUserId = null) {
   }
 }
 
-export async function changeAuthUserPassword() {
+export async function changeAuthUserPassword(userId, password, confirmPassword, actorUserId = null) {
+  if (!ensureCloudReady()) {
+    return getCloudUnavailableResult()
+  }
+
+  const cleanPassword = String(password || '')
+  const cleanConfirmPassword = String(confirmPassword || '')
+
+  if (!cleanPassword || !cleanConfirmPassword) {
+    return { ok: false, error: 'New password and confirmation are required.' }
+  }
+
+  if (cleanPassword !== cleanConfirmPassword) {
+    return { ok: false, error: 'New password and confirm password must match.' }
+  }
+
+  const passwordCheck = validatePassword(cleanPassword)
+  if (!passwordCheck.ok) {
+    return { ok: false, error: 'Password does not meet the required security rules.' }
+  }
+
+  const users = await listSafeAuthUsers()
+  const targetUser = users.find((user) => user.id === userId)
+  const actorUser = actorUserId ? users.find((user) => user.id === actorUserId) : null
+
+  if (!targetUser) {
+    return { ok: false, error: 'User not found.' }
+  }
+
+  const timestamp = new Date().toISOString()
+  let selfPasswordUpdated = false
+
+  // If current logged-in user is changing their own password
+  if (firebaseAuth.currentUser && firebaseAuth.currentUser.uid === userId) {
+    try {
+      await updatePassword(firebaseAuth.currentUser, cleanPassword)
+      selfPasswordUpdated = true
+    } catch (error) {
+      console.error('Firebase Auth password update error:', error)
+      const code = error?.code || 'UNKNOWN'
+      if (code === 'auth/requires-recent-login') {
+        return {
+          ok: false,
+          error: 'For security, please log out and log in again before changing your password.'
+        }
+      }
+      return {
+        ok: false,
+        error: mapAuthError(code)
+      }
+    }
+  }
+
+  // Update user document security metadata in Firestore
+  await updateDoc(doc(firebaseDb, 'users', userId), {
+    passwordUpdatedAt: timestamp,
+    mustChangePasswordOnNextLogin: targetUser.id !== actorUserId,
+    updatedAt: timestamp
+  })
+
+  // If the user has an external email address configured, send password reset link as well
+  if (targetUser.email && !targetUser.email.endsWith('@polypure-bsuite.local')) {
+    try {
+      await sendPasswordResetEmail(firebaseAuth, targetUser.email)
+    } catch (resetEmailError) {
+      console.warn('Could not send cloud reset email:', resetEmailError)
+    }
+  }
+
+  await recordAuthActivity({
+    action: 'password-reset',
+    actorUserId: actorUser?.id || '',
+    actorName: actorUser?.name || 'System',
+    targetUserId: targetUser.id,
+    targetName: targetUser.name,
+    description: `Password was reset for ${targetUser.name}${selfPasswordUpdated ? ' (Self)' : ' by Admin'}.`
+  })
+
   return {
-    ok: false,
-    error: 'Password reset for other users will be added in the secure cloud user phase.'
+    ok: true,
+    message: `Password updated successfully for ${targetUser.name}.`
   }
 }

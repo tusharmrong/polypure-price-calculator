@@ -1,74 +1,27 @@
-import { Download } from 'lucide-react'
+﻿import { CheckCircle2, Download, Smartphone, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import TextArea from '../components/TextArea.jsx'
 import { APP_BUILD, APP_RELEASE_DATE, APP_RELEASE_NOTES, APP_VERSION_LABEL } from '../utils/appMeta.js'
-import { loadValue, saveValue } from '../utils/storage.js'
 import { loadCompanySettings, saveCompanySettings } from '../utils/companySettings.js'
+import { usePwa } from '../utils/pwaInstall.jsx'
 import { isValidSignatureDataUrl, loadSignatureImage } from '../utils/signature.js'
-import { useUiLanguage } from '../utils/uiLanguage.js'
+import { loadValue, saveValue } from '../utils/storage.js'
 import { useToast } from '../utils/toast.jsx'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Settings() {
   const { language, t } = useUiLanguage()
   const { showToast } = useToast()
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [isInstalled, setIsInstalled] = useState(false)
-  const [installStatus, setInstallStatus] = useState('')
+  const { isInstalled, isIOS, promptInstall } = usePwa()
   const [signatureImage, setSignatureImage] = useState(() => loadSignatureImage())
   const [signatureStatus, setSignatureStatus] = useState('')
   const [backupStatus, setBackupStatus] = useState('')
   const [lastAutoBackupAt, setLastAutoBackupAt] = useState(() => loadValue('autoBackupLastAt', ''))
   const [companySettings, setCompanySettings] = useState(() => loadCompanySettings())
   const [settingsStatus, setSettingsStatus] = useState('')
-
-  useEffect(() => {
-    const installed =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true
-    setIsInstalled(installed)
-
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault()
-      setDeferredPrompt(event)
-    }
-
-    const handleInstalled = () => {
-      setInstallStatus('App installed successfully.')
-      setDeferredPrompt(null)
-      setIsInstalled(true)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleInstalled)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', handleInstalled)
-    }
-  }, [])
-
-  const isiOS = useMemo(() => /iPad|iPhone|iPod/.test(window.navigator.userAgent), [])
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) {
-      setInstallStatus('Install option is not ready in this browser yet. Try Safari share menu on iPhone.')
-      return
-    }
-
-    deferredPrompt.prompt()
-    const choice = await deferredPrompt.userChoice
-
-    if (choice?.outcome === 'accepted') {
-      setInstallStatus('Install request accepted.')
-    } else {
-      setInstallStatus('Install cancelled.')
-    }
-
-    setDeferredPrompt(null)
-  }
 
   const handleSignatureUpload = (event) => {
     const file = event.target.files?.[0]
@@ -256,6 +209,7 @@ export default function Settings() {
 
   return (
     <div className="grid gap-5">
+      {/* App Version Info */}
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-950">{language === 'bn' ? 'অ্যাপ ভার্সন' : 'App Version'}</h2>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -293,31 +247,32 @@ export default function Settings() {
         </div>
       </Card>
 
+      {/* PWA App Installation Card */}
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-950">{t('install_app')}</h2>
-        <div className="rounded-lg border border-brand-100 bg-brand-50 p-4">
+        <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
           <p className="text-sm text-slate-700">
             {t('install_app_text')}
           </p>
-          <div className="mt-3">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button
-              disabled={isInstalled}
-              onClick={handleInstallApp}
+              className="bg-brand-600 hover:bg-brand-700 text-white font-bold"
+              onClick={promptInstall}
               type="button"
             >
               <Download size={18} />
               {isInstalled ? t('installed') : t('install_now')}
             </Button>
           </div>
-          {isiOS ? (
+          {isIOS && (
             <p className="mt-3 text-xs text-slate-600">
-              iPhone: Open in Safari, tap Share, then choose Add to Home Screen.
+              iPhone / iPad: Safari ব্রাউজারে Share (শেয়ার ⎙ / ⬆) বাটনে ট্যাপ করে "Add to Home Screen" বেছে নিন।
             </p>
-          ) : null}
-          {installStatus ? <p className="mt-3 text-xs font-semibold text-brand-700">{installStatus}</p> : null}
+          )}
         </div>
       </Card>
 
+      {/* Company Settings Card */}
       <Card>
         <h2 className="mb-5 text-lg font-bold text-slate-950">{t('company_settings')}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -394,6 +349,7 @@ export default function Settings() {
         {settingsStatus ? <p className="mt-3 text-xs font-semibold text-brand-700">{settingsStatus}</p> : null}
       </Card>
 
+      {/* Backup & Restore Card */}
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-950">{t('backup_restore')}</h2>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">

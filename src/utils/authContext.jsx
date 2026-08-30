@@ -15,13 +15,14 @@ import {
   updateAuthUserStatus
 } from './auth.js'
 import { syncLocalDocumentsToCloud } from './documents.js'
-import { hasPermission as checkPermission, listPermissionsForRole } from './permissions.js'
+import { getUserPermissions, hasPermission as checkPermission, listPermissionsForRole } from './permissions.js'
+import { loadValue, saveValue } from './storage.js'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [authReady, setAuthReady] = useState(false)
-  const [currentUser, setCurrentUser] = useState(null)
+  const [authReady, setAuthReady] = useState(() => Boolean(typeof navigator !== 'undefined' && !navigator.onLine))
+  const [currentUser, setCurrentUser] = useState(() => loadValue('lastAuthSession', null))
   const [users, setUsers] = useState([])
   const [activityLogs, setActivityLogs] = useState([])
   const [authError, setAuthError] = useState('')
@@ -121,12 +122,13 @@ export function AuthProvider({ children }) {
       isStaff: currentUser?.role === 'staff',
       users,
       activityLogs,
-      permissions: listPermissionsForRole(currentUser?.role),
-      hasPermission: (permission) => checkPermission(currentUser?.role, permission),
+      permissions: getUserPermissions(currentUser),
+      hasPermission: (permission) => checkPermission(currentUser, permission),
       login: async (username, password) => {
         const result = await loginWithCredentials(username, password)
         if (result.ok) {
           setCurrentUser(result.user)
+          saveValue('lastAuthSession', result.user)
           setAuthError('')
           await refreshAll(result.user)
         }
@@ -139,6 +141,7 @@ export function AuthProvider({ children }) {
       },
       logout: async () => {
         await logoutCurrentUser()
+        saveValue('lastAuthSession', null)
         setCurrentUser(null)
         setUsers([])
         setActivityLogs([])

@@ -1,8 +1,17 @@
+import {
+  Copy,
+  Eye,
+  FileDown,
+  FileEdit,
+  RotateCcw,
+  Save
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import ClientSuggestions from '../components/ClientSuggestions.jsx'
+import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
 import Input from '../components/Input.jsx'
 import Select from '../components/Select.jsx'
 import TextArea from '../components/TextArea.jsx'
@@ -12,6 +21,7 @@ import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../
 import { saveDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
+import { numberToWords } from '../utils/numberToWords.js'
 import { loadSignatureImage } from '../utils/signature.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
@@ -52,6 +62,7 @@ export default function MoneyReceipt() {
   const [saveStatus, setSaveStatus] = useState('')
   const [formError, setFormError] = useState('')
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const clientSuggestions = useClientSuggestions()
 
   const readableDate = useMemo(() => formatDocumentDate(documentDate), [documentDate])
@@ -234,6 +245,118 @@ export default function MoneyReceipt() {
     showToast('Money receipt form reset.', 'success')
   }
 
+  const renderMoneyReceiptSheetContent = () => (
+    <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
+      <div className="h-2 bg-brand-600" />
+      <div className="px-5 pb-5 pt-4">
+        <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              alt="Poly Pure"
+              className="h-14 w-14 rounded-full border border-brand-100 bg-white object-contain shadow-sm"
+              src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
+            />
+            <div>
+              <p className="text-xl font-bold text-slate-950">{companySettings.companyName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Printing and Packaging</p>
+              <div className="mt-1 grid gap-0.5 text-[10px] leading-4 text-slate-500">
+                <span>Phone: {companySettings.phone}</span>
+                <span>Email: {companySettings.email} | Website: {companySettings.website}</span>
+                <span>{companySettings.address}</span>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-left sm:text-right">
+            <p className="text-2xl font-bold uppercase text-brand-700">Money Receipt</p>
+            <p className="mt-1 text-xs font-bold text-slate-900">{documentNumber}</p>
+            <p className="text-xs text-slate-600">{readableDate}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 py-3 lg:grid-cols-[1fr_260px]">
+          <div className="rounded-lg border border-slate-200 p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">Received From</p>
+            <p className="mt-1.5 text-base font-bold text-slate-950">{clientName || 'Client Name'}</p>
+            <p className="text-xs text-slate-600">{phone || 'Phone Number'}</p>
+            <p className="whitespace-pre-line text-xs leading-4 text-slate-600">{address || 'Client Address'}</p>
+          </div>
+          <div className="rounded-lg bg-brand-600 p-3 text-white">
+            <p className="text-[10px] font-bold uppercase tracking-wide opacity-85">Received Amount</p>
+            <p className="mt-1 text-2xl font-bold">{formatCurrency(receivedAmount)}</p>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="grid grid-cols-[1fr_160px] bg-brand-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span>For Invoice / Work Details</span>
+            <span className="text-right">Payment Method</span>
+          </div>
+          <div className="grid min-h-20 grid-cols-[1fr_160px] items-start px-3 py-3 text-xs text-slate-800">
+            <span className="pr-3 font-semibold leading-5">{workDetails || 'Work details'}</span>
+            <span className="text-right font-bold">{paymentMethod}</span>
+          </div>
+        </div>
+
+        <div className="mt-3 grid gap-3">
+          {notes ? (
+            <div className="rounded-lg bg-slate-50 p-3 text-xs">
+              <p className="font-bold text-slate-950">Notes</p>
+              <p className="mt-1 whitespace-pre-line text-slate-600">{notes}</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-slate-200 p-3 lg:ml-auto lg:w-[260px]">
+              <div className="grid gap-2 text-xs">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Receipt Number</span>
+                  <span className="font-semibold text-slate-950">{documentNumber}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Money Receipt Date</span>
+                  <span className="font-semibold text-slate-950">{formatDocumentDate(receivedDate)}</span>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-slate-200 pt-2 text-sm font-bold">
+                  <span className="text-slate-950">Total Received</span>
+                  <span className="text-brand-700">{formatCurrency(receivedAmount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Amount in Words (কথায়) */}
+          {Number(receivedAmount || 0) > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50/90 px-3.5 py-2 text-xs text-slate-800">
+              <span className="font-bold text-slate-900">{isBn ? 'কথায়: ' : 'In Words: '}</span>
+              <span className="italic font-semibold text-brand-900">{numberToWords(receivedAmount, isBn ? 'bn' : 'en')}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <div className="text-[10px] text-slate-500">
+            <p className="font-semibold text-slate-700">Thank you for your payment.</p>
+            <p className="mt-1">This receipt confirms that payment was received for the stated details.</p>
+          </div>
+          <div className="flex justify-end">
+            {signatureImage ? (
+              <div className="w-44 text-center">
+                <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
+                  <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
+                </div>
+                <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
+              </div>
+            ) : (
+              <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
+                Authorized Signature
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="grid gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:overflow-hidden">
       <div className="grid gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.98fr)] xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)]">
@@ -277,7 +400,7 @@ export default function MoneyReceipt() {
               <div className="grid gap-3 md:grid-cols-2">
                 <Input
                   id="receipt-client"
-                  label={isBn ? '???????????????????????????????????? ?????????' : 'Client Name'}
+                  label={isBn ? 'ক্লায়েন্টের নাম' : 'Client Name'}
                   list="receipt-client-suggestions"
                   onChange={handleClientNameChange}
                   value={clientName}
@@ -291,7 +414,7 @@ export default function MoneyReceipt() {
                 </datalist>
                 <Input
                   id="receipt-phone"
-                  label={isBn ? '????????? ???????????????' : 'Phone Number'}
+                  label={isBn ? 'ফোন নম্বর' : 'Phone Number'}
                   list="receipt-phone-suggestions"
                   onChange={handlePhoneChange}
                   value={phone}
@@ -305,7 +428,7 @@ export default function MoneyReceipt() {
                       </option>
                     ))}
                 </datalist>
-                <TextArea className="md:col-span-2" id="receipt-address" label={isBn ? '??????????????????' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
+                <TextArea className="md:col-span-2" id="receipt-address" label={isBn ? 'ঠিকানা' : 'Address'} onChange={(event) => setAddress(event.target.value)} value={address} />
                 <ClientSuggestions
                   onSelect={applyClientSuggestion}
                   query={`${clientName} ${phone}`}
@@ -319,7 +442,7 @@ export default function MoneyReceipt() {
               <div className="grid gap-3 md:grid-cols-2">
                 <Input
                   id="receipt-amount"
-                  label={isBn ? '??????????????? ????????????' : 'Received Amount'}
+                  label={isBn ? 'প্রাপ্ত টাকার পরিমাণ' : 'Received Amount'}
                   min="0"
                   onBlur={() => setReceivedAmount(formatDecimal(receivedAmount))}
                   onChange={(event) => setReceivedAmount(event.target.value)}
@@ -329,23 +452,23 @@ export default function MoneyReceipt() {
                 />
                 <Select
                   id="receipt-payment-method"
-                  label={isBn ? '????????????????????? ??????????????????' : 'Payment Method'}
+                  label={isBn ? 'পেমেন্ট মেথড' : 'Payment Method'}
                   onChange={(event) => setPaymentMethod(event.target.value)}
                   value={paymentMethod}
                 >
-                  <option>{isBn ? '???????????????' : 'Cash'}</option>
-                  <option>{isBn ? '?????????????????? ??????????????????????????????' : 'Bank Transfer'}</option>
-                  <option>{isBn ? '?????????????????? ????????????????????????' : 'Mobile Banking'}</option>
-                  <option>{isBn ? '?????????' : 'Cheque'}</option>
+                  <option>{isBn ? 'নগদ (Cash)' : 'Cash'}</option>
+                  <option>{isBn ? 'ব্যাংক ট্রান্সফার' : 'Bank Transfer'}</option>
+                  <option>{isBn ? 'মোবাইল ব্যাংকিং (বিকাশ/নগদ)' : 'Mobile Banking'}</option>
+                  <option>{isBn ? 'চেক (Cheque)' : 'Cheque'}</option>
                 </Select>
                 <Input
                   className="md:col-span-2"
                   id="receipt-work"
-                  label={isBn ? '?????????????????? / ??????????????? ???????????????' : 'For Invoice / Work Details'}
+                  label={isBn ? 'ইনভয়েস বা কাজের বিবরণ' : 'For Invoice / Work Details'}
                   onChange={(event) => setWorkDetails(event.target.value)}
                   value={workDetails}
                 />
-                <TextArea className="md:col-span-2" id="receipt-notes" label={isBn ? '?????????' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
+                <TextArea className="md:col-span-2" id="receipt-notes" label={isBn ? 'নোট / মন্তব্য' : 'Notes'} onChange={(event) => setNotes(event.target.value)} value={notes} />
               </div>
             </section>
           </div>
@@ -353,6 +476,10 @@ export default function MoneyReceipt() {
           <div className="document-action-grid form-action-sticky mt-5">
             <Button onClick={saveReceipt} type="button" variant="secondary">
               {isBn ? 'রিসিপ্ট সেভ' : 'Save Receipt'}
+            </Button>
+            <Button className="lg:hidden" onClick={() => setMobilePreviewOpen(true)} type="button" variant="secondary">
+              <Eye size={16} />
+              <span>{isBn ? 'প্রিভিউ দেখুন' : 'View Sheet'}</span>
             </Button>
             <Button onClick={savePdfReceipt} type="button" variant="secondary">
               {isBn ? 'PDF সেভ' : 'Save PDF'}
@@ -371,121 +498,19 @@ export default function MoneyReceipt() {
         </Card>
 
         <Card className="print-area relative z-0 hidden bg-white p-0 lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto">
-          <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
-            <div className="h-2 bg-brand-600" />
-            <div className="px-5 pb-5 pt-4">
-              <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <img
-                    alt="Poly Pure"
-                    className="h-14 w-14 rounded-full border border-brand-100 bg-white object-contain shadow-sm"
-                    src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
-                  />
-                  <div>
-                    <p className="text-xl font-bold text-slate-950">{companySettings.companyName}</p>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Printing and Packaging</p>
-                    <div className="mt-1 grid gap-0.5 text-[10px] leading-4 text-slate-500">
-                      <span>Phone: {companySettings.phone}</span>
-                      <span>Email: {companySettings.email} | Website: {companySettings.website}</span>
-                      <span>{companySettings.address}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-left sm:text-right">
-                  <p className="text-2xl font-bold uppercase text-brand-700">Money Receipt</p>
-                  <p className="mt-1 text-xs font-bold text-slate-900">{documentNumber}</p>
-                  <p className="text-xs text-slate-600">{readableDate}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 py-3 lg:grid-cols-[1fr_260px]">
-                <div className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">Received From</p>
-                  <p className="mt-1.5 text-base font-bold text-slate-950">{clientName || 'Client Name'}</p>
-                  <p className="text-xs text-slate-600">{phone || 'Phone Number'}</p>
-                  <p className="whitespace-pre-line text-xs leading-4 text-slate-600">{address || 'Client Address'}</p>
-                </div>
-                <div className="rounded-lg bg-brand-600 p-3 text-white">
-                  <p className="text-[10px] font-bold uppercase tracking-wide opacity-85">Received Amount</p>
-                  <p className="mt-1 text-2xl font-bold">{formatCurrency(receivedAmount)}</p>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-slate-200">
-                <div className="grid grid-cols-[1fr_160px] bg-brand-600 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white">
-                  <span>For Invoice / Work Details</span>
-                  <span className="text-right">Payment Method</span>
-                </div>
-                <div className="grid min-h-20 grid-cols-[1fr_160px] items-start px-3 py-3 text-xs text-slate-800">
-                  <span className="pr-3 font-semibold leading-5">{workDetails || 'Work details'}</span>
-                  <span className="text-right font-bold">{paymentMethod}</span>
-                </div>
-              </div>
-
-              <div className="mt-3 grid gap-3">
-                {notes ? (
-                  <div className="rounded-lg bg-slate-50 p-3 text-xs">
-                    <p className="font-bold text-slate-950">Notes</p>
-                    <p className="mt-1 whitespace-pre-line text-slate-600">{notes}</p>
-                  </div>
-                ) : null}
-
-                <div className="grid gap-3">
-                  <div className="rounded-lg border border-slate-200 p-3 lg:ml-auto lg:w-[260px]">
-                    <div className="grid gap-2 text-xs">
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Receipt Number</span>
-                        <span className="font-semibold text-slate-950">{documentNumber}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Money Receipt Date</span>
-                        <span className="font-semibold text-slate-950">{readableDate}</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500">Received Date</span>
-                        <span className="font-semibold text-slate-950">{readableReceivedDate}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 rounded-md border border-brand-100 bg-brand-50 px-2 py-1">
-                        <span className="font-semibold text-brand-700">Received</span>
-                        <span className="font-bold text-brand-700">{formatCurrency(receivedAmount)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-slate-50 p-3 text-xs">
-                  <p className="font-bold text-slate-950">Acknowledgement</p>
-                  <p className="mt-1 text-slate-600">
-                    Received the above amount for the mentioned invoice or work details. This money receipt is valid
-                    subject to payment confirmation.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-10 grid gap-6 sm:grid-cols-2">
-                <div className="text-[10px] text-slate-500">
-                  <p className="font-semibold text-slate-700">Thank you for your payment.</p>
-                  <p className="mt-1">Please keep this receipt for your records.</p>
-                </div>
-                <div className="flex justify-end">
-                  {signatureImage ? (
-                    <div className="w-44 text-center">
-                      <div className="flex h-16 items-end justify-center border-b-2 border-slate-400 pb-1">
-                        <img alt="Authorized signature" className="max-h-14 w-auto object-contain" src={signatureImage} />
-                      </div>
-                      <div className="pt-2 text-xs font-semibold text-slate-700">Authorized Signature</div>
-                    </div>
-                  ) : (
-                    <div className="w-44 border-t-2 border-slate-400 pt-2 text-center text-xs font-semibold text-slate-700">
-                      Authorized Signature
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderMoneyReceiptSheetContent()}
         </Card>
       </div>
+
+      {/* Mobile Document Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={mobilePreviewOpen}
+        onClose={() => setMobilePreviewOpen(false)}
+        onPrintPdf={savePdfReceipt}
+        title={isBn ? `মানি রিসিপ্ট #${documentNumber}` : `Money Receipt #${documentNumber}`}
+      >
+        {renderMoneyReceiptSheetContent()}
+      </DocumentPreviewModal>
     </div>
   )
 }
