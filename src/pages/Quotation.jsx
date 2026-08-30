@@ -630,17 +630,64 @@ export default function Quotation() {
       const savedInvoice = await saveDocument(invoicePayload, currentUser)
 
       // Lock this quotation by updating its conversion record
-      const updatedQuotation = {
-        ...quotationPayload,
+      const quotePayload = {
+        id: editingDocumentId || undefined,
+        type: 'Quotation',
+        number: documentNumber,
+        date: documentDate,
+        displayDate: readableDate,
+        clientName: clientName || 'Client Name',
+        phone,
+        address,
+        items: items.map((item, index) => ({
+          ...item,
+          no: index + 1,
+          amount: itemAmount(item)
+        })),
+        subtotal,
+        discount: Number(discount || 0),
+        vatPercent: Number(vatPercent || 0),
+        vatAmount,
+        otherChargeName,
+        otherChargeAmount: Number(otherChargeAmount || 0),
+        totalBeforeVat,
+        totalAmount,
+        advancePercent: Number(advancePercent || 0),
+        advanceAmount,
+        factoryCost: {
+          rawMaterialPounds: Number(factoryCost.rawMaterialPounds || 0),
+          poundRate: Number(factoryCost.poundRate || 0),
+          rawMaterialCost: factoryCostCalculation.rawMaterialTotal,
+          printCostPerUnit: Number(factoryCost.printCostPerUnit || 0),
+          totalPrintCost: factoryCostCalculation.printTotal,
+          hasHandle: Boolean(factoryCost.hasHandle),
+          handleCostPerUnit: Number(factoryCost.handleCostPerUnit || 0),
+          totalHandleCost: factoryCostCalculation.handleTotal,
+          hasAdhesive: Boolean(factoryCost.hasAdhesive),
+          adhesiveCostPerUnit: Number(factoryCost.adhesiveCostPerUnit || 0),
+          totalAdhesiveCost: factoryCostCalculation.adhesiveTotal,
+          blockCharge: Number(factoryCost.blockCharge || 0),
+          extraFinishingCost: Number(factoryCost.extraFinishingCost || 0),
+          wastagePercent: Number(factoryCost.wastagePercent || 0),
+          totalFactoryCost: factoryCostCalculation.totalProductionCost,
+          netOrderProfit: factoryCostCalculation.netOrderProfit,
+          marginPercent: factoryCostCalculation.marginPercent
+        },
+        notes,
+        terms,
         status: 'converted',
         convertedInvoiceId: savedInvoice.id,
         convertedInvoiceNumber: newInvoiceNumber,
         convertedAt: new Date().toISOString()
       }
-      await saveDocument(updatedQuotation, currentUser)
+
+      const savedQuote = await saveDocument(quotePayload, currentUser)
+      if (savedQuote?.id) {
+        setEditingDocumentId(savedQuote.id)
+      }
       setConvertedInvoiceNumber(newInvoiceNumber)
       setConvertedInvoiceId(savedInvoice.id)
-      setConvertedAt(updatedQuotation.convertedAt)
+      setConvertedAt(quotePayload.convertedAt)
 
       setConvertModalOpen(false)
       showToast(`Invoice ${newInvoiceNumber} generated & sent to Factory Production!`, 'success')
