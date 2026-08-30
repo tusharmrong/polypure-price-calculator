@@ -155,6 +155,86 @@ export default function History() {
     )
   }, [filteredDocuments])
 
+  const duplicateClusters = useMemo(() => {
+    const activeDocs = documents.filter((doc) => !doc.deletedAt)
+    const clusterMap = new Map()
+
+    activeDocs.forEach((doc) => {
+      const type = (doc.type || '').trim()
+      const client = (doc.clientName || '').trim().toLowerCase()
+      const amount = Math.round(getDocumentAmount(doc))
+
+      if (amount > 0 && client && client !== 'unnamed client' && client !== 'unknown client') {
+        const key = `${type}::${client}::${amount}`
+        const list = clusterMap.get(key) || []
+        list.push(doc)
+        clusterMap.set(key, list)
+      }
+    })
+
+    const duplicates = []
+    clusterMap.forEach((docs, key) => {
+      if (docs.length > 1) {
+        docs.sort((a, b) => {
+          const dateB = new Date(b.updatedAt || b.savedAt || b.createdAt || b.date || 0)
+          const dateA = new Date(a.updatedAt || a.savedAt || a.createdAt || a.date || 0)
+          return dateB - dateA
+        })
+        duplicates.push({
+          key,
+          type: docs[0].type,
+          clientName: docs[0].clientName,
+          totalAmount: getDocumentAmount(docs[0]),
+          docs
+        })
+      }
+    })
+
+    return duplicates.sort((a, b) => b.totalAmount - a.totalAmount)
+  }, [documents])
+
+  const duplicateCount = useMemo(() => {
+    return duplicateClusters.reduce((sum, cl) => sum + (cl.docs.length - 1), 0)
+  }, [duplicateClusters])
+
+  const handleKeepLatestAndTrashOthers = async (cluster) => {
+    const keepDoc = cluster.docs[0]
+    const duplicatesToTrash = cluster.docs.slice(1)
+    if (!window.confirm(`Keep latest ${cluster.type} "${keepDoc.number}" (${keepDoc.displayDate || keepDoc.date}) and move ${duplicatesToTrash.length} older duplicate(s) to Trash?`)) return
+
+    try {
+      for (const doc of duplicatesToTrash) {
+        await softDeleteDocument(doc.id)
+      }
+      showToast(`Cleaned ${duplicatesToTrash.length} duplicate(s). Kept ${keepDoc.number}.`, 'success')
+      await refreshDocuments()
+    } catch (err) {
+      console.error('Failed to trash duplicates:', err)
+      showToast('Error cleaning up duplicates.', 'error')
+    }
+  }
+
+  const handleCleanAllDuplicates = async () => {
+    if (!duplicateClusters.length) return
+    if (!window.confirm(`Clean all ${duplicateCount} duplicate documents across ${duplicateClusters.length} groups? The latest document for each order will be kept.`)) return
+
+    try {
+      let totalCleaned = 0
+      for (const cluster of duplicateClusters) {
+        const duplicatesToTrash = cluster.docs.slice(1)
+        for (const doc of duplicatesToTrash) {
+          await softDeleteDocument(doc.id)
+          totalCleaned += 1
+        }
+      }
+      showToast(`Successfully moved ${totalCleaned} duplicate documents to Trash!`, 'success')
+      await refreshDocuments()
+    } catch (err) {
+      console.error('Failed to cleanup all duplicates:', err)
+      showToast('Error cleaning all duplicates.', 'error')
+    }
+  }
+
   const typeCounts = useMemo(() => {
     const list = documents.filter((doc) => (viewMode === 'active' ? !doc.deletedAt : doc.deletedAt))
     return {
@@ -493,6 +573,170 @@ export default function History() {
         </div>
       </div>
 
+      {viewMode === 'duplicates' ? (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-4 shadow-soft">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200/80 text-amber-900 font-black text-lg">
+                🔍
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                  Smart Duplicate Scanner (স্মার্ট ডুপ্লিকেট স্ক্যানার)
+                </h3>
+                <p className="text-xs text-amber-800">
+                  {duplicateClusters.length > 0
+                    ? `Detected ${duplicateClusters.length} duplicate order groups (${duplicateCount} redundant records).`
+                    : 'All saved active documents are clean and unique! No duplicates detected.'}
+                </p>
+              </div>
+            </div>
+
+            {duplicateClusters.length > 0 && (
+              <Button
+                className="text-xs px-3.5 py-2 font-bold shadow-xs bg-amber-700 hover:bg-amber-800 text-white"
+                onClick={handleCleanAllDuplicates}
+                type="button"
+                variant="primary"
+              >
+                <span>⚡ Clean All (${duplicateCount} Duplicates)</span>
+              </Button>
+            )}
+          </div>
+
+          {duplicateClusters.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 text-2xl font-bold border border-emerald-200">
+                ✓
+              </div>
+              <h4 className="text-base font-bold text-slate-900">No Duplicate Records Found</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                Your database is completely optimized. Every active Quotation, Invoice, and Money Receipt has unique entries.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {duplicateClusters.map((cluster) => {
+                const latestDoc = cluster.docs[0]
+                const olderDuplicates = cluster.docs.slice(1)
+
+                return (
+                  <div
+                    key={cluster.key}
+                    className="rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden space-y-3 p-4 sm:p-5"
+                  >
+                    {/* Cluster Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-md border px-2 py-0.5 text-[11px] font-bold ${getDocumentTypeBadge(
+                              cluster.type
+                            )}`}
+                          >
+                            {cluster.type}
+                          </span>
+                          <h4 className="text-sm sm:text-base font-bold text-slate-950">{cluster.clientName}</h4>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {cluster.docs.length} matching documents found • Total Order Value:{' '}
+                          <strong className="text-slate-900 font-bold">{formatCurrency(cluster.totalAmount)}</strong>
+                        </p>
+                      </div>
+
+                      <Button
+                        className="text-xs px-3 py-1.5 font-bold shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                        onClick={() => handleKeepLatestAndTrashOthers(cluster)}
+                        type="button"
+                        variant="primary"
+                      >
+                        <span>⚡ Keep Latest ({latestDoc.number}) & Trash {olderDuplicates.length} Old</span>
+                      </Button>
+                    </div>
+
+                    {/* Cluster Document Comparison List */}
+                    <div className="space-y-2">
+                      {cluster.docs.map((doc, idx) => {
+                        const isLatest = idx === 0
+                        const total = getDocumentAmount(doc)
+                        const paid = getPaidAmount(doc)
+                        const due = getDueAmount(doc)
+
+                        return (
+                          <div
+                            key={doc.id || doc.number}
+                            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl p-3 text-xs border transition ${
+                              isLatest
+                                ? 'border-emerald-300 bg-emerald-50/40'
+                                : 'border-rose-200 bg-rose-50/30'
+                            }`}
+                          >
+                            <div className="flex items-start sm:items-center gap-2.5">
+                              <span
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                  isLatest
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : 'bg-rose-100 text-rose-800 border border-rose-300'
+                                }`}
+                              >
+                                {isLatest ? '⭐ Active (Latest)' : '⚠️ Duplicate'}
+                              </span>
+
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-slate-900">{doc.number}</span>
+                                  <span className="text-slate-400">•</span>
+                                  <span className="text-slate-600">{doc.displayDate || doc.date}</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  Created by: <strong className="text-slate-700">{doc.creatorName || 'Unknown'}</strong>{' '}
+                                  {doc.createdAt ? `(${formatAuditDate(doc.createdAt)})` : ''}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
+                              <div className="text-right">
+                                <span className="text-[10px] text-slate-400 block uppercase">
+                                  {doc.type === 'Invoice' ? `Paid: ${formatCurrency(paid)} | Due: ${formatCurrency(due)}` : 'Amount'}
+                                </span>
+                                <span className="font-bold text-slate-900">{formatCurrency(total)}</span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  className="text-xs px-2 py-1"
+                                  onClick={() => handleOpenDocument(doc)}
+                                  type="button"
+                                  variant="secondary"
+                                >
+                                  Open
+                                </Button>
+
+                                {!isLatest && (
+                                  <Button
+                                    className="text-xs px-2 py-1 text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100"
+                                    onClick={() => handleSoftDelete(doc.id)}
+                                    type="button"
+                                    variant="secondary"
+                                  >
+                                    <Trash2 size={13} />
+                                    <span>Trash</span>
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="rounded-xl border border-slate-200 bg-white shadow-soft overflow-hidden">
         <div className="flex flex-col gap-1 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
           <div>
@@ -777,6 +1021,7 @@ export default function History() {
           </table>
         </div>
       </div>
+      )}
 
       {undoInfo ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 shadow-sm">

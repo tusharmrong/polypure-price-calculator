@@ -1,5 +1,7 @@
 import {
   ArrowRight,
+  CheckCircle2,
+  FileText,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -32,7 +34,7 @@ import { defaultSettings } from '../data/defaultSettings.js'
 import { loadCalculatorDraft, normalizeThicknessText } from '../utils/calculatorDraft.js'
 import { loadCompanySettings } from '../utils/companySettings.js'
 import { createDocumentNumber, formatDocumentDate, getTodayInputDate } from '../utils/documentNumber.js'
-import { saveDocument } from '../utils/documents.js'
+import { loadDocuments, saveDocument } from '../utils/documents.js'
 import { clearFormDraft, loadFormDraft, saveFormDraft } from '../utils/formDrafts.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { formatDecimal } from '../utils/formatNumber.js'
@@ -119,6 +121,12 @@ export default function Quotation() {
   const [baselineFingerprint, setBaselineFingerprint] = useState('')
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const clientSuggestions = useClientSuggestions()
+
+  // Quotation Conversion Lock State
+  const [convertedInvoiceNumber, setConvertedInvoiceNumber] = useState(prefill?.convertedInvoiceNumber || '')
+  const [convertedInvoiceId, setConvertedInvoiceId] = useState(prefill?.convertedInvoiceId || '')
+  const [convertedAt, setConvertedAt] = useState(prefill?.convertedAt || '')
+  const [alreadyConvertedModalOpen, setAlreadyConvertedModalOpen] = useState(false)
 
   // Convert Quotation to Invoice & Send to Production Modal
   const [convertModalOpen, setConvertModalOpen] = useState(false)
@@ -544,6 +552,12 @@ export default function Quotation() {
       return
     }
     setFormError('')
+
+    if (convertedInvoiceNumber) {
+      setAlreadyConvertedModalOpen(true)
+      return
+    }
+
     setConvertForm({
       advancePaid: advanceAmount > 0 ? String(advanceAmount) : '',
       paymentMethod: 'Cash',
@@ -614,6 +628,20 @@ export default function Quotation() {
       }
 
       const savedInvoice = await saveDocument(invoicePayload, currentUser)
+
+      // Lock this quotation by updating its conversion record
+      const updatedQuotation = {
+        ...quotationPayload,
+        status: 'converted',
+        convertedInvoiceId: savedInvoice.id,
+        convertedInvoiceNumber: newInvoiceNumber,
+        convertedAt: new Date().toISOString()
+      }
+      await saveDocument(updatedQuotation, currentUser)
+      setConvertedInvoiceNumber(newInvoiceNumber)
+      setConvertedInvoiceId(savedInvoice.id)
+      setConvertedAt(updatedQuotation.convertedAt)
+
       setConvertModalOpen(false)
       showToast(`Invoice ${newInvoiceNumber} generated & sent to Factory Production!`, 'success')
       navigate('/invoice', { state: { prefillDocument: savedInvoice } })
@@ -804,6 +832,39 @@ export default function Quotation() {
           </div>
 
           <div className="grid gap-5">
+            {convertedInvoiceNumber && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-950">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="font-bold">
+                      {isBn ? 'এই কোটেশনটি ইনভয়েসে রূপান্তরিত হয়েছে' : 'Converted to Invoice'}
+                    </p>
+                    <p className="text-[11px] text-emerald-800">
+                      Invoice #{convertedInvoiceNumber} {convertedAt ? `• ${formatDocumentDate(convertedAt)}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition"
+                  onClick={() => {
+                    loadDocuments().then((docs) => {
+                      const inv = docs.find((d) => d.number === convertedInvoiceNumber || d.id === convertedInvoiceId)
+                      if (inv) {
+                        navigate('/invoice', { state: { prefillDocument: inv } })
+                      } else {
+                        navigate('/invoice')
+                      }
+                    })
+                  }}
+                  type="button"
+                >
+                  <FileText size={14} />
+                  <span>{isBn ? 'ইনভয়েসটি খুলুন →' : 'Open Converted Invoice →'}</span>
+                </button>
+              </div>
+            )}
+
             <section className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <h3 className="text-sm font-bold text-slate-950">{isBn ? 'ডকুমেন্ট বিস্তারিত' : 'Document Details'}</h3>
               <div className="grid gap-3 md:grid-cols-2">
