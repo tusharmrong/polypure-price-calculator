@@ -257,12 +257,12 @@ export default function Header() {
           </div>
 
           {/* Bottom Bar: Search Bar */}
-          <div className="py-3">
+          <div className="py-2">
             <div className="relative w-full">
-              <div className="flex h-11 sm:h-12 w-full items-center gap-3 rounded-xl sm:rounded-2xl border border-slate-300/90 bg-slate-50/95 px-4 shadow-2xs transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-3 focus-within:ring-brand-100/70">
-                <Search size={18} className="text-slate-400 shrink-0" aria-hidden="true" />
+              <div className="flex h-10 w-full items-center gap-2.5 rounded-xl border border-slate-300/80 bg-slate-50/90 px-3.5 shadow-2xs transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100">
+                <Search size={16} className="text-slate-400 shrink-0" aria-hidden="true" />
                 <input
-                  className="w-full border-0 bg-transparent p-0 text-sm sm:text-base text-slate-800 placeholder-slate-400 outline-none font-medium"
+                  className="w-full border-0 bg-transparent p-0 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none font-medium"
                   onBlur={() => window.setTimeout(() => setFocusSearch(false), 150)}
                   onChange={(event) => setQuery(event.target.value)}
                   onFocus={() => setFocusSearch(true)}
@@ -272,18 +272,18 @@ export default function Header() {
                 />
                 {query ? (
                   <button
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
                     onClick={() => setQuery('')}
                     type="button"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 ) : null}
               </div>
 
               {/* Search Dropdown */}
               {focusSearch && query.trim() ? (
-                <div className="absolute left-0 right-0 top-13 sm:top-14 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <div className="absolute left-0 right-0 top-11.5 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                   {matches.length ? (
                     <div className="max-h-80 overflow-auto divide-y divide-slate-100 py-1">
                       {matches.map((document) => {
@@ -377,10 +377,10 @@ export default function Header() {
 
               {/* Mobile Search */}
               <div>
-                <div className="flex h-11 items-center gap-2.5 rounded-xl border border-slate-300 bg-slate-50 px-3.5 shadow-2xs">
-                  <Search size={17} className="text-slate-400" />
+                <div className="flex h-10 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3">
+                  <Search size={16} className="text-slate-400" />
                   <input
-                    className="w-full border-0 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none font-medium"
+                    className="w-full border-0 bg-transparent text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none font-medium"
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder={copy.search}
                     type="text"
