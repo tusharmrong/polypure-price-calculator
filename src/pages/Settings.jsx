@@ -1,4 +1,4 @@
-﻿import { CheckCircle2, Download, Smartphone, Zap } from 'lucide-react'
+import { CheckCircle2, Download, Smartphone, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -269,6 +269,96 @@ export default function Settings() {
               iPhone / iPad: Safari ব্রাউজারে Share (শেয়ার ⎙ / ⬆) বাটনে ট্যাপ করে "Add to Home Screen" বেছে নিন।
             </p>
           )}
+        </div>
+      </Card>
+
+      {/* Pricing & Calculator Defaults Card */}
+      <Card>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+              <Zap size={18} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">
+                {language === 'bn' ? 'মূল্য ও ক্যালকুলেটর রেট সেটিংস' : 'Pricing & Calculator Rates'}
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <Input
+              id="settings-adhesive-rate"
+              label={language === 'bn' ? 'কুরিয়ার আঠা রেট (প্রতি ইঞ্চি)' : 'Courier Adhesive Rate (per width inch)'}
+              min="0"
+              onChange={(e) => updateCompanySetting('adhesiveRatePerInch', Number(e.target.value))}
+              placeholder="0.05"
+              step="0.001"
+              type="number"
+              value={companySettings.adhesiveRatePerInch ?? 0.05}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              {language === 'bn'
+                ? 'সূত্র: প্রস্থ × রেট (যেমন: ১০" × ০.০৫ = ০.৫০ ৳ প্রতি ব্যাগ)'
+                : 'Formula: Width × Rate (e.g. 10" × 0.05 = ৳0.50 per bag)'}
+            </p>
+          </div>
+
+          <div>
+            <Input
+              id="settings-shopping-print-rate"
+              label={language === 'bn' ? 'শপিং ব্যাগ ১-কালার প্রিন্ট রেট (৳/pc)' : 'Shopping Bag 1-Color Print (৳/pc)'}
+              min="0"
+              onChange={(e) => updateCompanySetting('shoppingPrintRate', Number(e.target.value))}
+              placeholder="0.40"
+              step="0.01"
+              type="number"
+              value={companySettings.shoppingPrintRate ?? 0.40}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              {language === 'bn' ? '২-কালার প্রিন্টের ক্ষেত্রে স্বয়ংক্রিয়ভাবে দ্বিগুণ হবে।' : 'Auto-doubles for 2-color printing.'}
+            </p>
+          </div>
+
+          <div>
+            <Input
+              id="settings-courier-print-rate"
+              label={language === 'bn' ? 'কুরিয়ার ব্যাগ ১-কালার প্রিন্ট রেট (৳/pc)' : 'Courier Bag 1-Color Print (৳/pc)'}
+              min="0"
+              onChange={(e) => updateCompanySetting('courierPrintRate', Number(e.target.value))}
+              placeholder="0.30"
+              step="0.01"
+              type="number"
+              value={companySettings.courierPrintRate ?? 0.30}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              {language === 'bn' ? '২-কালার প্রিন্টের ক্ষেত্রে স্বয়ংক্রিয়ভাবে দ্বিগুণ হবে।' : 'Auto-doubles for 2-color printing.'}
+            </p>
+          </div>
+
+          <div>
+            <Input
+              id="settings-handle-cost-rate"
+              label={language === 'bn' ? 'হ্যান্ডেল খরচ ডিফল্ট (৳/pc)' : 'Default Handle Cost (৳/pc)'}
+              min="0"
+              onChange={(e) => updateCompanySetting('handleCostRate', Number(e.target.value))}
+              placeholder="2.00"
+              step="0.01"
+              type="number"
+              value={companySettings.handleCostRate ?? 2.00}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              {language === 'bn' ? 'ডি-কাট বা লুপ হ্যান্ডেল খরচ' : 'D-cut or loop handle fitting cost'}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-end">
+          <Button onClick={handleSaveCompanySettings} type="button" variant="primary">
+            {language === 'bn' ? 'সেটিংস সেভ করুন' : 'Save Rates'}
+          </Button>
         </div>
       </Card>
 

@@ -1,5 +1,9 @@
 export const defaultSettings = {
   companyName: 'Poly Pure',
+  adhesiveRatePerInch: 0.05,
+  shoppingPrintRate: 0.40,
+  courierPrintRate: 0.30,
+  handleCostRate: 2.00,
   phone: '01914-981793',
   address:
     '16/5 Joynag Road, Baksi Bazar, Chawkbazar, Near Higher Secondary Education Board Office, Lalbag, Dhaka.',

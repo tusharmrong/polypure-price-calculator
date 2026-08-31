@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Calculator as CalculatorIcon,
   Check,
@@ -20,6 +20,7 @@ import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import { createDocumentDraft, saveCalculatorDraft } from '../utils/calculatorDraft.js'
 import { loadValue, saveValue } from '../utils/storage.js'
+import { loadCompanySettings } from '../utils/companySettings.js'
 import { useToast } from '../utils/toast.jsx'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
@@ -78,8 +79,10 @@ const initialValues = {
 
 const calculatorMemoryKey = 'calculatorMemory'
 
-function getDefaultPrintingCharge(mode, printColorMode) {
-  const baseCharge = mode === 'shopping' ? 0.4 : 0.3
+function getDefaultPrintingCharge(mode, printColorMode, customRates = {}) {
+  const shoppingBase = Number(customRates.shoppingPrintRate || 0.4)
+  const courierBase = Number(customRates.courierPrintRate || 0.3)
+  const baseCharge = mode === 'shopping' ? shoppingBase : courierBase
   return (printColorMode === '2' ? baseCharge * 2 : baseCharge).toFixed(2)
 }
 
@@ -118,10 +121,11 @@ function thicknessAsSheetText(value) {
   return `0.${String(Math.round(numericValue)).padStart(2, '0')}mm`
 }
 
-function calculateAdhesiveCost(width) {
+function calculateAdhesiveCost(width, ratePerInch = 0.05) {
   const numericWidth = Number(width || 0)
+  const numericRate = Number(ratePerInch || 0.05)
   if (!Number.isFinite(numericWidth) || numericWidth <= 0) return ''
-  return (numericWidth * 0.06).toFixed(2)
+  return (numericWidth * numericRate).toFixed(2)
 }
 
 function ResultLine({ label, value, strong = false, subtitle = '' }) {
@@ -139,6 +143,26 @@ function ResultLine({ label, value, strong = false, subtitle = '' }) {
 }
 
 export default function Calculator() {
+  const companySettings = useMemo(() => loadCompanySettings(), [])
+  const adhesiveRate = Number(companySettings.adhesiveRatePerInch || 0.05)
+  const [showFloatingStrip, setShowFloatingStrip] = useState(true)
+  const resultsCardRef = useRef(null)
+
+  useEffect(() => {
+    const el = resultsCardRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When the full results & document buttons are visible, hide floating strip!
+        setShowFloatingStrip(!entry.isIntersecting)
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
   const { showToast } = useToast()
@@ -284,7 +308,7 @@ export default function Calculator() {
     if (mode !== 'courier') return
     if (adhesiveCostTouched) return
 
-    const nextAdhesiveCost = calculateAdhesiveCost(values.width)
+    const nextAdhesiveCost = calculateAdhesiveCost(values.width, adhesiveRate)
     if (values.adhesiveCost === nextAdhesiveCost) return
 
     setValues((current) => ({
@@ -298,7 +322,7 @@ export default function Calculator() {
     setPrintColorMode(safeNextMode)
     setValues((current) => ({
       ...current,
-      printingCharge: getDefaultPrintingCharge(mode, safeNextMode)
+      printingCharge: getDefaultPrintingCharge(mode, safeNextMode, companySettings)
     }))
   }
 
@@ -329,7 +353,7 @@ export default function Calculator() {
     setValues((current) => ({
       ...current,
       thickness: String(bagModes[nextMode].thickness),
-      printingCharge: getDefaultPrintingCharge(nextMode, printColorMode),
+      printingCharge: getDefaultPrintingCharge(nextMode, printColorMode, companySettings),
       adhesiveCost: '',
       handleCost: '2'
     }))
@@ -343,7 +367,7 @@ export default function Calculator() {
     setValues({
       ...initialValues,
       thickness: String(activeMode.thickness),
-      printingCharge: getDefaultPrintingCharge(mode, '1')
+      printingCharge: getDefaultPrintingCharge(mode, '1', companySettings)
     })
     setOrderQuantity('2000')
     setSubmitted(true)
@@ -712,7 +736,7 @@ export default function Calculator() {
       </Card>
 
       {/* Right Column: Live Results & Quick Action Hub */}
-      <div className="grid content-start gap-5" id="calc-results-card">
+      <div ref={resultsCardRef} className="grid content-start gap-5" id="calc-results-card">
         <Card>
           <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5">
             <h3 className="text-sm font-black text-slate-950">{ui.result}</h3>
@@ -851,9 +875,15 @@ export default function Calculator() {
         </Card>
       </div>
 
-      {/* Floating Mobile Sticky Result Strip (Visible on mobile screens) */}
+      {/* Smart Auto-Hiding Floating Sticky Result Strip */}
       {result.status === 'ready' && (
-        <div className="fixed inset-x-3 bottom-[64px] z-30 flex items-center justify-between gap-2.5 rounded-2xl border border-brand-200 bg-slate-950/95 px-3.5 py-2.5 text-white shadow-2xl backdrop-blur-md lg:hidden animate-in fade-in slide-in-from-bottom-3">
+        <div
+          className={`fixed inset-x-3 bottom-[68px] sm:bottom-4 z-30 flex items-center justify-between gap-2.5 rounded-2xl border border-brand-200 bg-slate-950/95 px-3.5 py-2.5 text-white shadow-2xl backdrop-blur-md transition-all duration-300 ease-in-out ${
+            showFloatingStrip
+              ? 'opacity-100 translate-y-0 pointer-events-auto'
+              : 'opacity-0 translate-y-8 pointer-events-none'
+          }`}
+        >
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-brand-400">
               {isBn ? 'পিস প্রতি রেট' : 'Rate / Piece'}
@@ -877,8 +907,7 @@ export default function Calculator() {
             <button
               className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800 px-2.5 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 active:scale-95 transition"
               onClick={() => {
-                const resultElement = document.getElementById('calc-results-card')
-                resultElement?.scrollIntoView({ behavior: 'smooth' })
+                resultsCardRef.current?.scrollIntoView({ behavior: 'smooth' })
               }}
               title="View Breakdown"
               type="button"
