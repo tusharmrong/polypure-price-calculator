@@ -12,7 +12,8 @@ import { PERMISSIONS } from '../utils/permissions.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function BottomNav() {
-  const { t } = useUiLanguage()
+  const { t, language } = useUiLanguage()
+  const isBn = language === 'bn'
   const { hasPermission } = useAuth()
   const { isOffline } = useOffline()
 
