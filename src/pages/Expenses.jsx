@@ -228,6 +228,10 @@ export default function Expenses() {
     })
   }, [expenses, dateRange, categoryFilter, searchQuery])
 
+  const filteredTotal = useMemo(() => {
+    return filteredExpenses.reduce((sum, exp) => sum + toNumber(exp.amount), 0)
+  }, [filteredExpenses])
+
   // Express Submit Handler (Under 3 seconds!)
   const handleExpressSubmit = async (e) => {
     e?.preventDefault?.()
@@ -601,7 +605,7 @@ export default function Expenses() {
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-500">
-              {filteredExpenses.length} {isBn ? 'টি রেকর্ড' : 'entries'} (৳{formatDecimal(periodSummary.total)})
+              {filteredExpenses.length} {isBn ? 'টি রেকর্ড' : 'entries'} (৳{formatDecimal(filteredTotal)})
             </span>
           </div>
 
