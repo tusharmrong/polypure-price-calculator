@@ -100,7 +100,7 @@ export function getPreviousStage(currentStatusId) {
   return null
 }
 
-export function generateWhatsAppStatusMessage(doc, stageId, companyName = 'Poly Pure Printing & Packaging') {
+export function generateWhatsAppStatusMessage(doc, stageId, companyName = 'Poly Pure Printing & Packaging', phone = '01914-981793') {
   const stage = getProductionStage(stageId)
   const client = doc.clientName || 'Valued Client'
   const invNo = doc.number || 'Order'
@@ -142,5 +142,5 @@ ${stageMessage}
 
 Thank you,
 *${companyName}*
-📞 01914-901703 | 01761-100377`
+📞 ${phone || '01914-981793'}`
 }

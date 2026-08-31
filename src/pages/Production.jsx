@@ -45,6 +45,7 @@ import Select from '../components/Select.jsx'
 import { useAuth } from '../utils/authContext.jsx'
 import { loadDocuments, saveDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { loadCompanySettings } from '../utils/companySettings.js'
 import { PERMISSIONS } from '../utils/permissions.js'
 import {
   PRODUCTION_STAGES,
@@ -59,6 +60,7 @@ import { useToast } from '../utils/toast.jsx'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Production() {
+  const companySettings = useMemo(() => loadCompanySettings(), [])
   const { language } = useUiLanguage()
   const isBn = language === 'bn'
   const { currentUser, hasPermission } = useAuth()
@@ -280,7 +282,7 @@ export default function Production() {
     if (formattedPhone.startsWith('01')) {
       formattedPhone = '88' + formattedPhone
     }
-    const message = generateWhatsAppStatusMessage(doc, doc.currentStatusId)
+    const message = generateWhatsAppStatusMessage(doc, doc.currentStatusId, companySettings.companyName, companySettings.phone)
     const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
     window.open(url, '_blank')
   }
@@ -885,7 +887,7 @@ export default function Production() {
                     POLY PURE PRINTING & PACKAGING
                   </h2>
                   <p className="text-[11px] font-bold text-slate-600">DELIVERY CHALLAN (ডেলিভারি চালান)</p>
-                  <p className="text-[10px] text-slate-500">Dhaka, Bangladesh • 01914-901703</p>
+                  <p className="text-[10px] text-slate-500">{companySettings.address} • {companySettings.phone}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-sm font-black text-brand-800">CHALLAN #{challanDoc.number.replace('PP-I-', 'PP-DC-')}</p>
@@ -977,14 +979,14 @@ export default function Production() {
             </p>
 
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 font-mono text-[11px] text-slate-800 whitespace-pre-wrap">
-              {generateWhatsAppStatusMessage(whatsAppModalDoc, whatsAppModalDoc.currentStatusId)}
+              {generateWhatsAppStatusMessage(whatsAppModalDoc, whatsAppModalDoc.currentStatusId, companySettings.companyName, companySettings.phone)}
             </div>
 
             <div className="flex items-center justify-between gap-2 pt-2">
               <Button
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    generateWhatsAppStatusMessage(whatsAppModalDoc, whatsAppModalDoc.currentStatusId)
+                    generateWhatsAppStatusMessage(whatsAppModalDoc, whatsAppModalDoc.currentStatusId, companySettings.companyName, companySettings.phone)
                   )
                   showToast('WhatsApp message copied to clipboard!', 'success')
                 }}

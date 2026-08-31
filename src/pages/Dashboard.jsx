@@ -37,6 +37,7 @@ import { useAuth } from '../utils/authContext.jsx'
 import { loadDocuments } from '../utils/documents.js'
 import { loadExpenses } from '../utils/expenses.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { loadCompanySettings } from '../utils/companySettings.js'
 import { PERMISSIONS } from '../utils/permissions.js'
 import {
   PRODUCTION_STAGES,
@@ -46,6 +47,7 @@ import {
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 export default function Dashboard() {
+  const companySettings = useMemo(() => loadCompanySettings(), [])
   const { language, t } = useUiLanguage()
   const isBn = language === 'bn'
   const { currentUser, hasPermission } = useAuth()
@@ -273,7 +275,7 @@ export default function Dashboard() {
     if (formattedPhone.startsWith('01')) {
       formattedPhone = '88' + formattedPhone
     }
-    const message = `আসসালামু আলাইকুম ${invoice.clientName},\n\nপলিপিউর প্রিন্টিং অ্যান্ড প্যাকেজিং থেকে বকেয়া বিল সংক্রান্ত স্মরণিকা:\n\n📄 ইনভয়েস নং: ${invoice.number}\n📅 তারিখ: ${invoice.displayDate}\n💰 মোট বিল: ৳${invoice.totalAmount?.toLocaleString() || ''}\n🔴 বকেয়া পরিমাণ: ৳${invoice.dueAmount?.toLocaleString() || ''}\n\nঅনুগ্রহপূর্বক বকেয়া বিল পরিশোধের ব্যবস্থা গ্রহণ করার জন্য অনুরোধ জানাচ্ছি। কোনো তথ্য জানার থাকলে আমাদের সাথে যোগাযোগ করুন।\n\nধন্যবাদ,\nপলিপিউর টিম\n📞 01914-981793`
+    const message = `আসসালামু আলাইকুম ${invoice.clientName},\n\nপলিপিউর প্রিন্টিং অ্যান্ড প্যাকেজিং থেকে বকেয়া বিল সংক্রান্ত স্মরণিকা:\n\n📄 ইনভয়েস নং: ${invoice.number}\n📅 তারিখ: ${invoice.displayDate}\n💰 মোট বিল: ৳${invoice.totalAmount?.toLocaleString() || ''}\n🔴 বকেয়া পরিমাণ: ৳${invoice.dueAmount?.toLocaleString() || ''}\n\nঅনুগ্রহপূর্বক বকেয়া বিল পরিশোধের ব্যবস্থা গ্রহণ করার জন্য অনুরোধ জানাচ্ছি। কোনো তথ্য জানার থাকলে আমাদের সাথে যোগাযোগ করুন।\n\nধন্যবাদ,\nপলিপিউর টিম\n📞 ${companySettings.phone || '01914-981793'}`
     const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
     window.open(url, '_blank')
   }
