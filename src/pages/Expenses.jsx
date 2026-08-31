@@ -321,18 +321,19 @@ export default function Expenses() {
 
   return (
     <div className="grid gap-6">
-      {/* 1. EXPRESS SPEED LOGGER (Hero Card) */}
-      <div className="rounded-2xl border-2 border-brand-500/30 bg-gradient-to-br from-white via-slate-50 to-brand-50/20 p-4 sm:p-5 shadow-soft">
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
-              <Sparkles size={18} />
+      {/* 1. EXPRESS SPEED LOGGER (Sleek Mobile-First Hero Card) */}
+      <div className="rounded-2xl border border-brand-200/90 bg-gradient-to-br from-white via-slate-50 to-brand-50/20 p-3.5 sm:p-5 shadow-soft">
+        {/* Header Bar */}
+        <div className="mb-3 flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm shrink-0">
+              <Sparkles size={16} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">
-                {isBn ? 'এক্সপ্রেস খরচ এন্ট্রি (Express Logger)' : 'Express Expense Logger'}
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                {isBn ? 'এক্সপ্রেস খরচ এন্ট্রি' : 'Express Expense Logger'}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] text-slate-500 hidden sm:block">
                 {isBn
                   ? 'বিবরণ ও টাকা লিখে এন্টার চাপুন — ৩ সেকেন্ডে সেভ!'
                   : 'Fast 1-step entry: Type expense, amount, and tap enter.'}
@@ -340,22 +341,25 @@ export default function Expenses() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-bold text-emerald-800">
-              {isBn ? 'আজকের মোট:' : "Today's Spent:"} {formatCurrency(summaryKpis.todayTotal)}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] sm:text-xs font-bold text-emerald-800">
+              {isBn ? 'আজকে: ' : "Today: "} {formatCurrency(summaryKpis.todayTotal)}
             </span>
           </div>
         </div>
 
-        {/* Quick One-Tap Presets */}
-        <div className="mb-4">
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            {isBn ? '⚡ দ্রুত বাছাই (Quick Presets)' : '⚡ Quick Presets (1-Tap Fill)'}
-          </p>
-          <div className="flex flex-wrap items-center gap-1.5">
+        {/* Quick One-Tap Presets (Swipeable single-row on mobile, wrap on desktop) */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              {isBn ? '⚡ দ্রুত বাছাই (Quick Presets)' : '⚡ Quick Presets (1-Tap Fill)'}
+            </p>
+            <span className="text-[10px] text-slate-400 sm:hidden">Swipe →</span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
             {EXPENSE_PRESETS.map((preset) => (
               <button
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+                className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 active:scale-95 whitespace-nowrap"
                 key={preset.title}
                 onClick={() => handlePresetSelect(preset)}
                 type="button"
@@ -368,13 +372,13 @@ export default function Expenses() {
 
         {/* Express Input Form */}
         <form onSubmit={handleExpressSubmit}>
-          <div className="grid gap-3 sm:grid-cols-12">
+          <div className="grid gap-2.5 sm:grid-cols-12">
             {/* Title / Description */}
             <div className="sm:col-span-5">
               <input
-                className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="h-10 sm:h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 onChange={(e) => setExpressTitle(e.target.value)}
-                placeholder={isBn ? 'খরচের বিবরণ (যেমন: পেপার রিল, ড্রাইভার মজুরি)...' : 'Expense title (e.g. Paper Reel, Worker Tea)...'}
+                placeholder={isBn ? 'খরচের বিবরণ (যেমন: পেপার রিল, চা-নাস্তা)...' : 'Expense title (e.g. Paper Reel, Tea)...'}
                 ref={titleInputRef}
                 required
                 type="text"
@@ -382,56 +386,62 @@ export default function Expenses() {
               />
             </div>
 
-            {/* Amount */}
-            <div className="sm:col-span-3">
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-sm font-bold text-slate-400">৳</span>
+            {/* Mobile 2-column split for Amount & Date */}
+            <div className="grid grid-cols-12 gap-2 sm:col-span-5">
+              {/* Amount */}
+              <div className="col-span-7 sm:col-span-7">
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2.5 text-xs sm:text-sm font-bold text-slate-400">৳</span>
+                  <input
+                    className="h-10 sm:h-11 w-full rounded-xl border border-slate-300 bg-white pl-6 pr-2.5 text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    min="0"
+                    onChange={(e) => setExpressAmount(e.target.value)}
+                    placeholder="0.00"
+                    required
+                    step="0.01"
+                    type="number"
+                    value={expressAmount}
+                  />
+                </div>
+              </div>
+
+              {/* Date */}
+              <div className="col-span-5 sm:col-span-5">
                 <input
-                  className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-7 pr-3 text-sm font-bold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                  min="0"
-                  onChange={(e) => setExpressAmount(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  step="0.01"
-                  type="number"
-                  value={expressAmount}
+                  className="h-10 sm:h-11 w-full rounded-xl border border-slate-300 bg-white px-2 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500"
+                  onChange={(e) => setExpressDate(e.target.value)}
+                  type="date"
+                  value={expressDate}
                 />
               </div>
-            </div>
-
-            {/* Date */}
-            <div className="sm:col-span-2">
-              <input
-                className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500"
-                onChange={(e) => setExpressDate(e.target.value)}
-                type="date"
-                value={expressDate}
-              />
             </div>
 
             {/* Submit Button */}
             <div className="sm:col-span-2">
               <Button
-                className="h-11 w-full justify-center text-sm font-bold shadow-sm"
+                className="h-10 sm:h-11 w-full justify-center text-xs sm:text-sm font-bold shadow-sm bg-brand-600 hover:bg-brand-700 text-white"
                 disabled={submitting}
                 type="submit"
                 variant="primary"
               >
-                <Plus size={16} />
+                <Plus size={15} />
                 <span>{isBn ? 'সেভ করুন' : 'Add Cost'}</span>
               </Button>
             </div>
           </div>
 
-          {/* Category Chips Selector */}
-          <div className="mt-3.5">
-            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isBn ? 'খরচের ক্যাটাগরি' : 'Category'}
-            </p>
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* Category Chips Selector (Swipeable ribbon) */}
+          <div className="mt-2.5">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {isBn ? 'ক্যাটাগরি' : 'Category'}
+              </p>
+              <span className="text-[10px] text-slate-400 sm:hidden">Swipe →</span>
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
               {EXPENSE_CATEGORIES.map((cat) => (
                 <button
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                  className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
                     expressCategory === cat.id
                       ? 'bg-brand-600 text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
@@ -446,14 +456,14 @@ export default function Expenses() {
             </div>
           </div>
 
-          {/* Payment Method Pills */}
-          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">{isBn ? 'পেমেন্ট মাধ্যম:' : 'Payment:'}</span>
-              <div className="flex items-center gap-1">
+          {/* Payment Method Pills & Details Toggle */}
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-500">{isBn ? 'পেমেন্ট:' : 'Payment:'}</span>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 {PAYMENT_METHODS.map((method) => (
                   <button
-                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                    className={`rounded-lg px-2 py-0.5 text-[11px] sm:text-xs font-bold transition shrink-0 whitespace-nowrap ${
                       expressPaymentMethod === method
                         ? 'bg-slate-900 text-white'
                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -469,23 +479,23 @@ export default function Expenses() {
             </div>
 
             <button
-              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-brand-700 hover:underline"
               onClick={() => setShowMoreDetails((prev) => !prev)}
               type="button"
             >
-              <span>{showMoreDetails ? (isBn ? 'কম বিস্তারিত' : 'Fewer fields') : (isBn ? '+ ভেন্ডর বা বিল নম্বর' : '+ Add Vendor / Bill #')}</span>
-              {showMoreDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              <span>{showMoreDetails ? (isBn ? 'কম বিস্তারিত' : 'Fewer fields') : (isBn ? '+ ভেন্ডর বা বিল #' : '+ Add Vendor / Bill #')}</span>
+              {showMoreDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
           </div>
 
           {/* Expandable Vendor & Reference Fields */}
           {showMoreDetails && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 rounded-xl border border-slate-200 bg-white p-3">
+            <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2 rounded-xl border border-slate-200 bg-white p-3">
               <Input
                 id="exp-vendor"
                 label={isBn ? 'ভেন্ডর / সাপ্লায়ার নাম' : 'Vendor / Supplier Name'}
                 onChange={(e) => setExpressVendor(e.target.value)}
-                placeholder="e.g. Akij Paper, Dhaka Die Makers"
+                placeholder="e.g. Akij Paper, Dhaka Die"
                 value={expressVendor}
               />
               <Input
@@ -658,8 +668,69 @@ export default function Expenses() {
         </div>
       </div>
 
-      {/* 4. EXPENSES LOG TABLE */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+      {/* 4. EXPENSES LOG (Mobile Cards + Desktop Table) */}
+      {/* Mobile Card View (md:hidden) */}
+      <div className="space-y-2.5 md:hidden">
+        {filteredExpenses.map((exp) => {
+          const catObj =
+            EXPENSE_CATEGORIES.find((c) => c.id === exp.category) || {
+              label: 'Other',
+              shortLabel: 'Other'
+            }
+          return (
+            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs space-y-2" key={exp.id}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-900 text-xs truncate">{exp.title}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{exp.date} • {exp.paymentMethod}</p>
+                </div>
+                <span className="font-extrabold text-rose-700 text-xs shrink-0">
+                  {formatCurrency(exp.amount)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 text-[11px]">
+                <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 truncate max-w-[150px]">
+                  {catObj.shortLabel || catObj.label} {exp.vendor ? `• ${exp.vendor}` : ''}
+                </span>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => {
+                      setEditingExpense({ ...exp })
+                      setEditModalOpen(true)
+                    }}
+                    title="Edit"
+                    type="button"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    className="p-1 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    onClick={() => handleDelete(exp.id)}
+                    title="Delete"
+                    type="button"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+
+        {filteredExpenses.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-500">
+            {isBn
+              ? 'এই সময়ের জন্য কোনো খরচের হিসাব পাওয়া যায়নি।'
+              : 'No expenses found. Use the express logger above to add one in seconds!'}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View (hidden md:block) */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] border-collapse text-left text-xs">
             <thead>

@@ -15,7 +15,7 @@ export default function Layout() {
         <Header />
 
         {/* Scrollable Main Content Area */}
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-3.5 sm:px-6 md:pb-8 lg:px-8">
           <div className="mx-auto w-full max-w-[1760px]">
             <Outlet />
           </div>

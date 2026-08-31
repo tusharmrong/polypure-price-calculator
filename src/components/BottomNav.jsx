@@ -21,7 +21,7 @@ export default function BottomNav() {
     { label: t('nav_calculator'), path: '/calculator', icon: WalletCards, permission: PERMISSIONS.USE_CALCULATOR, offline: true },
     { label: t('nav_quotation'), path: '/quotation', icon: SquarePen, permission: PERMISSIONS.MANAGE_QUOTATIONS, offline: true },
     { label: t('nav_invoice'), path: '/invoice', icon: FileText, permission: PERMISSIONS.MANAGE_INVOICES, offline: true },
-    { label: t('nav_money_receipt'), path: '/money-receipt', icon: ReceiptText, permission: PERMISSIONS.MANAGE_RECEIPTS, offline: true }
+    { label: isBn ? 'মানি রিসিপ্ট' : 'Receipt', path: '/money-receipt', icon: ReceiptText, permission: PERMISSIONS.MANAGE_RECEIPTS, offline: true }
   ]
 
   const items = allItems.filter((item) => {
@@ -60,7 +60,7 @@ export default function BottomNav() {
                     <span className="absolute top-1 h-0.5 w-5 rounded-full bg-brand-600 animate-in fade-in" />
                   )}
                   <Icon size={19} aria-hidden="true" className={isActive ? 'text-brand-600 scale-105 transition-transform' : 'text-slate-500'} />
-                  <span className="truncate max-w-[70px] text-center leading-tight">{item.label}</span>
+                  <span className="truncate w-full text-center text-[9px] sm:text-[10px] leading-tight font-bold tracking-tight mt-0.5">{item.label}</span>
                 </>
               )}
             </NavLink>
