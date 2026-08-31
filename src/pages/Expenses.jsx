@@ -35,7 +35,6 @@ import Select from '../components/Select.jsx'
 import TextArea from '../components/TextArea.jsx'
 import {
   EXPENSE_CATEGORIES,
-  EXPENSE_PRESETS,
   deleteExpense,
   loadExpenses,
   saveExpense
@@ -288,13 +287,6 @@ export default function Expenses() {
     }
   }
 
-  // Handle Preset Click
-  const handlePresetSelect = (preset) => {
-    setExpressTitle(preset.title)
-    setExpressCategory(preset.category)
-    titleInputRef.current?.focus()
-  }
-
   // Handle Delete
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this expense record?')) return
@@ -349,28 +341,6 @@ export default function Expenses() {
             <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] sm:text-xs font-bold text-emerald-800 whitespace-nowrap">
               {isBn ? 'আজকে: ' : 'Today: '} {formatCurrency(summaryKpis.todayTotal)}
             </span>
-          </div>
-        </div>
-
-        {/* Quick One-Tap Presets (Swipeable single-row on mobile, wrap on desktop) */}
-        <div className="w-full min-w-0 max-w-full overflow-hidden mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isBn ? '⚡ দ্রুত বাছাই (Quick Presets)' : '⚡ Quick Presets (1-Tap Fill)'}
-            </p>
-            <span className="text-[10px] text-slate-400 sm:hidden">Swipe →</span>
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full min-w-0 max-w-full sm:flex-wrap">
-            {EXPENSE_PRESETS.map((preset) => (
-              <button
-                className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 active:scale-95 whitespace-nowrap"
-                key={preset.title}
-                onClick={() => handlePresetSelect(preset)}
-                type="button"
-              >
-                <span>{preset.title}</span>
-              </button>
-            ))}
           </div>
         </div>
 
