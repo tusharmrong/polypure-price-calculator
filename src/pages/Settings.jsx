@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, Smartphone, Zap } from 'lucide-react'
+import { Download, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -461,6 +461,20 @@ export default function Settings() {
           {backupStatus ? <p className="mt-3 text-xs font-semibold text-brand-700">{backupStatus}</p> : null}
         </div>
       </Card>
+
+      {/* Permanent Compact Creator Signature Note */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 rounded-2xl border border-slate-200/90 bg-white p-3 sm:px-4 sm:py-2.5 shadow-2xs text-xs">
+        <p className="text-slate-800 text-xs font-semibold">
+          <span className="text-slate-500">Created By </span>
+          <span className="font-bold text-brand-700">Tushar Mrong</span>
+        </p>
+
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+          <span>Poly Pure Business Suite</span>
+          <span>•</span>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </div>
     </div>
   )
 }
