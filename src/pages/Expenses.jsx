@@ -71,7 +71,8 @@ export default function Expenses() {
   // Express Input State
   const [expressTitle, setExpressTitle] = useState('')
   const [expressAmount, setExpressAmount] = useState('')
-  const [expressCategory, setExpressCategory] = useState('raw_materials')
+  const [expressCategory, setExpressCategory] = useState('transport')
+  const [expressOtherExplain, setExpressOtherExplain] = useState('')
   const [expressPaymentMethod, setExpressPaymentMethod] = useState('Cash')
   const [expressDate, setExpressDate] = useState(new Date().toISOString().slice(0, 10))
   const [expressVendor, setExpressVendor] = useState('')
@@ -254,6 +255,7 @@ export default function Expenses() {
           title: trimmedTitle,
           amount: amountNum,
           category: expressCategory,
+          notes: expressCategory === 'other' && expressOtherExplain.trim() ? `[Other: ${expressOtherExplain.trim()}] ${expressReference}` : '',
           paymentMethod: expressPaymentMethod,
           date: expressDate,
           vendor: expressVendor.trim(),
@@ -269,6 +271,7 @@ export default function Expenses() {
 
       // Fast Reset for next entry
       setExpressTitle('')
+      setExpressOtherExplain('')
       setExpressAmount('')
       setExpressVendor('')
       setExpressReference('')
@@ -329,11 +332,6 @@ export default function Expenses() {
               <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
                 {isBn ? 'এক্সপ্রেস খরচ এন্ট্রি' : 'Express Expense Logger'}
               </h2>
-              <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                {isBn
-                  ? 'বিবরণ ও টাকা লিখে এন্টার চাপুন — ৩ সেকেন্ডে সেভ!'
-                  : 'Fast 1-step entry: Type expense, amount, and tap enter.'}
-              </p>
             </div>
           </div>
 
@@ -345,13 +343,57 @@ export default function Expenses() {
         </div>
 
         {/* Express Input Form */}
-        <form className="w-full min-w-0 max-w-full space-y-2.5" onSubmit={handleExpressSubmit}>
-          {/* Row 1: Title Input */}
+        <form className="w-full min-w-0 max-w-full space-y-3" onSubmit={handleExpressSubmit}>
+          {/* Row 1: CATEGORY DROPDOWN ON TOP + EXPLAIN FIELD IF OTHERS */}
+          <div className="w-full min-w-0">
+            <div className="grid gap-2 sm:grid-cols-12">
+              <div className={expressCategory === 'other' ? 'sm:col-span-6' : 'sm:col-span-12'}>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1" htmlFor="express-category-select">
+                  {isBn ? 'খরচের ক্যাটাগরি (খাত)' : 'Expense Category'}
+                </label>
+                <div className="relative w-full">
+                  <select
+                    className="h-10 sm:h-11 w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 pr-9 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 cursor-pointer"
+                    id="express-category-select"
+                    onChange={(e) => setExpressCategory(e.target.value)}
+                    value={expressCategory}
+                  >
+                    {EXPENSE_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.label} {isBn && cat.labelBn ? `(${cat.labelBn})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                </div>
+              </div>
+
+              {/* If "Others" is selected: Explanation text input */}
+              {expressCategory === 'other' && (
+                <div className="sm:col-span-6 animate-in fade-in duration-200">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-rose-600 mb-1" htmlFor="express-other-explain">
+                    {isBn ? 'অন্যান্য খরচের বিবরণ (ব্যাখ্যা)' : 'Explain Other Expense'}
+                  </label>
+                  <input
+                    className="h-10 sm:h-11 w-full rounded-xl border border-rose-300 bg-rose-50/40 px-3.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    id="express-other-explain"
+                    onChange={(e) => setExpressOtherExplain(e.target.value)}
+                    placeholder={isBn ? 'কী বাবদ খরচ? (যেমন: চা-নাস্তা, অতিথি আপ্যায়ন)...' : 'What is this expense for? (e.g. Snacks, Courier fee)...'}
+                    required={expressCategory === 'other'}
+                    type="text"
+                    value={expressOtherExplain}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: Title / Description Input */}
           <div className="w-full min-w-0">
             <input
-              className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               onChange={(e) => setExpressTitle(e.target.value)}
-              placeholder={isBn ? 'খরচের বিবরণ (যেমন: পেপার রিল, চা-নাস্তা)...' : 'Expense title (e.g. Paper Reel, Tea)...'}
+              placeholder={isBn ? 'খরচের বিবরণ (যেমন: পিকআপ ভ্যান ভাড়া, মিস্ত্রি মজুরি)...' : 'Expense title / details (e.g. Van Fare, Worker Wage)...'}
               ref={titleInputRef}
               required
               type="text"
@@ -359,12 +401,12 @@ export default function Expenses() {
             />
           </div>
 
-          {/* Row 2: Amount (55%) + Date (45%) */}
+          {/* Row 3: Amount (55%) + Date (45%) */}
           <div className="grid grid-cols-12 gap-2 w-full min-w-0">
             <div className="col-span-7 relative min-w-0">
-              <span className="absolute left-2.5 top-2.5 text-xs sm:text-sm font-bold text-slate-400 pointer-events-none">৳</span>
+              <span className="absolute left-3 top-2.5 text-xs sm:text-sm font-bold text-slate-400 pointer-events-none">৳</span>
               <input
-                className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white pl-6 pr-2 text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white pl-7 pr-2.5 text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 min="0"
                 onChange={(e) => setExpressAmount(e.target.value)}
                 placeholder="0.00"
@@ -377,7 +419,7 @@ export default function Expenses() {
 
             <div className="col-span-5 min-w-0">
               <input
-                className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-2 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500"
+                className="h-10 sm:h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-2.5 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500"
                 onChange={(e) => setExpressDate(e.target.value)}
                 type="date"
                 value={expressDate}
@@ -385,53 +427,14 @@ export default function Expenses() {
             </div>
           </div>
 
-          {/* Row 3: Submit Action Button */}
-          <div className="w-full min-w-0 pt-0.5">
-            <Button
-              className="h-10 sm:h-11 w-full min-w-0 justify-center text-xs sm:text-sm font-bold shadow-sm bg-brand-600 hover:bg-brand-700 text-white"
-              disabled={submitting}
-              type="submit"
-              variant="primary"
-            >
-              <Plus size={16} />
-              <span>{isBn ? 'সেভ করুন' : 'Add Cost'}</span>
-            </Button>
-          </div>
-
-          {/* Category Chips Selector (Swipeable ribbon) */}
-          <div className="w-full min-w-0 max-w-full overflow-hidden pt-1">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                {isBn ? 'ক্যাটাগরি' : 'Category'}
-              </p>
-              <span className="text-[10px] text-slate-400 sm:hidden">Swipe →</span>
-            </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full min-w-0 max-w-full sm:flex-wrap">
-              {EXPENSE_CATEGORIES.map((cat) => (
-                <button
-                  className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold transition whitespace-nowrap ${
-                    expressCategory === cat.id
-                      ? 'bg-brand-600 text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                  }`}
-                  key={cat.id}
-                  onClick={() => setExpressCategory(cat.id)}
-                  type="button"
-                >
-                  {cat.shortLabel || cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Method Pills & Details Toggle */}
-          <div className="w-full min-w-0 flex flex-wrap items-center justify-between gap-2 pt-1">
+          {/* Row 4: Payment Method Pills & Details Toggle */}
+          <div className="w-full min-w-0 flex flex-wrap items-center justify-between gap-2 pt-0.5">
             <div className="flex items-center gap-1.5 min-w-0 max-w-full overflow-hidden">
               <span className="text-[11px] sm:text-xs font-bold text-slate-500 shrink-0">{isBn ? 'পেমেন্ট:' : 'Payment:'}</span>
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full">
                 {PAYMENT_METHODS.map((method) => (
                   <button
-                    className={`rounded-lg px-2 py-0.5 text-[11px] sm:text-xs font-bold transition shrink-0 whitespace-nowrap ${
+                    className={`rounded-lg px-2.5 py-1 text-[11px] sm:text-xs font-bold transition shrink-0 whitespace-nowrap ${
                       expressPaymentMethod === method
                         ? 'bg-slate-900 text-white'
                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -475,6 +478,19 @@ export default function Expenses() {
               />
             </div>
           )}
+
+          {/* Row 5: Submit Action Button */}
+          <div className="w-full min-w-0 pt-1">
+            <Button
+              className="h-10 sm:h-11 w-full min-w-0 justify-center text-xs sm:text-sm font-bold shadow-sm bg-brand-600 hover:bg-brand-700 text-white"
+              disabled={submitting}
+              type="submit"
+              variant="primary"
+            >
+              <Plus size={16} />
+              <span>{isBn ? 'সেভ করুন' : 'Add Cost'}</span>
+            </Button>
+          </div>
         </form>
       </div>
 

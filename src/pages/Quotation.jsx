@@ -49,7 +49,7 @@ import { matchClientSuggestion, useClientSuggestions } from '../utils/clientSugg
 
 function createItem(draft) {
   return {
-    id: crypto.randomUUID(),
+    id: window.crypto?.randomUUID?.() || `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     description: normalizeThicknessText(draft?.description || ''),
     quantity: String(draft?.quantity ?? '2000'),
     rate: draft?.rate ? formatDecimal(draft.rate) : ''
@@ -84,7 +84,7 @@ export default function Quotation() {
   const [items, setItems] = useState(() => {
     if (prefill?.items?.length) {
       return prefill.items.map((item) => ({
-        id: crypto.randomUUID(),
+        id: window.crypto?.randomUUID?.() || `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         description: normalizeThicknessText(item.description || ''),
         quantity: String(item.quantity ?? '2000'),
         rate: formatDecimal(item.rate || 0)
@@ -95,7 +95,7 @@ export default function Quotation() {
     }
     if (savedDraft?.items?.length) {
       return savedDraft.items.map((item) => ({
-        id: crypto.randomUUID(),
+        id: window.crypto?.randomUUID?.() || `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         description: normalizeThicknessText(item.description || ''),
         quantity: String(item.quantity ?? '2000'),
         rate: formatDecimal(item.rate || 0)
@@ -856,19 +856,12 @@ export default function Quotation() {
   )
 
   return (
-    <div className="grid gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:overflow-hidden">
-      <div className="grid gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.98fr)] xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)]">
-        <Card className="no-print relative z-10 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+    <div className="grid gap-5 xl:h-[calc(100vh-6rem)] xl:min-h-0 xl:overflow-hidden">
+      <div className="grid gap-5 xl:h-full xl:min-h-0 xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.96fr)] 2xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.95fr)]">
+        <Card className="no-print relative z-10 xl:h-full xl:min-h-0 xl:overflow-y-auto">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <img
-                alt="Poly Pure"
-                className="h-12 w-12 rounded-full border border-brand-100 bg-white object-contain"
-                src={`${import.meta.env.BASE_URL}poly-pure-logo.png`}
-              />
-              <div>
-                <h2 className="text-lg font-bold text-slate-950">{isBn ? 'কোটেশন ফর্ম' : 'Quotation Form'}</h2>
-              </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-950">{isBn ? 'কোটেশন ফর্ম' : 'Quotation Form'}</h2>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -1128,7 +1121,7 @@ export default function Quotation() {
             <Button onClick={saveQuotation} type="button" variant="secondary">
               {isBn ? 'কোটেশন সেভ' : 'Save Quotation'}
             </Button>
-            <Button className="lg:hidden" onClick={() => setMobilePreviewOpen(true)} type="button" variant="secondary">
+            <Button className="xl:hidden" onClick={() => setMobilePreviewOpen(true)} type="button" variant="secondary">
               <Eye size={16} />
               <span>{isBn ? 'প্রিভিউ দেখুন' : 'View Sheet'}</span>
             </Button>
@@ -1160,7 +1153,7 @@ export default function Quotation() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area relative z-0 hidden bg-white p-0 lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto">
+        <Card className="print-area relative z-0 hidden bg-white p-0 xl:block xl:h-full xl:min-h-0 xl:overflow-y-auto">
           {renderQuotationSheetContent()}
         </Card>
       </div>

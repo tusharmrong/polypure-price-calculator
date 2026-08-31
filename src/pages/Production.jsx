@@ -302,11 +302,7 @@ export default function Production() {
                 Live Factory Pipeline
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              {isBn
-                ? 'ফিল্ম ব্লোয়িং, প্রিন্টিং, কাটিং ও ডেলিভারি স্ট্যাটাস ট্র্যাকিং ও জব কার্ড তৈরি'
-                : 'Track orders from film extrusion & printing to cutting, packing & delivery challans'}
-            </p>
+            
           </div>
         </div>
 

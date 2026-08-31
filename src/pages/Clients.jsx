@@ -186,9 +186,9 @@ export default function Clients() {
       {/* Desktop Sidebar (Visible only on xl screens) */}
       <Card className="hidden xl:block xl:sticky xl:top-24 xl:self-start">
         <div className="mb-4">
-          <p className="text-sm font-semibold text-brand-700">Client Records</p>
+          
           <h2 className="text-2xl font-bold text-slate-950">Clients</h2>
-          <p className="mt-1 text-sm text-slate-500">Built from saved quotations, invoices, and money receipts.</p>
+          
         </div>
 
         <Input

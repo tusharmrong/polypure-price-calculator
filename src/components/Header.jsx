@@ -200,7 +200,7 @@ export default function Header() {
       <header className="shrink-0 border-b border-slate-200/80 bg-white/95 shadow-2xs backdrop-blur-md z-30">
         <div className="mx-auto flex flex-col w-full max-w-[1760px] px-4 sm:px-6 lg:px-8">
           {/* Top Bar: Title & Right Actions */}
-          <div className="flex min-h-14 items-center justify-between gap-3 py-2 border-b border-slate-100/90">
+          <div className="flex min-h-14 items-center justify-between gap-3 py-2 md:border-b md:border-slate-100/90">
             {/* Page Title & Breadcrumb */}
             <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-100 text-brand-700">
@@ -210,9 +210,7 @@ export default function Header() {
                 <h1 className="text-base sm:text-lg font-black text-slate-900 whitespace-nowrap">
                   {currentMeta.title}
                 </h1>
-                <p className="hidden sm:block text-xs text-slate-500 truncate max-w-sm">
-                  {currentMeta.subtitle}
-                </p>
+                
               </div>
             </div>
 
@@ -256,8 +254,8 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Bottom Bar: Search Bar */}
-          <div className="py-2">
+          {/* Bottom Bar: Search Bar (Desktop only, mobile search is in sidebar drawer) */}
+          <div className="hidden md:block py-2">
             <div className="relative w-full">
               <div className="flex h-10 w-full items-center gap-2.5 rounded-xl border border-slate-300/80 bg-slate-50/90 px-3.5 shadow-2xs transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100">
                 <Search size={16} className="text-slate-400 shrink-0" aria-hidden="true" />

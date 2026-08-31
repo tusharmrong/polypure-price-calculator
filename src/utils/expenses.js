@@ -14,15 +14,13 @@ const EXPENSES_STORAGE_KEY = 'pp_business_expenses'
 const expensesCollection = firebaseDb ? collection(firebaseDb, 'expenses') : null
 
 export const EXPENSE_CATEGORIES = [
-  { id: 'raw_materials', label: 'Raw Materials (Paper/Poly/Board)', shortLabel: 'Raw Materials', color: 'blue' },
-  { id: 'ink_chemicals', label: 'Printing Ink & Chemicals', shortLabel: 'Ink & Chem', color: 'indigo' },
-  { id: 'dies_plates', label: 'Plates, Blocks & Die Making', shortLabel: 'Dies & Plates', color: 'purple' },
-  { id: 'labor_wages', label: 'Factory Labor & Wages', shortLabel: 'Labor & Wages', color: 'emerald' },
-  { id: 'utilities_rent', label: 'Rent, Electricity & Utilities', shortLabel: 'Rent & Power', color: 'amber' },
-  { id: 'maintenance', label: 'Machine Maintenance & Spares', shortLabel: 'Maintenance', color: 'orange' },
-  { id: 'transport_delivery', label: 'Delivery, Fuel & Transport', shortLabel: 'Transport', color: 'cyan' },
-  { id: 'office_admin', label: 'Office Supplies & Admin', shortLabel: 'Office/Admin', color: 'slate' },
-  { id: 'other', label: 'Other Operating Expenses', shortLabel: 'Other', color: 'rose' }
+  { id: 'transport', label: 'Transport', shortLabel: 'Transport', color: 'cyan', labelBn: 'পরিবহন' },
+  { id: 'labor_wages', label: 'Labor & Wages', shortLabel: 'Labor & Wages', color: 'emerald', labelBn: 'লেবার ও মজুরি' },
+  { id: 'rent_power', label: 'Rent & Power', shortLabel: 'Rent & Power', color: 'amber', labelBn: 'ভাড়া ও বিদ্যুৎ' },
+  { id: 'maintenance', label: 'Maintenance', shortLabel: 'Maintenance', color: 'orange', labelBn: 'মেরামত ও মেইনটেন্যান্স' },
+  { id: 'office_admin', label: 'Office/Admin', shortLabel: 'Office/Admin', color: 'slate', labelBn: 'অফিস ও প্রশাসন' },
+  { id: 'ad_cost', label: 'Ad Cost', shortLabel: 'Ad Cost', color: 'blue', labelBn: 'বিজ্ঞাপন খরচ' },
+  { id: 'other', label: 'Others', shortLabel: 'Others', color: 'rose', labelBn: 'অন্যান্য' }
 ]
 
 export const EXPENSE_PRESETS = [
@@ -55,33 +53,51 @@ export function saveLocalExpenses(expenses) {
 export async function loadExpenses() {
   const localExpenses = getLocalExpenses()
 
-  if (!canUseCloudExpenses()) {
-    return localExpenses
-  }
-
-  try {
+  // Background Cloud Sync (Non-blocking)
+  if (canUseCloudExpenses()) {
     const expensesQuery = query(expensesCollection, orderBy('date', 'desc'))
-    const snapshot = await getDocs(expensesQuery)
-    const cloudExpenses = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    }))
+    getDocs(expensesQuery)
+      .then((snapshot) => {
+        const cloudExpenses = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
+        const mergedMap = new Map()
+        localExpenses.forEach((exp) => mergedMap.set(exp.id, exp))
+        cloudExpenses.forEach((exp) => mergedMap.set(exp.id, exp))
 
-    // Merge cloud and local expenses seamlessly
-    const mergedMap = new Map()
-    localExpenses.forEach((exp) => mergedMap.set(exp.id, exp))
-    cloudExpenses.forEach((exp) => mergedMap.set(exp.id, exp))
+        const mergedList = Array.from(mergedMap.values()).sort(
+          (a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
+        )
+        saveLocalExpenses(mergedList)
+      })
+      .catch((error) => {
+        console.warn('Background cloud expenses sync failed:', error)
+      })
+  }
 
-    const mergedList = Array.from(mergedMap.values()).sort(
-      (a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
-    )
-
-    saveLocalExpenses(mergedList)
-    return mergedList
-  } catch (error) {
-    console.warn('Unable to fetch cloud expenses, using local records.', error)
+  // If local records exist, return INSTANTLY (0ms startup!)
+  if (localExpenses && localExpenses.length > 0) {
     return localExpenses
   }
+
+  // If fresh device, wait for initial download
+  if (canUseCloudExpenses()) {
+    try {
+      const expensesQuery = query(expensesCollection, orderBy('date', 'desc'))
+      const snapshot = await getDocs(expensesQuery)
+      const cloudExpenses = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }))
+      saveLocalExpenses(cloudExpenses)
+      return cloudExpenses
+    } catch (error) {
+      console.warn('Unable to fetch cloud expenses, using local records.', error)
+    }
+  }
+
+  return localExpenses
 }
 
 export async function saveExpense(expenseData, actorUser) {

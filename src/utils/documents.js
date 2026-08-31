@@ -114,6 +114,29 @@ async function getCloudDocumentsWithoutCaching() {
 }
 
 export async function loadDocuments() {
+  const local = sortDocuments(getLocalDocuments())
+
+  // Background Cloud Sync (Non-blocking)
+  if (canUseCloudDocuments()) {
+    getDocs(query(documentsCollection, orderBy('updatedAt', 'desc')))
+      .then((snapshot) => {
+        const documents = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data()
+        }))
+        saveLocalDocuments(documents)
+      })
+      .catch((error) => {
+        console.warn('Background cloud documents sync failed:', error)
+      })
+  }
+
+  // If local documents exist, return INSTANTLY (0ms startup!)
+  if (local && local.length > 0) {
+    return local
+  }
+
+  // If first time on fresh browser, wait for cloud
   if (canUseCloudDocuments()) {
     try {
       const snapshot = await getDocs(query(documentsCollection, orderBy('updatedAt', 'desc')))
@@ -128,7 +151,7 @@ export async function loadDocuments() {
     }
   }
 
-  return sortDocuments(getLocalDocuments())
+  return local
 }
 
 export async function syncLocalDocumentsToCloud(actorUser = null) {

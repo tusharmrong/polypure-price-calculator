@@ -6,6 +6,20 @@ const base = process.env.VITE_BASE_PATH || '/'
 
 export default defineConfig({
   base,
+    build: {
+    target: 'esnext',
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          'vendor-icons': ['lucide-react']
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({

@@ -377,9 +377,9 @@ export default function History() {
     <div className="grid gap-5">
       <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">Document Archive</p>
+          
           <h1 className="text-xl sm:text-2xl font-bold text-slate-950">{t('history_title')}</h1>
-          <p className="text-xs sm:text-sm text-slate-500">{t('history_saved_note')}</p>
+          
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

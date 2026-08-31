@@ -162,38 +162,46 @@ input[type='checkbox'] {
 
 .document-action-grid {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .document-action-grid > button {
   width: 100%;
-  min-height: 44px;
-  padding-left: 12px;
-  padding-right: 12px;
+  min-height: 40px;
+  padding-left: 10px;
+  padding-right: 10px;
   border: 1px solid #c91f32;
   background: #c91f32;
   color: #ffffff;
   white-space: nowrap;
-  box-shadow: 0 12px 28px rgba(201, 31, 50, 0.24);
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(201, 31, 50, 0.18);
 }
 
 .document-action-grid > button:hover {
   border-color: #a91528;
   background: #a91528;
-  box-shadow: 0 14px 30px rgba(169, 21, 40, 0.28);
+  box-shadow: 0 6px 18px rgba(169, 21, 40, 0.24);
 }
 
 .form-action-sticky {
-  position: sticky;
-  bottom: 8px;
-  z-index: 20;
+  position: static;
+  z-index: 10;
   padding: 10px;
   border: 1px solid #fecdd3;
   border-radius: 12px;
   background: rgba(255, 250, 251, 0.96);
-  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(6px);
+}
+
+@media (min-width: 1024px) {
+  .form-action-sticky {
+    position: sticky;
+    bottom: 8px;
+    z-index: 20;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(6px);
+  }
 }
 
 .toast-viewport {
