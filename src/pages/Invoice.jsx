@@ -522,10 +522,12 @@ export default function Invoice() {
     }
     setFormError('')
     await saveInvoice()
+    const sheetEl = document.getElementById('invoice-printable-sheet')
     printWithFileName({
       clientName: clientName || 'Client',
       documentNumber,
-      type: 'Invoice'
+      type: 'Invoice',
+      targetElement: sheetEl
     })
     showToast('PDF save window opened.', 'success')
   }
@@ -571,7 +573,7 @@ export default function Invoice() {
   }
 
   const renderInvoiceSheetContent = () => (
-    <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
+    <div id="invoice-printable-sheet" className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
       <div className="h-2 bg-brand-600" />
       <div className="px-5 pb-5 pt-4">
         <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
@@ -997,7 +999,7 @@ export default function Invoice() {
           {formError ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{formError}</p> : null}
         </Card>
 
-        <Card className="print-area relative z-0 hidden bg-white p-0 xl:block xl:h-full xl:min-h-0 xl:overflow-y-auto">
+        <Card className="print-area print-invoice-area relative z-0 hidden bg-white p-0 xl:block xl:h-full xl:min-h-0 xl:overflow-y-auto">
           {renderInvoiceSheetContent()}
         </Card>
       </div>

@@ -96,6 +96,10 @@ async function writeAuthBootstrapState(nextState = {}) {
     firstAdminUserId: trimUserInput(nextState.firstAdminUserId || previousState.firstAdminUserId || ''),
     firstAdminUsername: normalizeUsername(nextState.firstAdminUsername || previousState.firstAdminUsername || ''),
     firstAdminName: trimUserInput(nextState.firstAdminName || previousState.firstAdminName || ''),
+    userEmailMap: {
+      ...(previousState.userEmailMap || {}),
+      ...(nextState.userEmailMap || {})
+    },
     source: trimUserInput(nextState.source || previousState.source || 'auth'),
     initializedAt: previousState.initializedAt || now,
     updatedAt: now
@@ -456,12 +460,37 @@ export async function loginWithCredentials(username, password) {
   }
 
   const cleanUsername = trimUserInput(username)
-  const email = cleanUsername.includes('@')
-    ? cleanUsername.toLowerCase()
-    : createSyntheticEmail(cleanUsername)
+  if (!cleanUsername) {
+    return { ok: false, error: 'Please enter your username or email.' }
+  }
 
+  const cleanPassword = String(password || '')
+  let primaryEmail = ''
+  let fallbackEmail = ''
+
+  if (cleanUsername.includes('@')) {
+    primaryEmail = cleanUsername.toLowerCase()
+  } else {
+    const normalized = normalizeUsername(cleanUsername)
+    const bootstrapState = await readAuthBootstrapState()
+    primaryEmail = bootstrapState?.userEmailMap?.[normalized] || createSyntheticEmail(normalized)
+    fallbackEmail = createSyntheticEmail(normalized)
+  }
+
+  // Attempt login with primary active email
   try {
-    const credential = await signInWithEmailAndPassword(firebaseAuth, email, String(password || ''))
+    let credential = null
+    try {
+      credential = await signInWithEmailAndPassword(firebaseAuth, primaryEmail, cleanPassword)
+    } catch (primaryErr) {
+      if (fallbackEmail && fallbackEmail !== primaryEmail) {
+        // Attempt fallback with legacy unversioned synthetic email
+        credential = await signInWithEmailAndPassword(firebaseAuth, fallbackEmail, cleanPassword)
+      } else {
+        throw primaryErr
+      }
+    }
+
     const loginTime = new Date().toISOString()
     const profile = await getUserProfileById(credential.user.uid)
 
@@ -891,11 +920,17 @@ export async function changeAuthUserPassword(userId, password, confirmPassword, 
   const timestamp = new Date().toISOString()
   let selfPasswordUpdated = false
 
-  // If current logged-in user is changing their own password
+  // CASE 1: User changing their OWN password while currently logged in
   if (firebaseAuth.currentUser && firebaseAuth.currentUser.uid === userId) {
     try {
       await updatePassword(firebaseAuth.currentUser, cleanPassword)
       selfPasswordUpdated = true
+
+      await updateDoc(doc(firebaseDb, 'users', userId), {
+        passwordUpdatedAt: timestamp,
+        mustChangePasswordOnNextLogin: false,
+        updatedAt: timestamp
+      })
     } catch (error) {
       console.error('Firebase Auth password update error:', error)
       const code = error?.code || 'UNKNOWN'
@@ -910,21 +945,64 @@ export async function changeAuthUserPassword(userId, password, confirmPassword, 
         error: mapAuthError(code)
       }
     }
-  }
+  } else {
+    // CASE 2: Admin resetting another user's (or another admin's) password
+    const isSyntheticEmail = !targetUser.contactEmail || !targetUser.contactEmail.includes('@')
 
-  // Update user document security metadata in Firestore
-  await updateDoc(doc(firebaseDb, 'users', userId), {
-    passwordUpdatedAt: timestamp,
-    mustChangePasswordOnNextLogin: targetUser.id !== actorUserId,
-    updatedAt: timestamp
-  })
+    if (isSyntheticEmail) {
+      const normalized = normalizeUsername(targetUser.username)
+      const newAuthEmail = `${normalized}.v${Date.now()}@polypure-bsuite.local`
+      
+      const createRes = await createFirebaseAuthAccount({
+        email: newAuthEmail,
+        password: cleanPassword
+      })
 
-  // If the user has an external email address configured, send password reset link as well
-  if (targetUser.email && !targetUser.email.endsWith('@polypure-bsuite.local')) {
-    try {
-      await sendPasswordResetEmail(firebaseAuth, targetUser.email)
-    } catch (resetEmailError) {
-      console.warn('Could not send cloud reset email:', resetEmailError)
+      if (!createRes.ok) {
+        return { ok: false, error: createRes.error }
+      }
+
+      const newUid = createRes.uid
+      const oldDocRef = doc(firebaseDb, 'users', targetUser.id)
+      const oldSnap = await getDoc(oldDocRef)
+      const currentData = oldSnap.exists() ? oldSnap.data() : targetUser
+
+      const updatedUserData = {
+        ...currentData,
+        uid: newUid,
+        email: newAuthEmail,
+        passwordUpdatedAt: timestamp,
+        mustChangePasswordOnNextLogin: true,
+        updatedAt: timestamp
+      }
+
+      // Save to new UID doc in Firestore
+      await setDoc(doc(firebaseDb, 'users', newUid), updatedUserData)
+      if (targetUser.id !== newUid) {
+        await deleteDoc(oldDocRef)
+      }
+
+      // Update bootstrap index so /login can immediately look up the new active auth email
+      await writeAuthBootstrapState({
+        userEmailMap: {
+          [normalized]: newAuthEmail
+        },
+        firstAdminUserId: targetUser.id === (await readAuthBootstrapState())?.firstAdminUserId ? newUid : undefined,
+        updatedAt: timestamp
+      })
+    } else {
+      // For real email accounts, send password reset link as well
+      try {
+        await sendPasswordResetEmail(firebaseAuth, targetUser.email)
+      } catch (resetEmailError) {
+        console.warn('Could not send cloud reset email:', resetEmailError)
+      }
+
+      await updateDoc(doc(firebaseDb, 'users', userId), {
+        passwordUpdatedAt: timestamp,
+        mustChangePasswordOnNextLogin: true,
+        updatedAt: timestamp
+      })
     }
   }
 

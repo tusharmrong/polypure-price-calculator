@@ -41,10 +41,12 @@ import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
+import DeliveryChallanModal from '../components/DeliveryChallanModal.jsx'
 import Select from '../components/Select.jsx'
 import { useAuth } from '../utils/authContext.jsx'
 import { loadDocuments, saveDocument, softDeleteDocument } from '../utils/documents.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { printWithFileName } from '../utils/pdf.js'
 import { loadCompanySettings } from '../utils/companySettings.js'
 import { PERMISSIONS } from '../utils/permissions.js'
 import {
@@ -272,6 +274,16 @@ export default function Production() {
   }
 
   // WhatsApp Message Generator Helper
+  const handlePrintJobCard = (job) => {
+    const sheetEl = document.getElementById('factory-job-card-print')
+    printWithFileName({
+      type: 'Job-Card',
+      clientName: job?.clientName || 'Client',
+      documentNumber: job?.number ? job.number.replace('PP-I-', 'PP-JC-') : 'JC',
+      targetElement: sheetEl
+    })
+  }
+
   const handleOpenWhatsApp = (doc) => {
     setWhatsAppModalDoc(doc)
   }
@@ -861,7 +873,7 @@ export default function Production() {
               <Button onClick={() => setJobCardDoc(null)} type="button" variant="secondary">
                 Close
               </Button>
-              <Button onClick={() => window.print()} type="button" variant="primary">
+              <Button onClick={() => handlePrintJobCard(jobCardDoc)} type="button" variant="primary">
                 <Printer size={14} />
                 <span>Print Job Card</span>
               </Button>
@@ -870,101 +882,20 @@ export default function Production() {
         )}
       </Modal>
 
-      {/* ================= MODAL 2: DELIVERY CHALLAN (ডেলিভারি চালান) ================= */}
-      <Modal
-        isOpen={Boolean(challanDoc)}
-        onClose={() => setChallanDoc(null)}
-        title={isBn ? 'ডেলিভারি চালান (Delivery Challan)' : 'Delivery Challan Slip'}
-      >
-        {challanDoc && (
-          <div className="space-y-4 text-xs">
-            {/* Printable Delivery Challan Slip */}
-            <div className="rounded-xl border-2 border-slate-800 bg-white p-5 text-slate-900 space-y-4 print:p-0 print:border-none">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
-                <div>
-                  <h2 className="text-base font-black tracking-wide text-slate-900">
-                    POLY PURE PRINTING & PACKAGING
-                  </h2>
-                  <p className="text-[11px] font-bold text-slate-600">DELIVERY CHALLAN (ডেলিভারি চালান)</p>
-                  <p className="text-[10px] text-slate-500">{companySettings.address} • {companySettings.phone}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono text-sm font-black text-brand-800">CHALLAN #{challanDoc.number.replace('PP-I-', 'PP-DC-')}</p>
-                  <p className="text-[11px] text-slate-500">Invoice Ref: #{challanDoc.number}</p>
-                  <p className="text-[11px] text-slate-500">Date: {new Date().toISOString().slice(0, 10)}</p>
-                </div>
-              </div>
-
-              {/* Consignee / Delivery Address */}
-              <div className="rounded-lg bg-slate-50 p-3 border border-slate-200">
-                <span className="text-[10px] uppercase text-slate-400 font-bold">Deliver To / Consignee:</span>
-                <p className="font-extrabold text-slate-900 text-sm">{challanDoc.clientName}</p>
-                <p className="text-slate-700">{challanDoc.phone || 'No Phone'}</p>
-                <p className="text-slate-600">{challanDoc.address || 'Delivery Address on file'}</p>
-              </div>
-
-              {/* Items List */}
-              <table className="w-full border-collapse border border-slate-300 text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-100 font-bold text-slate-700">
-                    <th className="border border-slate-300 p-2">SL</th>
-                    <th className="border border-slate-300 p-2">Description of Goods</th>
-                    <th className="border border-slate-300 p-2 text-right">Dispatched Quantity</th>
-                    <th className="border border-slate-300 p-2 text-center">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {challanDoc.items.map((it, idx) => (
-                    <tr key={idx}>
-                      <td className="border border-slate-300 p-2 font-bold">{idx + 1}</td>
-                      <td className="border border-slate-300 p-2 font-semibold">{it.description || 'Bag Item'}</td>
-                      <td className="border border-slate-300 p-2 text-right font-black text-sm">
-                        {Number(it.quantity || 0).toLocaleString()} pcs
-                      </td>
-                      <td className="border border-slate-300 p-2 text-center text-slate-500">Good Condition</td>
-                    </tr>
-                  ))}
-                  <tr className="bg-slate-50 font-black">
-                    <td className="border border-slate-300 p-2" colSpan={2}>Total Quantity Dispatched:</td>
-                    <td className="border border-slate-300 p-2 text-right text-brand-700 text-sm">
-                      {challanDoc.totalQty.toLocaleString()} pcs
-                    </td>
-                    <td className="border border-slate-300 p-2" />
-                  </tr>
-                </tbody>
-              </table>
-
-              {/* Signatures */}
-              <div className="grid grid-cols-3 gap-4 pt-8 text-center text-[10px]">
-                <div>
-                  <div className="border-t border-slate-400 pt-1" />
-                  <p className="font-bold text-slate-700">Prepared By</p>
-                </div>
-                <div>
-                  <div className="border-t border-slate-400 pt-1" />
-                  <p className="font-bold text-slate-700">Driver / Transport Sign</p>
-                </div>
-                <div>
-                  <div className="border-t border-slate-400 pt-1" />
-                  <p className="font-bold text-slate-700">Receiver's Signature & Stamp</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button onClick={() => setChallanDoc(null)} type="button" variant="secondary">
-                Close
-              </Button>
-              <Button onClick={() => window.print()} type="button" variant="primary">
-                <Printer size={14} />
-                <span>Print Delivery Challan</span>
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* ================= MODAL 2: DELIVERY CHALLAN ================= */}
+      {challanDoc && (
+        <DeliveryChallanModal
+          address={challanDoc.address}
+          clientName={challanDoc.clientName}
+          documentDate={challanDoc.date}
+          invoiceNumber={challanDoc.number}
+          isOpen={Boolean(challanDoc)}
+          items={challanDoc.items}
+          notes={challanDoc.notes}
+          onClose={() => setChallanDoc(null)}
+          phone={challanDoc.phone}
+        />
+      )}
 
       {/* ================= MODAL 3: WHATSAPP CLIENT NOTIFICATION ================= */}
       <Modal

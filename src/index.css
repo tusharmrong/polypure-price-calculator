@@ -286,67 +286,82 @@ input[type='checkbox'] {
   }
 }
 
+#print-root {
+  display: none;
+}
+
 @media print {
   @page {
     margin: 8mm;
-    size: A4;
+    size: A4 portrait;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   body {
-    background: #ffffff;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  body * {
-    visibility: hidden;
+  /* When printing via print-root: Completely eliminate the 48-page app DOM */
+  body.is-printing #root {
+    display: none !important;
   }
 
-  .print-area,
-  .print-area * {
-    visibility: visible;
-  }
-
-  .print-area {
+  body.is-printing #print-root {
     display: block !important;
-    position: absolute;
-    inset: 0;
-    width: 100%;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    visibility: visible !important;
+  }
+
+  body.is-printing #print-root * {
+    visibility: visible !important;
+  }
+
+  #print-root .quotation-sheet,
+  #print-root .challan-print-area,
+  #print-root .job-card-print-area,
+  #print-root .print-area {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
-  }
-
-  .print-area > div,
-  .quotation-sheet {
-    border: 0 !important;
     border-radius: 0 !important;
-    box-shadow: none !important;
-    max-width: none !important;
+    background: #ffffff !important;
+    font-size: 12px !important;
   }
 
-  .quotation-sheet {
-    font-size: 11px;
+  #print-root .challan-print-area {
+    font-size: 13px !important;
+    line-height: 1.45 !important;
   }
 
-  .quotation-terms {
-    columns: 2;
-    column-gap: 16px;
+  #print-root .quotation-terms {
+    columns: 2 !important;
+    column-gap: 16px !important;
     font-size: 8px !important;
     line-height: 1.35 !important;
   }
 
-  .quotation-payment-total-grid {
+  #print-root .quotation-payment-total-grid {
     grid-template-columns: minmax(0, 1fr) 260px !important;
   }
 
-  .no-print {
+  .no-print,
+  .no-print * {
     display: none !important;
-  }
-
-  .form-action-sticky,
-  .toast-viewport {
-    display: none !important;
+    visibility: hidden !important;
   }
 }
 
