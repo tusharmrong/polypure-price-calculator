@@ -308,7 +308,7 @@ input[type='checkbox'] {
     padding: 0 !important;
   }
 
-  /* When printing via print-root: Completely eliminate the 48-page app DOM */
+  /* When printing via print-root: Completely eliminate the app background tree */
   body.is-printing #root {
     display: none !important;
   }
@@ -327,10 +327,12 @@ input[type='checkbox'] {
     visibility: visible !important;
   }
 
+  #print-root > *,
   #print-root .quotation-sheet,
   #print-root .challan-print-area,
   #print-root .job-card-print-area,
   #print-root .print-area {
+    display: block !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
@@ -339,7 +341,19 @@ input[type='checkbox'] {
     box-shadow: none !important;
     border-radius: 0 !important;
     background: #ffffff !important;
-    font-size: 12px !important;
+    font-size: 11.5px !important;
+  }
+
+  #print-root .grid {
+    display: grid !important;
+  }
+
+  #print-root .flex {
+    display: flex !important;
+  }
+
+  #print-root .inline-flex {
+    display: inline-flex !important;
   }
 
   #print-root .challan-print-area {

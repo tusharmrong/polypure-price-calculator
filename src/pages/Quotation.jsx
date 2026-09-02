@@ -501,10 +501,12 @@ export default function Quotation() {
     }
     setFormError('')
     await saveQuotation()
+    const sheetEl = document.getElementById('quotation-printable-sheet')
     printWithFileName({
       clientName: clientName || 'Client',
       documentNumber,
-      type: 'Quotation'
+      type: 'Quotation',
+      targetElement: sheetEl
     })
     showToast('PDF save window opened.', 'success')
   }

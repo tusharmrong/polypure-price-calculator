@@ -20,13 +20,18 @@ export function printWithFileName(arg) {
     targetEl = arg.targetElement || (arg.elementId ? document.getElementById(arg.elementId) : null)
   }
 
-  // If no explicit target passed, find the active printable sheet
+  // Priority lookup for specific printable sheet elements
   if (!targetEl) {
     targetEl =
+      document.getElementById('quotation-printable-sheet') ||
+      document.getElementById('invoice-printable-sheet') ||
+      document.getElementById('receipt-printable-sheet') ||
+      document.getElementById('challan-printable-sheet') ||
+      document.getElementById('factory-job-card-print') ||
       document.querySelector('.challan-print-area') ||
       document.querySelector('.job-card-print-area') ||
-      document.querySelector('.print-area') ||
-      document.querySelector('.quotation-sheet')
+      document.querySelector('.quotation-sheet') ||
+      document.querySelector('.print-area')
   }
 
   let printRoot = document.getElementById('print-root')
@@ -39,8 +44,15 @@ export function printWithFileName(arg) {
   if (targetEl) {
     printRoot.innerHTML = ''
     const clone = targetEl.cloneNode(true)
-    // Strip no-print buttons from print clone
+    
+    // Strip no-print buttons/elements from print clone
     clone.querySelectorAll('.no-print').forEach((el) => el.remove())
+
+    // CRITICAL: Strip responsive visibility/display restrictions from cloned element
+    clone.classList.remove('hidden', 'invisible', 'xl:hidden', 'lg:hidden', 'md:hidden')
+    clone.style.display = 'block'
+    clone.style.visibility = 'visible'
+
     printRoot.appendChild(clone)
     document.body.classList.add('is-printing')
   }

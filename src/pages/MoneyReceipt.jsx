@@ -217,10 +217,12 @@ export default function MoneyReceipt() {
     }
     setFormError('')
     await saveReceipt()
+    const sheetEl = document.getElementById('receipt-printable-sheet')
     printWithFileName({
       clientName: clientName || 'Client',
       documentNumber,
-      type: 'Money-Receipt'
+      type: 'Money-Receipt',
+      targetElement: sheetEl
     })
     showToast('PDF save window opened.', 'success')
   }
@@ -246,7 +248,7 @@ export default function MoneyReceipt() {
   }
 
   const renderMoneyReceiptSheetContent = () => (
-    <div className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
+    <div id="receipt-printable-sheet" className="quotation-sheet overflow-hidden rounded-lg border border-slate-200 bg-white lg:w-full lg:max-w-none">
       <div className="h-2 bg-brand-600" />
       <div className="px-5 pb-5 pt-4">
         <div className="flex flex-col gap-3 border-b border-brand-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
