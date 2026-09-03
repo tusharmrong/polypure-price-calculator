@@ -250,7 +250,8 @@ export default function Calculator() {
 
     // Unit Economics
     const basePrice = poundRate / pieces
-    const finalPrice = basePrice + blockCharge + printingCharge + adhesiveCost + handleCost + profit - discount
+    const rawFinalPrice = basePrice + blockCharge + printingCharge + adhesiveCost + handleCost + profit - discount
+    const finalPrice = Number(rawFinalPrice.toFixed(2))
     const sizeDescription = `${width}" × ${height}" + ${extraMeasure}" ${activeMode.extraLabel}`
 
     // Batch Order Volume Economics
@@ -260,7 +261,7 @@ export default function Calculator() {
     const totalHandleCost = qty * handleCost
     const totalAdhesiveCost = qty * adhesiveCost
     const totalOrderCost = totalRawMaterialCost + totalPrintCost + totalHandleCost + totalAdhesiveCost + blockCharge
-    const totalOrderSale = qty * finalPrice
+    const totalOrderSale = Number((qty * finalPrice).toFixed(2))
     const estimatedOrderProfit = totalOrderSale - totalOrderCost
     const marginPercent = totalOrderSale > 0 ? (estimatedOrderProfit / totalOrderSale) * 100 : 0
 
